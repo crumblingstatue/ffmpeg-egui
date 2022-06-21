@@ -1,11 +1,17 @@
+pub mod properties;
+mod property;
+
 use std::{
-    ffi::{CStr, CString},
+    ffi::CString,
+    mem::MaybeUninit,
     os::raw::{c_char, c_int, c_void},
 };
 
 use libmpv_sys as ffi;
 
 use crate::video_pix_size;
+
+use self::property::{Property, PropertyType};
 
 pub struct Mpv {
     mpv_handle: *mut ffi::mpv_handle,
@@ -97,19 +103,33 @@ impl Mpv {
         }
     }
 
-    pub fn get_property_string(&self, name: &str) -> Option<String> {
-        let name_c_string = CString::new(name).unwrap();
-        let c_str =
-            unsafe { ffi::mpv_get_property_string(self.mpv_handle, name_c_string.as_ptr() as _) };
-        if c_str.is_null() {
-            None
-        } else {
-            unsafe {
-                let my_c_str = CStr::from_ptr(c_str);
-                let string = my_c_str.to_str().unwrap().to_string();
-                ffi::mpv_free(c_str as *mut c_void);
-                Some(string)
+    /// See [`properties`] for the properties you can use.
+    pub fn get_property<P: Property>(&self) -> Option<P::Type> {
+        let mut out: MaybeUninit<P::Type> = MaybeUninit::uninit();
+        unsafe {
+            if ffi::mpv_get_property(
+                self.mpv_handle,
+                P::NAME.as_bytes().as_ptr() as _,
+                P::Type::FORMAT,
+                out.as_mut_ptr() as _,
+            ) < 0
+            {
+                None
+            } else {
+                Some(out.assume_init())
             }
+        }
+    }
+
+    /// See [`properties`] for the properties you can use.
+    pub fn set_property<P: Property>(&self, mut value: P::Type) -> bool {
+        unsafe {
+            ffi::mpv_set_property(
+                self.mpv_handle,
+                P::NAME.as_bytes().as_ptr() as _,
+                P::Type::FORMAT,
+                (&mut value) as *mut _ as *mut c_void,
+            ) >= 0
         }
     }
 }

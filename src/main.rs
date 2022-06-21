@@ -3,8 +3,12 @@
 mod mpv;
 
 use egui_sfml::{egui, SfEgui};
+use std::fmt::Write;
 
-use mpv::{Command, Mpv};
+use mpv::{
+    properties::{Duration, TimePos},
+    Command, Mpv,
+};
 use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Text, Texture, View},
     window::{ContextSettings, Event, Key, Style},
@@ -54,6 +58,15 @@ fn main() {
         }
         sf_egui.do_frame(|ctx| {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+                if let Some(mut pos) = mpv.get_property::<TimePos>() {
+                    let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
+                    if ui
+                        .add(egui::Slider::new(&mut pos, 0.0..=duration))
+                        .changed()
+                    {
+                        mpv.set_property::<TimePos>(pos);
+                    }
+                }
                 ui.horizontal(|ui| {
                     let mut changed = false;
                     ui.label("Video width");
@@ -66,9 +79,9 @@ fn main() {
                 });
             });
         });
-        if let Some(pos) = mpv.get_property_string("time-pos") {
+        if let Some(pos) = mpv.get_property::<TimePos>() {
             pos_string.truncate(prefix.len());
-            pos_string.push_str(&pos);
+            write!(&mut pos_string, "{}", pos).unwrap();
         }
         rw.clear(Color::BLACK);
 
