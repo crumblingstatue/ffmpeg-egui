@@ -1,4 +1,5 @@
 #![feature(array_chunks)]
+#![feature(generic_const_exprs)]
 
 mod mpv;
 
@@ -6,8 +7,9 @@ use egui_sfml::{egui, SfEgui};
 use std::fmt::{self, Write};
 
 use mpv::{
+    commands::LoadFile,
     properties::{Duration, TimePos},
-    Command, Mpv,
+    Mpv,
 };
 use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Text, Texture, View},
@@ -17,7 +19,7 @@ use sfml::{
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
-    mpv.command_async(Command::LoadFile { path: &path });
+    mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),
         "ffmpeg-egui",

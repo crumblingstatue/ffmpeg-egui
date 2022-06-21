@@ -1,17 +1,21 @@
+mod command;
+pub mod commands;
 pub mod properties;
 mod property;
 
 use std::{
-    ffi::CString,
     mem::MaybeUninit,
-    os::raw::{c_char, c_int, c_void},
+    os::raw::{c_int, c_void},
 };
 
 use libmpv_sys as ffi;
 
 use crate::video_pix_size;
 
-use self::property::{Property, PropertyType, PropertyWrite};
+use self::{
+    command::Command,
+    property::{Property, PropertyType, PropertyWrite},
+};
 
 pub struct Mpv {
     mpv_handle: *mut ffi::mpv_handle,
@@ -59,10 +63,20 @@ impl Mpv {
             pix_buf: Vec::new(),
         })
     }
-    pub fn command_async(&mut self, command: Command) {
-        command.with_as_ptr(|slice| unsafe {
-            ffi::mpv_command_async(self.mpv_handle, 0, slice.as_mut_ptr());
-        });
+    pub fn command_async<C: Command>(&mut self, command: C)
+    where
+        [(); C::ARGS_COUNT + 2]:,
+    {
+        let mut args_buf = [std::ptr::null(); C::ARGS_COUNT + 2];
+        args_buf[0] = C::NAME.as_ptr() as *const i8;
+        let args = command.args();
+        for (i, arg) in args.iter().enumerate() {
+            args_buf[i + 1] = arg.as_ptr();
+        }
+        *args_buf.last_mut().unwrap() = std::ptr::null();
+        unsafe {
+            ffi::mpv_command_async(self.mpv_handle, 0, args_buf.as_mut_ptr());
+        }
     }
     pub fn get_frame_as_pixels(&mut self, video_w: u16, video_h: u16) -> &[u8] {
         let pix_size = video_pix_size(video_w, video_h);
@@ -140,27 +154,5 @@ impl Drop for Mpv {
             ffi::mpv_render_context_free(self.render_ctx);
             ffi::mpv_destroy(self.mpv_handle);
         }
-    }
-}
-
-pub enum Command<'a> {
-    LoadFile { path: &'a str },
-}
-
-impl<'a> Command<'a> {
-    fn with_as_ptr<F>(&self, f: F)
-    where
-        F: FnOnce(&mut [*const c_char]),
-    {
-        match *self {
-            Command::LoadFile { path } => {
-                let path = CString::new(path).unwrap();
-                f(&mut [
-                    b"loadfile\0".as_ptr() as *const c_char,
-                    path.as_ptr() as *const c_char,
-                    std::ptr::null(),
-                ][..])
-            }
-        };
     }
 }
