@@ -8,7 +8,7 @@ use std::fmt::{self, Write};
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile},
-    properties::{Duration, Flag, Pause, TimePos},
+    properties::{Duration, Flag, Pause, Speed, TimePos, Volume},
     Mpv,
 };
 use sfml::{
@@ -95,6 +95,18 @@ fn main() {
                     changed |= ui.add(egui::DragValue::new(&mut video_h)).changed();
                     if changed && !tex.create(video_w.into(), video_h.into()) {
                         panic!("Failed to create texture");
+                    }
+                    if let Some(mut speed) = mpv.get_property::<Speed>() {
+                        ui.label("Playback speed");
+                        if ui.add(egui::Slider::new(&mut speed, 0.1..=2.0)).changed() {
+                            mpv.set_property::<Speed>(speed);
+                        }
+                    }
+                    if let Some(mut vol) = mpv.get_property::<Volume>() {
+                        ui.label("Playback volume");
+                        if ui.add(egui::Slider::new(&mut vol, 0.0..=150.0)).changed() {
+                            mpv.set_property::<Volume>(vol);
+                        }
                     }
                 });
             });

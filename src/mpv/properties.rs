@@ -11,6 +11,24 @@ unsafe impl Property for TimePos {
 
 unsafe impl PropertyWrite for TimePos {}
 
+pub enum Speed {}
+
+unsafe impl Property for Speed {
+    type Type = f64;
+    const NAME: &'static str = "speed\0";
+}
+
+unsafe impl PropertyWrite for Speed {}
+
+pub enum Volume {}
+
+unsafe impl Property for Volume {
+    type Type = f64;
+    const NAME: &'static str = "volume\0";
+}
+
+unsafe impl PropertyWrite for Volume {}
+
 pub enum Duration {}
 
 unsafe impl Property for Duration {
