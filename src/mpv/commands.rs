@@ -14,3 +14,27 @@ unsafe impl<'a> Command for LoadFile<'a> {
         [CString::new(self.path).unwrap()]
     }
 }
+
+pub struct FrameStep;
+
+unsafe impl Command for FrameStep {
+    const NAME: &'static str = "frame-step\0";
+
+    const ARGS_COUNT: usize = 0;
+
+    fn args(&self) -> [CString; Self::ARGS_COUNT] {
+        []
+    }
+}
+
+pub struct FrameBackStep;
+
+unsafe impl Command for FrameBackStep {
+    const NAME: &'static str = "frame-back-step\0";
+
+    const ARGS_COUNT: usize = 0;
+
+    fn args(&self) -> [CString; Self::ARGS_COUNT] {
+        []
+    }
+}

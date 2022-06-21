@@ -7,7 +7,7 @@ use egui_sfml::{egui, SfEgui};
 use std::fmt::{self, Write};
 
 use mpv::{
-    commands::LoadFile,
+    commands::{FrameBackStep, FrameStep, LoadFile},
     properties::{Duration, Flag, Pause, TimePos},
     Mpv,
 };
@@ -57,6 +57,8 @@ fn main() {
                             mpv.set_property::<Pause>(Flag::NO);
                         }
                     }
+                    Key::Period => mpv.command_async(FrameStep),
+                    Key::Comma => mpv.command_async(FrameBackStep),
                     _ => {}
                 },
                 Event::Resized { width, height } => {
