@@ -8,7 +8,9 @@ use std::fmt::{self, Write};
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile},
-    properties::{AudioPitchCorrection, Duration, Flag, Pause, Speed, TimePos, Volume},
+    properties::{
+        AudioPitchCorrection, Duration, Flag, Height, Pause, Speed, TimePos, Volume, Width,
+    },
     Mpv,
 };
 use sfml::{
@@ -94,6 +96,13 @@ fn main() {
                     changed |= ui.add(egui::DragValue::new(&mut video_w)).changed();
                     ui.label("Video height");
                     changed |= ui.add(egui::DragValue::new(&mut video_h)).changed();
+                    if ui.button("1:1").clicked() {
+                        let w = mpv.get_property::<Width>().unwrap();
+                        let h = mpv.get_property::<Height>().unwrap();
+                        video_w = w as u16;
+                        video_h = h as u16;
+                        changed = true;
+                    }
                     if changed && !tex.create(video_w.into(), video_h.into()) {
                         panic!("Failed to create texture");
                     }

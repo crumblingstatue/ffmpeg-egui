@@ -52,3 +52,19 @@ unsafe impl super::property::Option for AudioPitchCorrection {
 
     const NAME: &'static str = "audio-pitch-correction\0";
 }
+
+pub enum Width {}
+
+unsafe impl Property for Width {
+    type Type = i64;
+
+    const NAME: &'static str = "width\0";
+}
+
+pub enum Height {}
+
+unsafe impl Property for Height {
+    type Type = i64;
+
+    const NAME: &'static str = "height\0";
+}

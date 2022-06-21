@@ -24,6 +24,10 @@ unsafe impl PropertyType for f64 {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_DOUBLE;
 }
 
+unsafe impl PropertyType for i64 {
+    const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_INT64;
+}
+
 #[repr(transparent)]
 #[derive(PartialEq, Eq)]
 pub struct Flag(c_int);
