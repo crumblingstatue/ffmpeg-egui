@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.58"
 egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git", version = "0.1.0" }
 libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", features = ["use-bindgen"] }
 sfml = { git = "https://github.com/jeremyletang/rust-sfml.git", version = "0.16.0" }
