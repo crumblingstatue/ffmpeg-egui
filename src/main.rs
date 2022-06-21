@@ -7,7 +7,7 @@ use egui_sfml::{egui, SfEgui};
 use std::fmt::{self, Write};
 
 use mpv::{
-    commands::{FrameBackStep, FrameStep, LoadFile},
+    commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
     properties::{
         AudioPitchCorrection, Duration, Flag, Height, Pause, Speed, TimePos, Volume, Width,
     },
@@ -62,6 +62,9 @@ fn main() {
                     }
                     Key::Period => mpv.command_async(FrameStep),
                     Key::Comma => mpv.command_async(FrameBackStep),
+                    Key::P => mpv.command_async(PlaylistPlay::Current),
+                    Key::S => mpv.command_async(PlaylistPlay::None),
+                    Key::R => mpv.command_async(PlaylistPlay::Index(0)),
                     _ => {}
                 },
                 Event::Resized { width, height } => {

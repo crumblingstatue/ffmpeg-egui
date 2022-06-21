@@ -38,3 +38,28 @@ unsafe impl Command for FrameBackStep {
         []
     }
 }
+
+pub enum PlaylistPlay {
+    Index(u32),
+    Current,
+    None,
+}
+
+unsafe impl Command for PlaylistPlay {
+    const NAME: &'static str = "playlist-play-index\0";
+
+    const ARGS_COUNT: usize = 1;
+
+    fn args(&self) -> [CString; Self::ARGS_COUNT] {
+        let buf: String;
+        let s = match self {
+            PlaylistPlay::Index(idx) => {
+                buf = idx.to_string();
+                &buf
+            }
+            PlaylistPlay::Current => "current",
+            PlaylistPlay::None => "none",
+        };
+        [CString::new(s).unwrap()]
+    }
+}
