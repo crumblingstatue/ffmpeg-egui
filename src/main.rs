@@ -9,7 +9,7 @@ use egui_sfml::{egui, SfEgui};
 use libmpv_sys as mpv;
 use mpv::{mpv_error_str, mpv_render_context_render, mpv_render_param};
 use sfml::{
-    graphics::{Color, Font, RenderTarget, RenderWindow, Sprite, Text, Texture},
+    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Text, Texture, View},
     window::{ContextSettings, Event, Key, Style},
 };
 
@@ -62,11 +62,13 @@ fn main() {
     }
 
     let mut tex = Texture::new().unwrap();
-    if !tex.create(800, 600) {
+    let mut video_w: u16 = 800;
+    let mut video_h: u16 = 600;
+    if !tex.create(video_w.into(), video_h.into()) {
         panic!("Failed to create texture");
     }
 
-    let mut pix_buf = [0u8; 800 * 600 * 4];
+    let mut pix_buf = vec![0u8; video_pix_size(video_w, video_h)];
 
     let font = unsafe { Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap() };
     let prefix = "SFML Overlay: ";
@@ -83,19 +85,35 @@ fn main() {
                     Key::Tab => overlay_show ^= true,
                     _ => {}
                 },
+                Event::Resized { width, height } => {
+                    let view = View::from_rect(&Rect::new(0., 0., width as f32, height as f32));
+                    rw.set_view(&view);
+                }
                 _ => {}
             }
         }
         sf_egui.do_frame(|ctx| {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-                ui.label("Hello from egui");
+                ui.horizontal(|ui| {
+                    let mut changed = false;
+                    ui.label("Video width");
+                    changed |= ui.add(egui::DragValue::new(&mut video_w)).changed();
+                    ui.label("Video height");
+                    changed |= ui.add(egui::DragValue::new(&mut video_h)).changed();
+                    if changed {
+                        if !tex.create(video_w.into(), video_h.into()) {
+                            panic!("Failed to create texture");
+                        }
+                        pix_buf.resize(video_pix_size(video_w, video_h), 0);
+                    }
+                });
             });
         });
         rw.clear(Color::BLACK);
         unsafe {
-            let mut size: [c_int; 2] = [800, 600];
+            let mut size: [c_int; 2] = [c_int::from(video_w), c_int::from(video_h)];
             let mut format = *b"rgb0\0";
-            let mut stride: usize = 800 * 4;
+            let mut stride: usize = video_w as usize * 4;
             let mut params = [
                 mpv_render_param {
                     type_: mpv::mpv_render_param_type_MPV_RENDER_PARAM_SW_SIZE,
@@ -122,15 +140,15 @@ fn main() {
             } else {
                 pos_string.truncate(prefix.len());
                 pos_string.push_str(CStr::from_ptr(c_str).to_str().unwrap());
+                mpv::mpv_free(c_str as _);
             }
-            mpv::mpv_free(c_str as _);
             for [.., a] in pix_buf.array_chunks_mut::<4>() {
                 *a = 255;
             }
             if result < 0 {
                 eprintln!("Render error: {}", mpv_error_str(result));
             }
-            tex.update_from_pixels(&pix_buf, 800, 600, 0, 0);
+            tex.update_from_pixels(&pix_buf, video_w.into(), video_h.into(), 0, 0);
         }
         rw.draw(&Sprite::with_texture(&tex));
         if overlay_show {
@@ -144,4 +162,8 @@ fn main() {
         mpv::mpv_render_context_free(render_ctx);
         mpv::mpv_destroy(mpv_handle);
     }
+}
+
+fn video_pix_size(w: u16, h: u16) -> usize {
+    (w as usize * h as usize) * 4
 }
