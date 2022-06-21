@@ -5,6 +5,7 @@ use std::{
     os::raw::c_int,
 };
 
+use egui_sfml::{egui, SfEgui};
 use libmpv_sys as mpv;
 use mpv::{mpv_error_str, mpv_render_context_render, mpv_render_param};
 use sfml::{
@@ -22,6 +23,7 @@ fn main() {
         &ContextSettings::default(),
     );
     rw.set_framerate_limit(60);
+    let mut sf_egui = SfEgui::new(&rw);
     let mpv_handle = unsafe { mpv::mpv_create() };
     if mpv_handle.is_null() {
         panic!("Failed to create mpv instance");
@@ -73,6 +75,7 @@ fn main() {
 
     while rw.is_open() {
         while let Some(event) = rw.poll_event() {
+            sf_egui.add_event(&event);
             match event {
                 Event::Closed => rw.close(),
                 Event::KeyPressed { code, .. } => match code {
@@ -83,6 +86,11 @@ fn main() {
                 _ => {}
             }
         }
+        sf_egui.do_frame(|ctx| {
+            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+                ui.label("Hello from egui");
+            });
+        });
         rw.clear(Color::BLACK);
         unsafe {
             let mut size: [c_int; 2] = [800, 600];
@@ -116,7 +124,6 @@ fn main() {
                 pos_string.push_str(CStr::from_ptr(c_str).to_str().unwrap());
             }
             mpv::mpv_free(c_str as _);
-            // works
             for [.., a] in pix_buf.array_chunks_mut::<4>() {
                 *a = 255;
             }
@@ -129,6 +136,7 @@ fn main() {
         if overlay_show {
             rw.draw(&Text::new(&pos_string, &font, 32));
         }
+        sf_egui.draw(&mut rw, None);
         rw.display();
     }
 
