@@ -44,3 +44,11 @@ unsafe impl Property for Pause {
 }
 
 unsafe impl PropertyWrite for Pause {}
+
+pub enum AudioPitchCorrection {}
+
+unsafe impl super::property::Option for AudioPitchCorrection {
+    type Type = Flag;
+
+    const NAME: &'static str = "audio-pitch-correction\0";
+}

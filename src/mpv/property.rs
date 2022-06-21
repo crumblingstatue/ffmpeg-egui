@@ -8,6 +8,13 @@ pub unsafe trait Property {
 }
 
 /// # Safety
+/// NAME must be null terminated
+pub unsafe trait Option {
+    type Type: PropertyType;
+    const NAME: &'static str;
+}
+
+/// # Safety
 /// FORMAT must be the correct format for this type
 pub unsafe trait PropertyType {
     const FORMAT: libmpv_sys::mpv_format;

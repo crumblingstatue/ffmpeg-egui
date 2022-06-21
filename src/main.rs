@@ -8,7 +8,7 @@ use std::fmt::{self, Write};
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile},
-    properties::{Duration, Flag, Pause, Speed, TimePos, Volume},
+    properties::{AudioPitchCorrection, Duration, Flag, Pause, Speed, TimePos, Volume},
     Mpv,
 };
 use sfml::{
@@ -19,6 +19,7 @@ use sfml::{
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
+    mpv.set_option::<AudioPitchCorrection>(Flag::NO);
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),

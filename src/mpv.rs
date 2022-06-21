@@ -146,6 +146,17 @@ impl Mpv {
             ) >= 0
         }
     }
+
+    pub fn set_option<O: property::Option>(&self, mut value: O::Type) {
+        unsafe {
+            ffi::mpv_set_option(
+                self.mpv_handle,
+                O::NAME.as_bytes().as_ptr() as _,
+                O::Type::FORMAT,
+                (&mut value) as *mut _ as *mut c_void,
+            );
+        }
+    }
 }
 
 impl Drop for Mpv {
