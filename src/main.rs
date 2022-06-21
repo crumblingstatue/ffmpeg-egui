@@ -60,8 +60,9 @@ fn main() {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 if let Some(mut pos) = mpv.get_property::<TimePos>() {
                     let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
+                    ui.style_mut().spacing.slider_width = ui.available_width();
                     if ui
-                        .add(egui::Slider::new(&mut pos, 0.0..=duration))
+                        .add(egui::Slider::new(&mut pos, 0.0..=duration).show_value(false))
                         .changed()
                     {
                         mpv.set_property::<TimePos>(pos);
