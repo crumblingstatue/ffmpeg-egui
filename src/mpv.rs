@@ -11,7 +11,7 @@ use libmpv_sys as ffi;
 
 use crate::video_pix_size;
 
-use self::property::{Property, PropertyType};
+use self::property::{Property, PropertyType, PropertyWrite};
 
 pub struct Mpv {
     mpv_handle: *mut ffi::mpv_handle,
@@ -122,7 +122,7 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn set_property<P: Property>(&self, mut value: P::Type) -> bool {
+    pub fn set_property<P: PropertyWrite>(&self, mut value: P::Type) -> bool {
         unsafe {
             ffi::mpv_set_property(
                 self.mpv_handle,

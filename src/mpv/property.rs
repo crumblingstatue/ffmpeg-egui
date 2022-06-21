@@ -14,3 +14,7 @@ pub unsafe trait PropertyType {
 unsafe impl PropertyType for f64 {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_DOUBLE;
 }
+
+/// # Safety
+/// This property must be writable
+pub unsafe trait PropertyWrite: Property {}
