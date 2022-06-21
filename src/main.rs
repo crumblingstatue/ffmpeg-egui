@@ -8,7 +8,7 @@ use std::fmt::{self, Write};
 
 use mpv::{
     commands::LoadFile,
-    properties::{Duration, TimePos},
+    properties::{Duration, Flag, Pause, TimePos},
     Mpv,
 };
 use sfml::{
@@ -49,6 +49,14 @@ fn main() {
                 Event::KeyPressed { code, .. } => match code {
                     Key::Escape => rw.close(),
                     Key::Tab => overlay_show ^= true,
+                    Key::Space => {
+                        let pause_flag = mpv.get_property::<Pause>().unwrap_or(Flag::NO);
+                        if pause_flag == Flag::NO {
+                            mpv.set_property::<Pause>(Flag::YES);
+                        } else {
+                            mpv.set_property::<Pause>(Flag::NO);
+                        }
+                    }
                     _ => {}
                 },
                 Event::Resized { width, height } => {
