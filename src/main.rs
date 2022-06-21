@@ -3,7 +3,7 @@
 mod mpv;
 
 use egui_sfml::{egui, SfEgui};
-use std::fmt::Write;
+use std::fmt::{self, Write};
 
 use mpv::{
     properties::{Duration, TimePos},
@@ -56,17 +56,24 @@ fn main() {
                 _ => {}
             }
         }
+        let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         sf_egui.do_frame(|ctx| {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 if let Some(mut pos) = mpv.get_property::<TimePos>() {
-                    let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
-                    ui.style_mut().spacing.slider_width = ui.available_width();
-                    if ui
-                        .add(egui::Slider::new(&mut pos, 0.0..=duration).show_value(false))
-                        .changed()
-                    {
-                        mpv.set_property::<TimePos>(pos);
-                    }
+                    ui.horizontal(|ui| {
+                        ui.label(format!(
+                            "{}/{}",
+                            FfmpegTimeFmt(pos),
+                            FfmpegTimeFmt(duration)
+                        ));
+                        ui.style_mut().spacing.slider_width = ui.available_width();
+                        if ui
+                            .add(egui::Slider::new(&mut pos, 0.0..=duration).show_value(false))
+                            .changed()
+                        {
+                            mpv.set_property::<TimePos>(pos);
+                        }
+                    });
                 }
                 ui.horizontal(|ui| {
                     let mut changed = false;
@@ -82,7 +89,13 @@ fn main() {
         });
         if let Some(pos) = mpv.get_property::<TimePos>() {
             pos_string.truncate(prefix.len());
-            write!(&mut pos_string, "{}", pos).unwrap();
+            write!(
+                &mut pos_string,
+                "{}/{}",
+                FfmpegTimeFmt(pos),
+                FfmpegTimeFmt(duration)
+            )
+            .unwrap();
         }
         rw.clear(Color::BLACK);
 
@@ -101,4 +114,25 @@ fn main() {
 
 fn video_pix_size(w: u16, h: u16) -> usize {
     (w as usize * h as usize) * 4
+}
+
+struct FfmpegTimeFmt(f64);
+
+impl fmt::Display for FfmpegTimeFmt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        const HOUR: f64 = 3600.0;
+        const MINUTE: f64 = 60.0;
+
+        let secs = self.0;
+        let hh = secs / HOUR;
+        let mm = secs / MINUTE;
+        write!(
+            f,
+            "{:02.0}:{:02.0}:{:02.0}.{:03}",
+            hh,
+            mm,
+            secs % MINUTE,
+            (secs.fract() * 1000.0) as u64
+        )
+    }
 }
