@@ -2,9 +2,11 @@
 #![feature(generic_const_exprs, generic_associated_types)]
 
 mod mpv;
+mod time_fmt;
 
 use egui_sfml::{egui, SfEgui};
-use std::fmt::{self, Write};
+use std::fmt::Write;
+use time_fmt::FfmpegTimeFmt;
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
@@ -258,31 +260,4 @@ fn translate_up(
 
 fn video_pix_size(w: u16, h: u16) -> usize {
     (w as usize * h as usize) * 4
-}
-
-struct FfmpegTimeFmt(f64);
-
-impl fmt::Display for FfmpegTimeFmt {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let secs = self.0;
-        let hh = secs / 3600.0;
-        let mm = hh.fract() * 60.0;
-        let ss = mm.fract() * 60.0;
-        write!(
-            f,
-            "{:02.0}:{:02.0}:{:02.0}.{:03}",
-            hh.floor(),
-            mm.floor(),
-            ss.floor(),
-            (ss.fract() * 1000.0).round() as u64
-        )
-    }
-}
-
-#[test]
-fn test_time_fmt() {
-    assert_eq!(&FfmpegTimeFmt(0.0).to_string()[..], "00:00:00.000");
-    assert_eq!(&FfmpegTimeFmt(24.56).to_string()[..], "00:00:24.560");
-    assert_eq!(&FfmpegTimeFmt(119.885).to_string()[..], "00:01:59.885");
-    assert_eq!(&FfmpegTimeFmt(52349.345).to_string()[..], "14:32:29.345");
 }
