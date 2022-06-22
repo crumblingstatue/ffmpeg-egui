@@ -44,9 +44,11 @@ fn main() {
     }
 
     let font = unsafe { Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap() };
-    let prefix = "SFML Overlay: ";
+    let prefix = "Mouse video pos: ";
     let mut pos_string = String::from(prefix);
     let mut overlay_show = true;
+    let actual_video_w = mpv.get_property::<Width>().unwrap();
+    let actual_video_h = mpv.get_property::<Height>().unwrap();
 
     while rw.is_open() {
         while let Some(event) = rw.poll_event() {
@@ -78,6 +80,7 @@ fn main() {
                 _ => {}
             }
         }
+        let mouse_pos = rw.mouse_position();
         let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         sf_egui.do_frame(|ctx| {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -104,10 +107,8 @@ fn main() {
                     ui.label("Video height");
                     changed |= ui.add(egui::DragValue::new(&mut video_h)).changed();
                     if ui.button("1:1").clicked() {
-                        let w = mpv.get_property::<Width>().unwrap();
-                        let h = mpv.get_property::<Height>().unwrap();
-                        video_w = w as u16;
-                        video_h = h as u16;
+                        video_w = actual_video_w as u16;
+                        video_h = actual_video_h as u16;
                         changed = true;
                     }
                     if changed && !tex.create(video_w.into(), video_h.into()) {
@@ -128,16 +129,10 @@ fn main() {
                 });
             });
         });
-        if let Some(pos) = mpv.get_property::<TimePos>() {
-            pos_string.truncate(prefix.len());
-            write!(
-                &mut pos_string,
-                "{}/{}",
-                FfmpegTimeFmt(pos),
-                FfmpegTimeFmt(duration)
-            )
-            .unwrap();
-        }
+        let (mvx, mvy) =
+            video_mouse_pos(mouse_pos, actual_video_w, actual_video_h, video_w, video_h);
+        pos_string.truncate(prefix.len());
+        write!(&mut pos_string, "{}, {}", mvx, mvy,).unwrap();
         rw.clear(Color::BLACK);
 
         unsafe {
@@ -151,6 +146,21 @@ fn main() {
         sf_egui.draw(&mut rw, None);
         rw.display();
     }
+}
+
+fn video_mouse_pos(
+    mouse_pos: sfml::system::Vector2<i32>,
+    actual_video_w: i64,
+    actual_video_h: i64,
+    video_w: u16,
+    video_h: u16,
+) -> (i16, i16) {
+    let w_ratio = actual_video_w as f64 / video_w as f64;
+    let h_ratio = actual_video_h as f64 / video_h as f64;
+    (
+        (mouse_pos.x as f64 * w_ratio) as i16,
+        (mouse_pos.y as f64 * h_ratio) as i16,
+    )
 }
 
 fn video_pix_size(w: u16, h: u16) -> usize {
