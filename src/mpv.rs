@@ -14,7 +14,7 @@ use crate::video_pix_size;
 
 use self::{
     command::Command,
-    property::{Property, PropertyType, PropertyWrite},
+    property::{Property, PropertyTypeRaw, PropertyWrite},
 };
 
 pub struct Mpv {

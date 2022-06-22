@@ -1,41 +1,32 @@
-use std::{ffi::CStr, os::raw::c_int};
+use std::os::raw::{c_char, c_double, c_int};
 
 /// # Safety
 /// NAME must be null terminated
 pub unsafe trait Property {
-    type Type<'a>: PropertyType;
+    type Type<'a>: PropertyTypeRaw;
     const NAME: &'static str;
 }
 
 /// # Safety
 /// FORMAT must be the correct format for this type
-pub unsafe trait PropertyType {
+pub unsafe trait PropertyTypeRaw {
     const FORMAT: libmpv_sys::mpv_format;
 }
 
-unsafe impl PropertyType for f64 {
+unsafe impl PropertyTypeRaw for c_double {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_DOUBLE;
 }
 
-unsafe impl PropertyType for i64 {
+unsafe impl PropertyTypeRaw for i64 {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_INT64;
 }
 
-unsafe impl<'a> PropertyType for &'a CStr {
+unsafe impl PropertyTypeRaw for *mut c_char {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_STRING;
 }
 
-#[repr(transparent)]
-#[derive(PartialEq, Eq)]
-pub struct Flag(c_int);
-
-unsafe impl PropertyType for Flag {
+unsafe impl PropertyTypeRaw for c_int {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_FLAG;
-}
-
-impl Flag {
-    pub const NO: Self = Self(0);
-    pub const YES: Self = Self(1);
 }
 
 /// # Safety

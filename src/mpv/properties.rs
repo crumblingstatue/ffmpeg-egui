@@ -1,6 +1,5 @@
-use std::ffi::CStr;
+use std::os::raw::{c_char, c_int};
 
-pub use super::property::Flag;
 use super::property::{Property, PropertyWrite};
 
 /// The time position mpv is currently at
@@ -41,7 +40,7 @@ unsafe impl Property for Duration {
 pub enum Pause {}
 
 unsafe impl Property for Pause {
-    type Type<'a> = Flag;
+    type Type<'a> = c_int;
     const NAME: &'static str = "pause\0";
 }
 
@@ -50,7 +49,7 @@ unsafe impl PropertyWrite for Pause {}
 pub enum AudioPitchCorrection {}
 
 unsafe impl Property for AudioPitchCorrection {
-    type Type<'a> = Flag;
+    type Type<'a> = c_int;
 
     const NAME: &'static str = "audio-pitch-correction\0";
 }
@@ -60,7 +59,7 @@ unsafe impl PropertyWrite for AudioPitchCorrection {}
 pub enum KeepOpen {}
 
 unsafe impl Property for KeepOpen {
-    type Type<'a> = &'a CStr;
+    type Type<'a> = *mut c_char;
 
     const NAME: &'static str = "keep-open\0";
 }
@@ -70,7 +69,7 @@ unsafe impl PropertyWrite for KeepOpen {}
 pub enum KeepOpenPause {}
 
 unsafe impl Property for KeepOpenPause {
-    type Type<'a> = &'a CStr;
+    type Type<'a> = *mut c_char;
 
     const NAME: &'static str = "keep-open-pause\0";
 }

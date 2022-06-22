@@ -12,8 +12,8 @@ use std::{
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
     properties::{
-        AudioPitchCorrection, Duration, Flag, Height, KeepOpen, KeepOpenPause, Pause, Speed,
-        TimePos, Volume, Width,
+        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, Speed, TimePos,
+        Volume, Width,
     },
     Mpv,
 };
@@ -25,9 +25,9 @@ use sfml::{
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
-    mpv.set_property::<AudioPitchCorrection>(Flag::NO);
-    mpv.set_property::<KeepOpen>(CStr::from_bytes_with_nul(b"yes\0").unwrap());
-    mpv.set_property::<KeepOpenPause>(CStr::from_bytes_with_nul(b"no\0").unwrap());
+    mpv.set_property::<AudioPitchCorrection>(0);
+    mpv.set_property::<KeepOpen>(CStr::from_bytes_with_nul(b"yes\0").unwrap().as_ptr() as _);
+    mpv.set_property::<KeepOpenPause>(CStr::from_bytes_with_nul(b"no\0").unwrap().as_ptr() as _);
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),
@@ -59,11 +59,11 @@ fn main() {
                     Key::Escape => rw.close(),
                     Key::Tab => overlay_show ^= true,
                     Key::Space => {
-                        let pause_flag = mpv.get_property::<Pause>().unwrap_or(Flag::NO);
-                        if pause_flag == Flag::NO {
-                            mpv.set_property::<Pause>(Flag::YES);
+                        let pause_flag = mpv.get_property::<Pause>().unwrap_or(0);
+                        if pause_flag == 0 {
+                            mpv.set_property::<Pause>(1);
                         } else {
-                            mpv.set_property::<Pause>(Flag::NO);
+                            mpv.set_property::<Pause>(0);
                         }
                     }
                     Key::Period => mpv.command_async(FrameStep),
