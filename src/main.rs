@@ -16,7 +16,10 @@ use mpv::{
     Mpv,
 };
 use sfml::{
-    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Text, Texture, View},
+    graphics::{
+        Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite, Text,
+        Texture, Transformable, View,
+    },
     window::{ContextSettings, Event, Key, Style},
 };
 
@@ -27,6 +30,7 @@ fn main() {
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.command_async(LoadFile { path: &path });
+    let mut rects: Vec<Rect<u16>> = Vec::new();
     let mut rw = RenderWindow::new(
         (960, 600),
         "ffmpeg-egui",
@@ -145,6 +149,25 @@ fn main() {
                 });
             });
             video_area_max_h = re.response.rect.top();
+            egui::SidePanel::right("right_panel").show(ctx, |ui| {
+                if ui.button("Add rect").clicked() {
+                    rects.push(Rect::default());
+                }
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.separator();
+                    for rect in &mut rects {
+                        ui.label("left");
+                        ui.add(egui::DragValue::new(&mut rect.left));
+                        ui.label("top");
+                        ui.add(egui::DragValue::new(&mut rect.top));
+                        ui.label("w");
+                        ui.add(egui::DragValue::new(&mut rect.width));
+                        ui.label("h");
+                        ui.add(egui::DragValue::new(&mut rect.height));
+                        ui.separator();
+                    }
+                });
+            });
         });
         let (mvx, mvy) =
             video_mouse_pos(mouse_pos, actual_video_w, actual_video_h, video_w, video_h);
@@ -159,6 +182,29 @@ fn main() {
         rw.draw(&Sprite::with_texture(&tex));
         if overlay_show {
             rw.draw(&Text::new(&pos_string, &font, 32));
+            let mut rs = RectangleShape::default();
+            rs.set_fill_color(Color::rgba(250, 250, 200, 128));
+            for rect in &rects {
+                let (w, h) = translate_up(
+                    rect.width as i32,
+                    rect.height as i32,
+                    actual_video_w,
+                    actual_video_h,
+                    video_w,
+                    video_h,
+                );
+                rs.set_size((w as f32, h as f32));
+                let (x, y) = translate_up(
+                    rect.left as i32,
+                    rect.top as i32,
+                    actual_video_w,
+                    actual_video_h,
+                    video_w,
+                    video_h,
+                );
+                rs.set_position((x as f32, y as f32));
+                rw.draw(&rs);
+            }
         }
         sf_egui.draw(&mut rw, None);
         rw.display();
@@ -172,12 +218,42 @@ fn video_mouse_pos(
     video_w: u16,
     video_h: u16,
 ) -> (i16, i16) {
+    translate_down(
+        mouse_pos.x,
+        mouse_pos.y,
+        actual_video_w,
+        actual_video_h,
+        video_w,
+        video_h,
+    )
+}
+
+/// window -> vid coords
+fn translate_down(
+    x: i32,
+    y: i32,
+    actual_video_w: i64,
+    actual_video_h: i64,
+    video_w: u16,
+    video_h: u16,
+) -> (i16, i16) {
     let w_ratio = actual_video_w as f64 / video_w as f64;
     let h_ratio = actual_video_h as f64 / video_h as f64;
-    (
-        (mouse_pos.x as f64 * w_ratio) as i16,
-        (mouse_pos.y as f64 * h_ratio) as i16,
-    )
+    ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
+}
+
+/// vid -> window coords
+fn translate_up(
+    x: i32,
+    y: i32,
+    actual_video_w: i64,
+    actual_video_h: i64,
+    video_w: u16,
+    video_h: u16,
+) -> (i16, i16) {
+    let w_ratio = video_w as f64 / actual_video_w as f64;
+    let h_ratio = video_h as f64 / actual_video_h as f64;
+    ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
 }
 
 fn video_pix_size(w: u16, h: u16) -> usize {
