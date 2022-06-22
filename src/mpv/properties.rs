@@ -1,4 +1,4 @@
-use super::property::{Property, PropertyWrite};
+use super::property::{Property, PropertyWrite, YesNo, YesNoAlways};
 
 /// The time position mpv is currently at
 pub enum TimePos {}
@@ -57,7 +57,7 @@ unsafe impl PropertyWrite for AudioPitchCorrection {}
 pub enum KeepOpen {}
 
 unsafe impl Property for KeepOpen {
-    type Type<'a> = &'a str;
+    type Type<'a> = YesNoAlways;
 
     const NAME: &'static str = "keep-open\0";
 }
@@ -67,7 +67,7 @@ unsafe impl PropertyWrite for KeepOpen {}
 pub enum KeepOpenPause {}
 
 unsafe impl Property for KeepOpenPause {
-    type Type<'a> = &'a str;
+    type Type<'a> = YesNo;
 
     const NAME: &'static str = "keep-open-pause\0";
 }

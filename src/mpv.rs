@@ -1,7 +1,7 @@
 mod command;
 pub mod commands;
 pub mod properties;
-mod property;
+pub mod property;
 
 use std::{
     mem::MaybeUninit,

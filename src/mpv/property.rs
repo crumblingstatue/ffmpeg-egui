@@ -1,5 +1,5 @@
 use std::{
-    ffi::CString,
+    ffi::{CStr, CString},
     os::raw::{c_char, c_double, c_int},
 };
 
@@ -104,6 +104,65 @@ impl PropertyType for bool {
             1 => true,
             0 => false,
             _ => panic!("Invalid value converting mpv property to bool: {}", src),
+        }
+    }
+}
+
+pub enum YesNo {
+    Yes,
+    No,
+}
+
+impl PropertyType for YesNo {
+    type CType = *mut c_char;
+
+    fn from_c(src: Self::CType) -> Self {
+        let c_str = unsafe { CStr::from_ptr(src) };
+        match c_str.to_str().unwrap() {
+            "yes" => YesNo::Yes,
+            "no" => YesNo::No,
+            etc => panic!("Invalid yes/no option: {}", etc),
+        }
+    }
+
+    fn with_c<F>(self, f: F)
+    where
+        F: FnOnce(Self::CType),
+    {
+        match self {
+            YesNo::Yes => f(b"yes\0".as_ptr() as *mut c_char),
+            YesNo::No => f(b"no\0".as_ptr() as *mut c_char),
+        }
+    }
+}
+
+pub enum YesNoAlways {
+    Yes,
+    No,
+    Always,
+}
+
+impl PropertyType for YesNoAlways {
+    type CType = *mut c_char;
+
+    fn from_c(src: Self::CType) -> Self {
+        let c_str = unsafe { CStr::from_ptr(src) };
+        match c_str.to_str().unwrap() {
+            "yes" => YesNoAlways::Yes,
+            "no" => YesNoAlways::No,
+            "always" => YesNoAlways::Always,
+            etc => panic!("Invalid yes/no option: {}", etc),
+        }
+    }
+
+    fn with_c<F>(self, f: F)
+    where
+        F: FnOnce(Self::CType),
+    {
+        match self {
+            YesNoAlways::Yes => f(b"yes\0".as_ptr() as *mut c_char),
+            YesNoAlways::No => f(b"no\0".as_ptr() as *mut c_char),
+            YesNoAlways::Always => f(b"always\0".as_ptr() as *mut c_char),
         }
     }
 }

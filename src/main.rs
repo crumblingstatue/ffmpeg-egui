@@ -12,6 +12,7 @@ use mpv::{
         AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, Speed, TimePos,
         Volume, Width,
     },
+    property::{YesNo, YesNoAlways},
     Mpv,
 };
 use sfml::{
@@ -23,8 +24,8 @@ fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
     mpv.set_property::<AudioPitchCorrection>(false);
-    mpv.set_property::<KeepOpen>("yes");
-    mpv.set_property::<KeepOpenPause>("no");
+    mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
+    mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),
