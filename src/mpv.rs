@@ -118,8 +118,8 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn get_property<P: Property>(&self) -> Option<P::Type> {
-        let mut out: MaybeUninit<P::Type> = MaybeUninit::uninit();
+    pub fn get_property<P: Property>(&self) -> Option<P::Type<'_>> {
+        let mut out: MaybeUninit<P::Type<'_>> = MaybeUninit::uninit();
         unsafe {
             if ffi::mpv_get_property(
                 self.mpv_handle,
@@ -136,7 +136,7 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn set_property<P: PropertyWrite>(&self, mut value: P::Type) -> bool {
+    pub fn set_property<P: PropertyWrite>(&self, mut value: P::Type<'_>) -> bool {
         unsafe {
             ffi::mpv_set_property(
                 self.mpv_handle,
@@ -144,17 +144,6 @@ impl Mpv {
                 P::Type::FORMAT,
                 (&mut value) as *mut _ as *mut c_void,
             ) >= 0
-        }
-    }
-
-    pub fn set_option<O: property::Option>(&self, mut value: O::Type<'_>) {
-        unsafe {
-            ffi::mpv_set_option(
-                self.mpv_handle,
-                O::NAME.as_bytes().as_ptr() as _,
-                O::Type::FORMAT,
-                (&mut value) as *mut _ as *mut c_void,
-            );
         }
     }
 }

@@ -3,13 +3,6 @@ use std::{ffi::CStr, os::raw::c_int};
 /// # Safety
 /// NAME must be null terminated
 pub unsafe trait Property {
-    type Type: PropertyType;
-    const NAME: &'static str;
-}
-
-/// # Safety
-/// NAME must be null terminated
-pub unsafe trait Option {
     type Type<'a>: PropertyType;
     const NAME: &'static str;
 }

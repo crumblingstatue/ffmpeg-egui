@@ -25,9 +25,9 @@ use sfml::{
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
-    mpv.set_option::<AudioPitchCorrection>(Flag::NO);
-    mpv.set_option::<KeepOpen>(CStr::from_bytes_with_nul(b"yes\0").unwrap());
-    mpv.set_option::<KeepOpenPause>(CStr::from_bytes_with_nul(b"no\0").unwrap());
+    mpv.set_property::<AudioPitchCorrection>(Flag::NO);
+    mpv.set_property::<KeepOpen>(CStr::from_bytes_with_nul(b"yes\0").unwrap());
+    mpv.set_property::<KeepOpenPause>(CStr::from_bytes_with_nul(b"no\0").unwrap());
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),
