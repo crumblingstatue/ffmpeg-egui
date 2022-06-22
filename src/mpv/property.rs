@@ -3,7 +3,7 @@ use std::os::raw::{c_char, c_double, c_int};
 /// # Safety
 /// NAME must be null terminated
 pub unsafe trait Property {
-    type Type<'a>: PropertyTypeRaw;
+    type Type: PropertyTypeRaw;
     const NAME: &'static str;
 }
 

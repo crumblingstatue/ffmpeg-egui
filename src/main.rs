@@ -1,5 +1,5 @@
 #![feature(array_chunks)]
-#![feature(generic_const_exprs, generic_associated_types)]
+#![feature(generic_const_exprs)]
 
 mod mpv;
 
