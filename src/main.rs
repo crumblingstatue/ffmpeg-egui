@@ -28,7 +28,7 @@ fn main() {
     mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
-        (800, 600),
+        (960, 600),
         "ffmpeg-egui",
         Style::RESIZE,
         &ContextSettings::default(),
@@ -49,6 +49,8 @@ fn main() {
     let mut overlay_show = true;
     let actual_video_w = mpv.get_property::<Width>().unwrap();
     let actual_video_h = mpv.get_property::<Height>().unwrap();
+    let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
+    let mut video_area_max_h = 100.0;
 
     while rw.is_open() {
         while let Some(event) = rw.poll_event() {
@@ -83,7 +85,7 @@ fn main() {
         let mouse_pos = rw.mouse_position();
         let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         sf_egui.do_frame(|ctx| {
-            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 if let Some(mut pos) = mpv.get_property::<TimePos>() {
                     ui.horizontal(|ui| {
                         ui.label(format!(
@@ -103,14 +105,28 @@ fn main() {
                 ui.horizontal(|ui| {
                     let mut changed = false;
                     ui.label("Video width");
-                    changed |= ui.add(egui::DragValue::new(&mut video_w)).changed();
+                    if ui.add(egui::DragValue::new(&mut video_w)).changed() {
+                        video_h = (video_w as f64 / w_h_ratio) as u16;
+                        changed = true;
+                    }
                     ui.label("Video height");
-                    changed |= ui.add(egui::DragValue::new(&mut video_h)).changed();
-                    if ui.button("1:1").clicked() {
+                    if ui.add(egui::DragValue::new(&mut video_h)).changed() {
+                        video_w = (video_h as f64 * w_h_ratio) as u16;
+                        changed = true;
+                    }
+                    if ui.button("orig").clicked() {
                         video_w = actual_video_w as u16;
                         video_h = actual_video_h as u16;
                         changed = true;
                     }
+                    if ui.button("fit").clicked() {
+                        video_h = video_area_max_h as u16;
+                        video_w = (video_h as f64 * w_h_ratio) as u16;
+                        changed = true;
+                    }
+                    // Clamp range to make it somewhat sane
+                    video_w = video_w.clamp(1, 4096);
+                    video_h = video_h.clamp(1, 4096);
                     if changed && !tex.create(video_w.into(), video_h.into()) {
                         panic!("Failed to create texture");
                     }
@@ -128,6 +144,7 @@ fn main() {
                     }
                 });
             });
+            video_area_max_h = re.response.rect.top();
         });
         let (mvx, mvy) =
             video_mouse_pos(mouse_pos, actual_video_w, actual_video_h, video_w, video_h);
