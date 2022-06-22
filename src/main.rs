@@ -1,15 +1,19 @@
 #![feature(array_chunks)]
-#![feature(generic_const_exprs)]
+#![feature(generic_const_exprs, generic_associated_types)]
 
 mod mpv;
 
 use egui_sfml::{egui, SfEgui};
-use std::fmt::{self, Write};
+use std::{
+    ffi::CStr,
+    fmt::{self, Write},
+};
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
     properties::{
-        AudioPitchCorrection, Duration, Flag, Height, Pause, Speed, TimePos, Volume, Width,
+        AudioPitchCorrection, Duration, Flag, Height, KeepOpen, KeepOpenPause, Pause, Speed,
+        TimePos, Volume, Width,
     },
     Mpv,
 };
@@ -22,6 +26,8 @@ fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
     mpv.set_option::<AudioPitchCorrection>(Flag::NO);
+    mpv.set_option::<KeepOpen>(CStr::from_bytes_with_nul(b"yes\0").unwrap());
+    mpv.set_option::<KeepOpenPause>(CStr::from_bytes_with_nul(b"no\0").unwrap());
     mpv.command_async(LoadFile { path: &path });
     let mut rw = RenderWindow::new(
         (800, 600),

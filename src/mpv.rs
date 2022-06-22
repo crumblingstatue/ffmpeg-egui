@@ -147,7 +147,7 @@ impl Mpv {
         }
     }
 
-    pub fn set_option<O: property::Option>(&self, mut value: O::Type) {
+    pub fn set_option<O: property::Option>(&self, mut value: O::Type<'_>) {
         unsafe {
             ffi::mpv_set_option(
                 self.mpv_handle,

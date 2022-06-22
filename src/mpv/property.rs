@@ -1,4 +1,4 @@
-use std::os::raw::c_int;
+use std::{ffi::CStr, os::raw::c_int};
 
 /// # Safety
 /// NAME must be null terminated
@@ -10,7 +10,7 @@ pub unsafe trait Property {
 /// # Safety
 /// NAME must be null terminated
 pub unsafe trait Option {
-    type Type: PropertyType;
+    type Type<'a>: PropertyType;
     const NAME: &'static str;
 }
 
@@ -26,6 +26,10 @@ unsafe impl PropertyType for f64 {
 
 unsafe impl PropertyType for i64 {
     const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_INT64;
+}
+
+unsafe impl<'a> PropertyType for &'a CStr {
+    const FORMAT: libmpv_sys::mpv_format = libmpv_sys::mpv_format_MPV_FORMAT_STRING;
 }
 
 #[repr(transparent)]

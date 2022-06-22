@@ -1,3 +1,5 @@
+use std::ffi::CStr;
+
 pub use super::property::Flag;
 use super::property::{Property, PropertyWrite};
 
@@ -48,9 +50,25 @@ unsafe impl PropertyWrite for Pause {}
 pub enum AudioPitchCorrection {}
 
 unsafe impl super::property::Option for AudioPitchCorrection {
-    type Type = Flag;
+    type Type<'a> = Flag;
 
     const NAME: &'static str = "audio-pitch-correction\0";
+}
+
+pub enum KeepOpen {}
+
+unsafe impl super::property::Option for KeepOpen {
+    type Type<'a> = &'a CStr;
+
+    const NAME: &'static str = "keep-open\0";
+}
+
+pub enum KeepOpenPause {}
+
+unsafe impl super::property::Option for KeepOpenPause {
+    type Type<'a> = &'a CStr;
+
+    const NAME: &'static str = "keep-open-pause\0";
 }
 
 pub enum Width {}
