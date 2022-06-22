@@ -7,20 +7,18 @@ use crate::{
         Mpv,
     },
     time_fmt::FfmpegTimeFmt,
+    VideoSrcInfo,
 };
 
-pub fn ui(
+pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
-    duration: f64,
     video_w: &mut u16,
     video_h: &mut u16,
-    w_h_ratio: f64,
-    actual_video_w: i64,
-    actual_video_h: i64,
     video_area_max_h: &mut f32,
     tex: &mut Texture,
     rects: &mut Vec<Rect<u16>>,
+    src_info: &VideoSrcInfo,
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -29,11 +27,11 @@ pub fn ui(
                     ui.label(format!(
                         "{}/{}",
                         FfmpegTimeFmt(pos),
-                        FfmpegTimeFmt(duration)
+                        FfmpegTimeFmt(src_info.duration)
                     ));
                     ui.style_mut().spacing.slider_width = ui.available_width();
                     if ui
-                        .add(egui::Slider::new(&mut pos, 0.0..=duration).show_value(false))
+                        .add(egui::Slider::new(&mut pos, 0.0..=src_info.duration).show_value(false))
                         .changed()
                     {
                         mpv.set_property::<TimePos>(pos);
@@ -44,22 +42,22 @@ pub fn ui(
                 let mut changed = false;
                 ui.label("Video width");
                 if ui.add(egui::DragValue::new(&mut *video_w)).changed() {
-                    *video_h = (*video_w as f64 / w_h_ratio) as u16;
+                    *video_h = (*video_w as f64 / src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 ui.label("Video height");
                 if ui.add(egui::DragValue::new(video_h)).changed() {
-                    *video_w = (*video_h as f64 * w_h_ratio) as u16;
+                    *video_w = (*video_h as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 if ui.button("orig").clicked() {
-                    *video_w = actual_video_w as u16;
-                    *video_h = actual_video_h as u16;
+                    *video_w = src_info.width as u16;
+                    *video_h = src_info.height as u16;
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
                     *video_h = *video_area_max_h as u16;
-                    *video_w = (*video_h as f64 * w_h_ratio) as u16;
+                    *video_w = (*video_h as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane

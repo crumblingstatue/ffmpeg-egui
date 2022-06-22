@@ -5,15 +5,12 @@ mod mpv;
 mod time_fmt;
 mod ui;
 
-use egui_sfml::{SfEgui};
+use egui_sfml::SfEgui;
 use std::fmt::Write;
-
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
-    properties::{
-        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, Width,
-    },
+    properties::{AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, Width},
     property::{YesNo, YesNoAlways},
     Mpv,
 };
@@ -24,6 +21,13 @@ use sfml::{
     },
     window::{ContextSettings, Event, Key, Style},
 };
+
+struct VideoSrcInfo {
+    width: u16,
+    height: u16,
+    w_h_ratio: f64,
+    duration: f64,
+}
 
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
@@ -56,6 +60,12 @@ fn main() {
     let actual_video_w = mpv.get_property::<Width>().unwrap();
     let actual_video_h = mpv.get_property::<Height>().unwrap();
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
+    let mut src_info = VideoSrcInfo {
+        width: actual_video_w as u16,
+        height: actual_video_h as u16,
+        w_h_ratio,
+        duration: 0.0,
+    };
     let mut video_area_max_h = 100.0;
 
     while rw.is_open() {
@@ -89,20 +99,17 @@ fn main() {
             }
         }
         let mouse_pos = rw.mouse_position();
-        let duration = mpv.get_property::<Duration>().unwrap_or(0.0);
+        src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         sf_egui.do_frame(|ctx| {
             ui::ui(
                 ctx,
                 &mut mpv,
-                duration,
                 &mut video_w,
                 &mut video_h,
-                w_h_ratio,
-                actual_video_w,
-                actual_video_h,
                 &mut video_area_max_h,
                 &mut tex,
                 &mut rects,
+                &src_info,
             )
         });
         let (mvx, mvy) =
