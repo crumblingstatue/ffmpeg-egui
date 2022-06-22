@@ -14,7 +14,7 @@ use crate::video_pix_size;
 
 use self::{
     command::Command,
-    property::{Property, PropertyTypeRaw, PropertyWrite},
+    property::{Property, PropertyType, PropertyTypeRaw, PropertyWrite},
 };
 
 pub struct Mpv {
@@ -118,33 +118,36 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn get_property<P: Property>(&self) -> Option<P::Type> {
-        let mut out: MaybeUninit<P::Type> = MaybeUninit::uninit();
+    pub fn get_property<P: Property>(&self) -> Option<P::Type<'_>> {
+        let mut out: MaybeUninit<<P::Type<'_> as PropertyType>::CType> = MaybeUninit::uninit();
         unsafe {
             if ffi::mpv_get_property(
                 self.mpv_handle,
                 P::NAME.as_bytes().as_ptr() as _,
-                P::Type::FORMAT,
+                <P::Type<'_> as PropertyType>::CType::FORMAT,
                 out.as_mut_ptr() as _,
             ) < 0
             {
                 None
             } else {
-                Some(out.assume_init())
+                let c_val = out.assume_init();
+                Some(P::Type::from_c(c_val))
             }
         }
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn set_property<P: PropertyWrite>(&self, mut value: P::Type) -> bool {
-        unsafe {
-            ffi::mpv_set_property(
+    pub fn set_property<P: PropertyWrite>(&self, value: P::Type<'_>) -> bool {
+        let mut ret = false;
+        value.with_c(|mut cvalue| unsafe {
+            ret = ffi::mpv_set_property(
                 self.mpv_handle,
                 P::NAME.as_bytes().as_ptr() as _,
-                P::Type::FORMAT,
-                (&mut value) as *mut _ as *mut c_void,
+                <P::Type<'_> as PropertyType>::CType::FORMAT,
+                (&mut cvalue) as *mut _ as *mut c_void,
             ) >= 0
-        }
+        });
+        ret
     }
 }
 
