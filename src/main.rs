@@ -116,7 +116,7 @@ fn main() {
                     x,
                     y,
                 } => {
-                    let pos = VideoPos::from_mouse(x, y, src_info.dim, present.dim);
+                    let pos = VideoPos::from_present(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {
@@ -132,7 +132,7 @@ fn main() {
                     x,
                     y,
                 } => {
-                    let pos = VideoPos::from_mouse(x, y, src_info.dim, present.dim);
+                    let pos = VideoPos::from_present(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {}
@@ -149,7 +149,7 @@ fn main() {
         }
         let raw_mouse_pos = rw.mouse_position();
         let src_mouse_pos =
-            VideoPos::from_mouse(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
+            VideoPos::from_present(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
         src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         if let Some(drag) = &interact_state.rect_drag {
             match drag.status {

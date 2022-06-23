@@ -57,7 +57,7 @@ impl<Kind> VideoVector<Kind> {
 }
 
 impl VideoVector<Pos> {
-    pub(crate) fn from_mouse(
+    pub(crate) fn from_present(
         x: i32,
         y: i32,
         src: VideoVector<Dim>,
