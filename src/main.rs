@@ -1,11 +1,13 @@
 #![feature(array_chunks)]
 #![feature(generic_const_exprs, generic_associated_types)]
 
+mod coords;
 mod mpv;
 mod overlay;
 mod time_fmt;
 mod ui;
 
+use coords::{video_mouse_pos, VideoDim};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use std::fmt::Write;
@@ -20,13 +22,6 @@ use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Texture, View},
     window::{ContextSettings, Event, Key, Style},
 };
-
-/// Video dimension (width, height)
-#[derive(Clone, Copy)]
-struct VideoDim {
-    width: u16,
-    height: u16,
-}
 
 struct VideoSrcInfo {
     dim: VideoDim,
@@ -148,28 +143,6 @@ fn main() {
         sf_egui.draw(&mut rw, None);
         rw.display();
     }
-}
-
-fn video_mouse_pos(
-    mouse_pos: sfml::system::Vector2<i32>,
-    src_dim: VideoDim,
-    present_dim: VideoDim,
-) -> (i16, i16) {
-    translate_down(mouse_pos.x, mouse_pos.y, src_dim, present_dim)
-}
-
-/// window -> vid coords
-fn translate_down(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (i16, i16) {
-    let w_ratio = src_dim.width as f64 / present_dim.width as f64;
-    let h_ratio = src_dim.height as f64 / present_dim.height as f64;
-    ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
-}
-
-/// vid -> window coords
-fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (i16, i16) {
-    let w_ratio = present_dim.width as f64 / src_dim.width as f64;
-    let h_ratio = present_dim.height as f64 / src_dim.height as f64;
-    ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
 }
 
 fn video_pix_size(w: u16, h: u16) -> usize {

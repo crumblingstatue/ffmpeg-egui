@@ -2,7 +2,7 @@ use sfml::graphics::{
     Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
 };
 
-use crate::{translate_up, VideoDim, VideoSrcInfo};
+use crate::{coords::translate_up, VideoDim, VideoSrcInfo};
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
