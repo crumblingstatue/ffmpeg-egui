@@ -6,8 +6,9 @@ use crate::{
         properties::{Speed, TimePos, Volume},
         Mpv,
     },
+    present::Present,
+    source,
     time_fmt::FfmpegTimeFmt,
-    Present, VideoSrcInfo,
 };
 
 pub(crate) fn ui(
@@ -16,7 +17,7 @@ pub(crate) fn ui(
     video_area_max_h: &mut f32,
     present: &mut Present,
     rects: &mut Vec<Rect<u16>>,
-    src_info: &VideoSrcInfo,
+    src_info: &source::Info,
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {

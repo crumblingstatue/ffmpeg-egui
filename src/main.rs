@@ -4,12 +4,15 @@
 mod coords;
 mod mpv;
 mod overlay;
+mod present;
+mod source;
 mod time_fmt;
 mod ui;
 
 use coords::{video_mouse_pos, VideoDim};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
+use present::Present;
 use std::fmt::Write;
 
 use mpv::{
@@ -19,31 +22,9 @@ use mpv::{
     Mpv,
 };
 use sfml::{
-    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Texture, View},
+    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, View},
     window::{ContextSettings, Event, Key, Style},
-    SfBox,
 };
-
-struct VideoSrcInfo {
-    dim: VideoDim,
-    w_h_ratio: f64,
-    duration: f64,
-}
-
-struct Present {
-    dim: VideoDim,
-    texture: SfBox<Texture>,
-}
-
-impl Present {
-    pub fn new(dim: VideoDim) -> Self {
-        let mut texture = Texture::new().unwrap();
-        if !texture.create(dim.width.into(), dim.height.into()) {
-            panic!("Failed to create texture");
-        }
-        Present { dim, texture }
-    }
-}
 
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
@@ -69,7 +50,7 @@ fn main() {
     let actual_video_w = mpv.get_property::<Width>().unwrap();
     let actual_video_h = mpv.get_property::<Height>().unwrap();
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
-    let mut src_info = VideoSrcInfo {
+    let mut src_info = source::Info {
         dim: VideoDim {
             width: actual_video_w as u16,
             height: actual_video_h as u16,
