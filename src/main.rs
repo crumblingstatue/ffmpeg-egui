@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{video_mouse_pos, VideoDim, VideoRect};
+use coords::{translate_down, video_mouse_pos, VideoDim, VideoRect};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
@@ -23,8 +23,32 @@ use mpv::{
 };
 use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, View},
-    window::{ContextSettings, Event, Key, Style},
+    window::{mouse, ContextSettings, Event, Key, Style},
 };
+
+struct RectDrag {
+    idx: usize,
+    status: RectDragStatus,
+}
+
+impl RectDrag {
+    fn new(idx: usize) -> Self {
+        Self {
+            idx,
+            status: RectDragStatus::Init,
+        }
+    }
+}
+
+enum RectDragStatus {
+    Init,
+    ClickedTopLeft,
+}
+
+#[derive(Default)]
+struct InteractState {
+    rect_drag: Option<RectDrag>,
+}
 
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
@@ -41,6 +65,7 @@ fn main() {
         &ContextSettings::default(),
     );
     rw.set_framerate_limit(60);
+    let mut interact_state = InteractState::default();
     let mut sf_egui = SfEgui::new(&rw);
 
     let font = unsafe { Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap() };
@@ -89,11 +114,55 @@ fn main() {
                     let view = View::from_rect(&Rect::new(0., 0., width as f32, height as f32));
                     rw.set_view(&view);
                 }
+                Event::MouseButtonPressed {
+                    button: mouse::Button::Left,
+                    x,
+                    y,
+                } => {
+                    let (x, y) = translate_down(x, y, src_info.dim, present.dim);
+                    if let Some(drag) = &mut interact_state.rect_drag {
+                        match drag.status {
+                            RectDragStatus::Init => {
+                                rects[drag.idx].left = x as u16;
+                                rects[drag.idx].top = y as u16;
+                                drag.status = RectDragStatus::ClickedTopLeft;
+                            }
+                            RectDragStatus::ClickedTopLeft => {}
+                        }
+                    }
+                }
+                Event::MouseButtonReleased {
+                    button: mouse::Button::Left,
+                    x,
+                    y,
+                } => {
+                    let (x, y) = translate_down(x, y, src_info.dim, present.dim);
+                    if let Some(drag) = &interact_state.rect_drag {
+                        match drag.status {
+                            RectDragStatus::Init => {}
+                            RectDragStatus::ClickedTopLeft => {
+                                rects[drag.idx].width = x as u16 - rects[drag.idx].left;
+                                rects[drag.idx].height = y as u16 - rects[drag.idx].top;
+                                interact_state.rect_drag = None;
+                            }
+                        }
+                    }
+                }
                 _ => {}
             }
         }
-        let mouse_pos = rw.mouse_position();
+        let raw_mouse_pos = rw.mouse_position();
+        let (mvx, mvy) = video_mouse_pos(raw_mouse_pos, src_info.dim, present.dim);
         src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
+        if let Some(drag) = &interact_state.rect_drag {
+            match drag.status {
+                RectDragStatus::Init => {}
+                RectDragStatus::ClickedTopLeft => {
+                    rects[drag.idx].width = mvx as u16 - rects[drag.idx].left;
+                    rects[drag.idx].height = mvy as u16 - rects[drag.idx].top;
+                }
+            }
+        }
         sf_egui.do_frame(|ctx| {
             ui::ui(
                 ctx,
@@ -102,9 +171,9 @@ fn main() {
                 &mut present,
                 &mut rects,
                 &src_info,
+                &mut interact_state,
             )
         });
-        let (mvx, mvy) = video_mouse_pos(mouse_pos, src_info.dim, present.dim);
         pos_string.truncate(prefix.len());
         write!(&mut pos_string, "{}, {}", mvx, mvy,).unwrap();
         rw.clear(Color::BLACK);

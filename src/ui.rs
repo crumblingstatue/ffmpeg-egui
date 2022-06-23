@@ -10,6 +10,7 @@ use crate::{
     present::Present,
     source,
     time_fmt::FfmpegTimeFmt,
+    InteractState, RectDrag,
 };
 
 pub(crate) fn ui(
@@ -19,6 +20,7 @@ pub(crate) fn ui(
     present: &mut Present,
     rects: &mut Vec<VideoRect>,
     src_info: &source::Info,
+    interact_state: &mut InteractState,
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -97,15 +99,28 @@ pub(crate) fn ui(
             }
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.separator();
-                for rect in rects {
-                    ui.label("left");
-                    ui.add(egui::DragValue::new(&mut rect.left));
-                    ui.label("top");
-                    ui.add(egui::DragValue::new(&mut rect.top));
-                    ui.label("w");
-                    ui.add(egui::DragValue::new(&mut rect.width));
-                    ui.label("h");
-                    ui.add(egui::DragValue::new(&mut rect.height));
+                for (i, rect) in rects.iter_mut().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label("x");
+                        ui.add(egui::DragValue::new(&mut rect.left));
+                        ui.label("y");
+                        ui.add(egui::DragValue::new(&mut rect.top));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("w");
+                        ui.add(egui::DragValue::new(&mut rect.width));
+                        ui.label("h");
+                        ui.add(egui::DragValue::new(&mut rect.height));
+                    });
+                    if ui
+                        .add_enabled(
+                            interact_state.rect_drag.is_none(),
+                            egui::Button::new("select with mouse"),
+                        )
+                        .clicked()
+                    {
+                        interact_state.rect_drag = Some(RectDrag::new(i));
+                    }
                     ui.separator();
                 }
             });
