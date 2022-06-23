@@ -1,7 +1,7 @@
 use egui_sfml::egui;
 
 use crate::{
-    coords::{VideoMag, VideoRect},
+    coords::{Src, VideoMag, VideoRect},
     mpv::{
         properties::{Speed, TimePos, Volume},
         Mpv,
@@ -17,7 +17,7 @@ pub(crate) fn ui(
     mpv: &mut Mpv,
     video_area_max_h: &mut f32,
     present: &mut Present,
-    rects: &mut Vec<VideoRect>,
+    rects: &mut Vec<VideoRect<Src>>,
     src_info: &source::Info,
     interact_state: &mut InteractState,
 ) {

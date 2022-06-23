@@ -10,7 +10,7 @@ use std::{
 
 use libmpv_sys as ffi;
 
-use crate::coords::VideoDim;
+use crate::coords::{Present, VideoDim};
 
 use self::{
     command::Command,
@@ -78,7 +78,7 @@ impl Mpv {
             ffi::mpv_command_async(self.mpv_handle, 0, args_buf.as_mut_ptr());
         }
     }
-    pub fn get_frame_as_pixels(&mut self, present_dim: VideoDim) -> &[u8] {
+    pub fn get_frame_as_pixels(&mut self, present_dim: VideoDim<Present>) -> &[u8] {
         let pix_size = present_dim.rgba_bytes_len();
         if self.pix_buf.len() != pix_size {
             self.pix_buf.resize(pix_size, 0);

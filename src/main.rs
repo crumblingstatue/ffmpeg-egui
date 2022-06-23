@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{VideoDim, VideoMag, VideoPos, VideoRect};
+use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
@@ -57,7 +57,7 @@ fn main() {
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.command_async(LoadFile { path: &path });
-    let mut rects: Vec<VideoRect> = Vec::new();
+    let mut rects: Vec<VideoRect<Src>> = Vec::new();
     let mut rw = RenderWindow::new(
         (960, 600),
         "ffmpeg-egui",
@@ -80,7 +80,7 @@ fn main() {
         w_h_ratio,
         duration: 0.0,
     };
-    let mut present = Present::new(src_info.dim);
+    let mut present = Present::new(src_info.dim.as_present());
 
     let mut video_area_max_h = 100.0;
 
