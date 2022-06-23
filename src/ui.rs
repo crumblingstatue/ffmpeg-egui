@@ -54,17 +54,26 @@ pub(crate) fn ui(
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
-                ui.selectable_value(&mut ui_state.tab, Tab::TimeSpans, Tab::TimeSpans.name());
-            });
-            ui.separator();
-            match ui_state.tab {
-                Tab::Rects => rects_ui(ui, rects, interact_state),
-                Tab::TimeSpans => timespans_ui(ui),
-            }
+            right_panel_ui(ui, ui_state, rects, interact_state);
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
+    }
+}
+
+fn right_panel_ui(
+    ui: &mut egui::Ui,
+    ui_state: &mut UiState,
+    rects: &mut Vec<VideoRect<Src>>,
+    interact_state: &mut InteractState,
+) {
+    ui.horizontal(|ui| {
+        ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
+        ui.selectable_value(&mut ui_state.tab, Tab::TimeSpans, Tab::TimeSpans.name());
+    });
+    ui.separator();
+    match ui_state.tab {
+        Tab::Rects => rects_ui(ui, rects, interact_state),
+        Tab::TimeSpans => timespans_ui(ui),
     }
 }
 
