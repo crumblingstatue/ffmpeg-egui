@@ -14,7 +14,7 @@ use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
 use std::fmt::Write;
-use ui::UiState;
+use ui::{EguiFriendlyColor, UiState};
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
@@ -34,10 +34,20 @@ struct RectDrag {
     status: RectDragStatus,
 }
 
+struct RectMarker {
+    rect: VideoRect<Src>,
+    color: EguiFriendlyColor,
+}
+
+struct TimespanMarker {
+    timespan: TimeSpan,
+    color: EguiFriendlyColor,
+}
+
 #[derive(Default)]
 struct SourceMarkers {
-    rects: Vec<VideoRect<Src>>,
-    timespans: Vec<TimeSpan>,
+    rects: Vec<RectMarker>,
+    timespans: Vec<TimespanMarker>,
 }
 
 impl RectDrag {
@@ -136,7 +146,7 @@ fn main() {
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {
-                                source_markers.rects[drag.idx].pos = pos;
+                                source_markers.rects[drag.idx].rect.pos = pos;
                                 drag.status = RectDragStatus::ClickedTopLeft;
                             }
                             RectDragStatus::ClickedTopLeft => {}
@@ -153,10 +163,10 @@ fn main() {
                         match drag.status {
                             RectDragStatus::Init => {}
                             RectDragStatus::ClickedTopLeft => {
-                                source_markers.rects[drag.idx].dim.x =
-                                    pos.x - source_markers.rects[drag.idx].pos.x;
-                                source_markers.rects[drag.idx].dim.y =
-                                    pos.y - source_markers.rects[drag.idx].pos.y;
+                                source_markers.rects[drag.idx].rect.dim.x =
+                                    pos.x - source_markers.rects[drag.idx].rect.pos.x;
+                                source_markers.rects[drag.idx].rect.dim.y =
+                                    pos.y - source_markers.rects[drag.idx].rect.pos.y;
                                 interact_state.rect_drag = None;
                             }
                         }
@@ -174,10 +184,10 @@ fn main() {
             match drag.status {
                 RectDragStatus::Init => {}
                 RectDragStatus::ClickedTopLeft => {
-                    source_markers.rects[drag.idx].dim.x =
-                        src_mouse_pos.x - source_markers.rects[drag.idx].pos.x;
-                    source_markers.rects[drag.idx].dim.y =
-                        src_mouse_pos.y - source_markers.rects[drag.idx].pos.y;
+                    source_markers.rects[drag.idx].rect.dim.x =
+                        src_mouse_pos.x - source_markers.rects[drag.idx].rect.pos.x;
+                    source_markers.rects[drag.idx].rect.dim.y =
+                        src_mouse_pos.y - source_markers.rects[drag.idx].rect.pos.y;
                 }
             }
         }

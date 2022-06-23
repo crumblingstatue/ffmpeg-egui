@@ -1,7 +1,9 @@
 use egui_sfml::egui;
+use rand::{thread_rng, Rng};
+use sfml::graphics::Color;
 
 use crate::{
-    coords::{self, Src, VideoDim, VideoMag, VideoRect},
+    coords::{self, VideoDim, VideoMag, VideoRect},
     mpv::{
         properties::{Speed, TimePos, Volume},
         Mpv,
@@ -9,7 +11,7 @@ use crate::{
     present::Present,
     source,
     time_fmt::FfmpegTimeFmt,
-    InteractState, RectDrag, SourceMarkers,
+    InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
 };
 
 pub struct UiState {
@@ -54,7 +56,7 @@ pub(crate) fn ui(
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            right_panel_ui(ui, ui_state, source_markers, interact_state);
+            right_panel_ui(ui, ui_state, source_markers, interact_state, src_info);
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
     }
@@ -65,6 +67,7 @@ fn right_panel_ui(
     ui_state: &mut UiState,
     source_markers: &mut SourceMarkers,
     interact_state: &mut InteractState,
+    src_info: &source::Info,
 ) {
     ui.horizontal(|ui| {
         ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
@@ -72,8 +75,8 @@ fn right_panel_ui(
     });
     ui.separator();
     match ui_state.tab {
-        Tab::Rects => rects_ui(ui, &mut source_markers.rects, interact_state),
-        Tab::TimeSpans => timespans_ui(ui),
+        Tab::Rects => rects_ui(ui, source_markers, interact_state),
+        Tab::TimeSpans => timespans_ui(ui, source_markers, src_info),
     }
 }
 
@@ -150,32 +153,58 @@ fn bottom_bar_ui(
     });
 }
 
-fn timespans_ui(ui: &mut egui::Ui) {
-    ui.label("Time spans ui");
+fn timespans_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, src_info: &source::Info) {
+    if ui.button("Add").clicked() {
+        markers.timespans.push(TimespanMarker {
+            timespan: TimeSpan {
+                begin: 0.0,
+                end: 0.0,
+            },
+            color: random_color(),
+        });
+    }
+    ui.separator();
+    for marker in &mut markers.timespans {
+        ui.horizontal(|ui| {
+            ui.label("begin");
+            ui.add(egui::DragValue::new(&mut marker.timespan.begin));
+            ui.label("end");
+            ui.add(egui::DragValue::new(&mut marker.timespan.end));
+        });
+        ui.horizontal(|ui| {
+            if ui.button("begin=current").clicked() {
+                marker.timespan.begin = src_info.time_pos;
+            }
+            if ui.button("end=current").clicked() {
+                marker.timespan.end = src_info.time_pos;
+            }
+        });
+        egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
+        ui.separator();
+    }
 }
 
-fn rects_ui(
-    ui: &mut egui::Ui,
-    rects: &mut Vec<VideoRect<Src>>,
-    interact_state: &mut InteractState,
-) {
+fn rects_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, interact_state: &mut InteractState) {
     if ui.button("Add").clicked() {
-        rects.push(VideoRect::new(0, 0, 0, 0));
+        markers.rects.push(RectMarker {
+            rect: VideoRect::new(0, 0, 0, 0),
+            color: random_color(),
+        });
     }
     egui::ScrollArea::vertical().show(ui, |ui| {
         ui.separator();
-        for (i, rect) in rects.iter_mut().enumerate() {
+        for (i, marker) in markers.rects.iter_mut().enumerate() {
             ui.horizontal(|ui| {
                 ui.label("x");
-                ui.add(egui::DragValue::new(&mut rect.pos.x));
+                ui.add(egui::DragValue::new(&mut marker.rect.pos.x));
                 ui.label("y");
-                ui.add(egui::DragValue::new(&mut rect.pos.y));
+                ui.add(egui::DragValue::new(&mut marker.rect.pos.y));
             });
             ui.horizontal(|ui| {
                 ui.label("w");
-                ui.add(egui::DragValue::new(&mut rect.dim.x));
+                ui.add(egui::DragValue::new(&mut marker.rect.dim.x));
                 ui.label("h");
-                ui.add(egui::DragValue::new(&mut rect.dim.y));
+                ui.add(egui::DragValue::new(&mut marker.rect.dim.y));
             });
             if ui
                 .add_enabled(
@@ -186,7 +215,34 @@ fn rects_ui(
             {
                 interact_state.rect_drag = Some(RectDrag::new(i));
             }
+
+            egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
             ui.separator();
         }
     });
+}
+
+/// Color that works with egui color picker.
+///
+/// Conversion from rgb255 messes up because of floating point inaccuracies
+pub type EguiFriendlyColor = [f32; 3];
+
+fn random_color() -> EguiFriendlyColor {
+    let mut rng = thread_rng();
+    [
+        rng.gen_range(0.1..=1.0),
+        rng.gen_range(0.1..=1.0),
+        rng.gen_range(0.1..=1.0),
+    ]
+}
+
+pub trait EguiFriendlyColorExt {
+    fn to_sfml(self) -> Color;
+}
+
+impl EguiFriendlyColorExt for EguiFriendlyColor {
+    fn to_sfml(self) -> Color {
+        let [r, g, b] = self;
+        Color::rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
+    }
 }
