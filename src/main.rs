@@ -21,12 +21,28 @@ use mpv::{
 use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Texture, View},
     window::{ContextSettings, Event, Key, Style},
+    SfBox,
 };
 
 struct VideoSrcInfo {
     dim: VideoDim,
     w_h_ratio: f64,
     duration: f64,
+}
+
+struct Present {
+    dim: VideoDim,
+    texture: SfBox<Texture>,
+}
+
+impl Present {
+    pub fn new(dim: VideoDim) -> Self {
+        let mut texture = Texture::new().unwrap();
+        if !texture.create(dim.width.into(), dim.height.into()) {
+            panic!("Failed to create texture");
+        }
+        Present { dim, texture }
+    }
 }
 
 fn main() {
@@ -61,14 +77,8 @@ fn main() {
         w_h_ratio,
         duration: 0.0,
     };
-    let mut video_present_dim = src_info.dim;
-    let mut tex = Texture::new().unwrap();
-    if !tex.create(
-        video_present_dim.width.into(),
-        video_present_dim.height.into(),
-    ) {
-        panic!("Failed to create texture");
-    }
+    let mut present = Present::new(src_info.dim);
+
     let mut video_area_max_h = 100.0;
 
     while rw.is_open() {
@@ -107,38 +117,30 @@ fn main() {
             ui::ui(
                 ctx,
                 &mut mpv,
-                &mut video_present_dim,
                 &mut video_area_max_h,
-                &mut tex,
+                &mut present,
                 &mut rects,
                 &src_info,
             )
         });
-        let (mvx, mvy) = video_mouse_pos(mouse_pos, src_info.dim, video_present_dim);
+        let (mvx, mvy) = video_mouse_pos(mouse_pos, src_info.dim, present.dim);
         pos_string.truncate(prefix.len());
         write!(&mut pos_string, "{}, {}", mvx, mvy,).unwrap();
         rw.clear(Color::BLACK);
 
         unsafe {
-            let pixels = mpv.get_frame_as_pixels(video_present_dim);
-            tex.update_from_pixels(
+            let pixels = mpv.get_frame_as_pixels(present.dim);
+            present.texture.update_from_pixels(
                 pixels,
-                video_present_dim.width.into(),
-                video_present_dim.height.into(),
+                present.dim.width.into(),
+                present.dim.height.into(),
                 0,
                 0,
             );
         }
-        rw.draw(&Sprite::with_texture(&tex));
+        rw.draw(&Sprite::with_texture(&present.texture));
         if overlay_show {
-            draw_overlay(
-                &mut rw,
-                &pos_string,
-                &font,
-                &rects,
-                &src_info,
-                video_present_dim,
-            );
+            draw_overlay(&mut rw, &pos_string, &font, &rects, &src_info, present.dim);
         }
         sf_egui.draw(&mut rw, None);
         rw.display();

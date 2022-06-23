@@ -1,5 +1,5 @@
 use egui_sfml::egui;
-use sfml::graphics::{Rect, Texture};
+use sfml::graphics::Rect;
 
 use crate::{
     mpv::{
@@ -7,15 +7,14 @@ use crate::{
         Mpv,
     },
     time_fmt::FfmpegTimeFmt,
-    VideoDim, VideoSrcInfo,
+    Present, VideoSrcInfo,
 };
 
 pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
-    video_present_dim: &mut VideoDim,
     video_area_max_h: &mut f32,
-    tex: &mut Texture,
+    present: &mut Present,
     rects: &mut Vec<Rect<u16>>,
     src_info: &VideoSrcInfo,
 ) {
@@ -41,41 +40,37 @@ pub(crate) fn ui(
                 let mut changed = false;
                 ui.label("Video width");
                 if ui
-                    .add(egui::DragValue::new(&mut video_present_dim.width))
+                    .add(egui::DragValue::new(&mut present.dim.width))
                     .changed()
                 {
-                    video_present_dim.height =
-                        (video_present_dim.width as f64 / src_info.w_h_ratio) as u16;
+                    present.dim.height = (present.dim.width as f64 / src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 ui.label("Video height");
                 if ui
-                    .add(egui::DragValue::new(&mut video_present_dim.height))
+                    .add(egui::DragValue::new(&mut present.dim.height))
                     .changed()
                 {
-                    video_present_dim.width =
-                        (video_present_dim.height as f64 * src_info.w_h_ratio) as u16;
+                    present.dim.width = (present.dim.height as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 if ui.button("orig").clicked() {
-                    video_present_dim.width = src_info.dim.width as u16;
-                    video_present_dim.height = src_info.dim.height as u16;
+                    present.dim.width = src_info.dim.width as u16;
+                    present.dim.height = src_info.dim.height as u16;
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
-                    video_present_dim.height = *video_area_max_h as u16;
-                    video_present_dim.width =
-                        (video_present_dim.height as f64 * src_info.w_h_ratio) as u16;
+                    present.dim.height = *video_area_max_h as u16;
+                    present.dim.width = (present.dim.height as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane
-                video_present_dim.width = (video_present_dim.width).clamp(1, 4096);
-                video_present_dim.height = (video_present_dim.height).clamp(1, 4096);
+                present.dim.width = (present.dim.width).clamp(1, 4096);
+                present.dim.height = (present.dim.height).clamp(1, 4096);
                 if changed
-                    && !tex.create(
-                        (video_present_dim.width).into(),
-                        (video_present_dim.height).into(),
-                    )
+                    && !present
+                        .texture
+                        .create((present.dim.width).into(), (present.dim.height).into())
                 {
                     panic!("Failed to create texture");
                 }
