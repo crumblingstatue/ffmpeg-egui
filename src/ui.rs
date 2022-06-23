@@ -2,6 +2,7 @@ use egui_sfml::egui;
 use sfml::graphics::Rect;
 
 use crate::{
+    coords::VideoRect,
     mpv::{
         properties::{Speed, TimePos, Volume},
         Mpv,
@@ -16,7 +17,7 @@ pub(crate) fn ui(
     mpv: &mut Mpv,
     video_area_max_h: &mut f32,
     present: &mut Present,
-    rects: &mut Vec<Rect<u16>>,
+    rects: &mut Vec<VideoRect>,
     src_info: &source::Info,
 ) {
     {

@@ -5,6 +5,8 @@ pub struct VideoDim {
     pub height: u16,
 }
 
+pub type VideoRect = sfml::graphics::Rect<u16>;
+
 impl VideoDim {
     /// The length of an RGBA buffer that can hold the data of a video of this dimension
     pub fn rgba_bytes_len(&self) -> usize {

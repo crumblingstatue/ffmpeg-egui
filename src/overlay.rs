@@ -1,14 +1,17 @@
 use sfml::graphics::{
-    Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
+    Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
 };
 
-use crate::{coords::translate_up, source, VideoDim};
+use crate::{
+    coords::{translate_up, VideoRect},
+    source, VideoDim,
+};
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
     pos_string: &String,
     font: &sfml::SfBox<Font>,
-    rects: &Vec<Rect<u16>>,
+    rects: &Vec<VideoRect>,
     src_info: &source::Info,
     video_present_dim: VideoDim,
 ) {
