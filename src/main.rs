@@ -120,7 +120,7 @@ fn main() {
         rw.clear(Color::BLACK);
 
         unsafe {
-            let pixels = mpv.get_frame_as_pixels(video_present_dim.width, video_present_dim.height);
+            let pixels = mpv.get_frame_as_pixels(video_present_dim);
             tex.update_from_pixels(
                 pixels,
                 video_present_dim.width.into(),
@@ -143,8 +143,4 @@ fn main() {
         sf_egui.draw(&mut rw, None);
         rw.display();
     }
-}
-
-fn video_pix_size(w: u16, h: u16) -> usize {
-    (w as usize * h as usize) * 4
 }

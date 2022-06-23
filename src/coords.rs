@@ -5,6 +5,13 @@ pub struct VideoDim {
     pub height: u16,
 }
 
+impl VideoDim {
+    /// The length of an RGBA buffer that can hold the data of a video of this dimension
+    pub fn rgba_bytes_len(&self) -> usize {
+        usize::from(self.width) * usize::from(self.height) * 4
+    }
+}
+
 pub fn video_mouse_pos(
     mouse_pos: sfml::system::Vector2<i32>,
     src_dim: VideoDim,

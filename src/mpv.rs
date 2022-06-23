@@ -10,7 +10,7 @@ use std::{
 
 use libmpv_sys as ffi;
 
-use crate::video_pix_size;
+use crate::coords::VideoDim;
 
 use self::{
     command::Command,
@@ -78,15 +78,18 @@ impl Mpv {
             ffi::mpv_command_async(self.mpv_handle, 0, args_buf.as_mut_ptr());
         }
     }
-    pub fn get_frame_as_pixels(&mut self, video_w: u16, video_h: u16) -> &[u8] {
-        let pix_size = video_pix_size(video_w, video_h);
+    pub fn get_frame_as_pixels(&mut self, present_dim: VideoDim) -> &[u8] {
+        let pix_size = present_dim.rgba_bytes_len();
         if self.pix_buf.len() != pix_size {
             self.pix_buf.resize(pix_size, 0);
         }
         unsafe {
-            let mut size: [c_int; 2] = [c_int::from(video_w), c_int::from(video_h)];
+            let mut size: [c_int; 2] = [
+                c_int::from(present_dim.width),
+                c_int::from(present_dim.height),
+            ];
             let mut format = *b"rgb0\0";
-            let mut stride: usize = video_w as usize * 4;
+            let mut stride: usize = present_dim.width as usize * 4;
             let mut params = [
                 ffi::mpv_render_param {
                     type_: ffi::mpv_render_param_type_MPV_RENDER_PARAM_SW_SIZE,
