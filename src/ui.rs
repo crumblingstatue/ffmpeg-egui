@@ -7,14 +7,13 @@ use crate::{
         Mpv,
     },
     time_fmt::FfmpegTimeFmt,
-    VideoSrcInfo,
+    VideoDim, VideoSrcInfo,
 };
 
 pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
-    video_w: &mut u16,
-    video_h: &mut u16,
+    video_present_dim: &mut VideoDim,
     video_area_max_h: &mut f32,
     tex: &mut Texture,
     rects: &mut Vec<Rect<u16>>,
@@ -41,29 +40,43 @@ pub(crate) fn ui(
             ui.horizontal(|ui| {
                 let mut changed = false;
                 ui.label("Video width");
-                if ui.add(egui::DragValue::new(&mut *video_w)).changed() {
-                    *video_h = (*video_w as f64 / src_info.w_h_ratio) as u16;
+                if ui
+                    .add(egui::DragValue::new(&mut video_present_dim.width))
+                    .changed()
+                {
+                    video_present_dim.height =
+                        (video_present_dim.width as f64 / src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 ui.label("Video height");
-                if ui.add(egui::DragValue::new(video_h)).changed() {
-                    *video_w = (*video_h as f64 * src_info.w_h_ratio) as u16;
+                if ui
+                    .add(egui::DragValue::new(&mut video_present_dim.height))
+                    .changed()
+                {
+                    video_present_dim.width =
+                        (video_present_dim.height as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 if ui.button("orig").clicked() {
-                    *video_w = src_info.width as u16;
-                    *video_h = src_info.height as u16;
+                    video_present_dim.width = src_info.dim.width as u16;
+                    video_present_dim.height = src_info.dim.height as u16;
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
-                    *video_h = *video_area_max_h as u16;
-                    *video_w = (*video_h as f64 * src_info.w_h_ratio) as u16;
+                    video_present_dim.height = *video_area_max_h as u16;
+                    video_present_dim.width =
+                        (video_present_dim.height as f64 * src_info.w_h_ratio) as u16;
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane
-                *video_w = (*video_w).clamp(1, 4096);
-                *video_h = (*video_h).clamp(1, 4096);
-                if changed && !tex.create((*video_w).into(), (*video_h).into()) {
+                video_present_dim.width = (video_present_dim.width).clamp(1, 4096);
+                video_present_dim.height = (video_present_dim.height).clamp(1, 4096);
+                if changed
+                    && !tex.create(
+                        (video_present_dim.width).into(),
+                        (video_present_dim.height).into(),
+                    )
+                {
                     panic!("Failed to create texture");
                 }
                 if let Some(mut speed) = mpv.get_property::<Speed>() {

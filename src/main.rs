@@ -22,9 +22,15 @@ use sfml::{
     window::{ContextSettings, Event, Key, Style},
 };
 
-struct VideoSrcInfo {
+/// Video dimension (width, height)
+#[derive(Clone, Copy)]
+struct VideoDim {
     width: u16,
     height: u16,
+}
+
+struct VideoSrcInfo {
+    dim: VideoDim,
     w_h_ratio: f64,
     duration: f64,
 }
@@ -46,13 +52,6 @@ fn main() {
     rw.set_framerate_limit(60);
     let mut sf_egui = SfEgui::new(&rw);
 
-    let mut tex = Texture::new().unwrap();
-    let mut video_w: u16 = 800;
-    let mut video_h: u16 = 600;
-    if !tex.create(video_w.into(), video_h.into()) {
-        panic!("Failed to create texture");
-    }
-
     let font = unsafe { Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap() };
     let prefix = "Mouse video pos: ";
     let mut pos_string = String::from(prefix);
@@ -61,11 +60,21 @@ fn main() {
     let actual_video_h = mpv.get_property::<Height>().unwrap();
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
     let mut src_info = VideoSrcInfo {
-        width: actual_video_w as u16,
-        height: actual_video_h as u16,
+        dim: VideoDim {
+            width: actual_video_w as u16,
+            height: actual_video_h as u16,
+        },
         w_h_ratio,
         duration: 0.0,
     };
+    let mut video_present_dim = src_info.dim;
+    let mut tex = Texture::new().unwrap();
+    if !tex.create(
+        video_present_dim.width.into(),
+        video_present_dim.height.into(),
+    ) {
+        panic!("Failed to create texture");
+    }
     let mut video_area_max_h = 100.0;
 
     while rw.is_open() {
@@ -104,23 +113,27 @@ fn main() {
             ui::ui(
                 ctx,
                 &mut mpv,
-                &mut video_w,
-                &mut video_h,
+                &mut video_present_dim,
                 &mut video_area_max_h,
                 &mut tex,
                 &mut rects,
                 &src_info,
             )
         });
-        let (mvx, mvy) =
-            video_mouse_pos(mouse_pos, actual_video_w, actual_video_h, video_w, video_h);
+        let (mvx, mvy) = video_mouse_pos(mouse_pos, src_info.dim, video_present_dim);
         pos_string.truncate(prefix.len());
         write!(&mut pos_string, "{}, {}", mvx, mvy,).unwrap();
         rw.clear(Color::BLACK);
 
         unsafe {
-            let pixels = mpv.get_frame_as_pixels(video_w, video_h);
-            tex.update_from_pixels(pixels, video_w.into(), video_h.into(), 0, 0);
+            let pixels = mpv.get_frame_as_pixels(video_present_dim.width, video_present_dim.height);
+            tex.update_from_pixels(
+                pixels,
+                video_present_dim.width.into(),
+                video_present_dim.height.into(),
+                0,
+                0,
+            );
         }
         rw.draw(&Sprite::with_texture(&tex));
         if overlay_show {
@@ -131,19 +144,15 @@ fn main() {
                 let (w, h) = translate_up(
                     rect.width as i32,
                     rect.height as i32,
-                    actual_video_w,
-                    actual_video_h,
-                    video_w,
-                    video_h,
+                    src_info.dim,
+                    video_present_dim,
                 );
                 rs.set_size((w as f32, h as f32));
                 let (x, y) = translate_up(
                     rect.left as i32,
                     rect.top as i32,
-                    actual_video_w,
-                    actual_video_h,
-                    video_w,
-                    video_h,
+                    src_info.dim,
+                    video_present_dim,
                 );
                 rs.set_position((x as f32, y as f32));
                 rw.draw(&rs);
@@ -156,46 +165,23 @@ fn main() {
 
 fn video_mouse_pos(
     mouse_pos: sfml::system::Vector2<i32>,
-    actual_video_w: i64,
-    actual_video_h: i64,
-    video_w: u16,
-    video_h: u16,
+    src_dim: VideoDim,
+    present_dim: VideoDim,
 ) -> (i16, i16) {
-    translate_down(
-        mouse_pos.x,
-        mouse_pos.y,
-        actual_video_w,
-        actual_video_h,
-        video_w,
-        video_h,
-    )
+    translate_down(mouse_pos.x, mouse_pos.y, src_dim, present_dim)
 }
 
 /// window -> vid coords
-fn translate_down(
-    x: i32,
-    y: i32,
-    actual_video_w: i64,
-    actual_video_h: i64,
-    video_w: u16,
-    video_h: u16,
-) -> (i16, i16) {
-    let w_ratio = actual_video_w as f64 / video_w as f64;
-    let h_ratio = actual_video_h as f64 / video_h as f64;
+fn translate_down(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (i16, i16) {
+    let w_ratio = src_dim.width as f64 / present_dim.width as f64;
+    let h_ratio = src_dim.height as f64 / present_dim.height as f64;
     ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
 }
 
 /// vid -> window coords
-fn translate_up(
-    x: i32,
-    y: i32,
-    actual_video_w: i64,
-    actual_video_h: i64,
-    video_w: u16,
-    video_h: u16,
-) -> (i16, i16) {
-    let w_ratio = video_w as f64 / actual_video_w as f64;
-    let h_ratio = video_h as f64 / actual_video_h as f64;
+fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (i16, i16) {
+    let w_ratio = present_dim.width as f64 / src_dim.width as f64;
+    let h_ratio = present_dim.height as f64 / src_dim.height as f64;
     ((x as f64 * w_ratio) as i16, (y as f64 * h_ratio) as i16)
 }
 
