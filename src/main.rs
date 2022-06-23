@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{translate_down, video_mouse_pos, VideoDim, VideoRect};
+use coords::{VideoDim, VideoPos, VideoRect};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
@@ -119,12 +119,12 @@ fn main() {
                     x,
                     y,
                 } => {
-                    let (x, y) = translate_down(x, y, src_info.dim, present.dim);
+                    let pos = VideoPos::from_mouse(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {
-                                rects[drag.idx].left = x as u16;
-                                rects[drag.idx].top = y as u16;
+                                rects[drag.idx].left = pos.x;
+                                rects[drag.idx].top = pos.y;
                                 drag.status = RectDragStatus::ClickedTopLeft;
                             }
                             RectDragStatus::ClickedTopLeft => {}
@@ -136,13 +136,13 @@ fn main() {
                     x,
                     y,
                 } => {
-                    let (x, y) = translate_down(x, y, src_info.dim, present.dim);
+                    let pos = VideoPos::from_mouse(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {}
                             RectDragStatus::ClickedTopLeft => {
-                                rects[drag.idx].width = x as u16 - rects[drag.idx].left;
-                                rects[drag.idx].height = y as u16 - rects[drag.idx].top;
+                                rects[drag.idx].width = pos.x - rects[drag.idx].left;
+                                rects[drag.idx].height = pos.y - rects[drag.idx].top;
                                 interact_state.rect_drag = None;
                             }
                         }
@@ -152,14 +152,15 @@ fn main() {
             }
         }
         let raw_mouse_pos = rw.mouse_position();
-        let (mvx, mvy) = video_mouse_pos(raw_mouse_pos, src_info.dim, present.dim);
+        let src_mouse_pos =
+            VideoPos::from_mouse(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
         src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         if let Some(drag) = &interact_state.rect_drag {
             match drag.status {
                 RectDragStatus::Init => {}
                 RectDragStatus::ClickedTopLeft => {
-                    rects[drag.idx].width = mvx as u16 - rects[drag.idx].left;
-                    rects[drag.idx].height = mvy as u16 - rects[drag.idx].top;
+                    rects[drag.idx].width = src_mouse_pos.x as u16 - rects[drag.idx].left;
+                    rects[drag.idx].height = src_mouse_pos.y as u16 - rects[drag.idx].top;
                 }
             }
         }
@@ -175,7 +176,7 @@ fn main() {
             )
         });
         pos_string.truncate(prefix.len());
-        write!(&mut pos_string, "{}, {}", mvx, mvy,).unwrap();
+        write!(&mut pos_string, "{}, {}", src_mouse_pos.x, src_mouse_pos.y,).unwrap();
         rw.clear(Color::BLACK);
 
         unsafe {

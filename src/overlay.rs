@@ -3,7 +3,7 @@ use sfml::graphics::{
 };
 
 use crate::{
-    coords::{translate_up, VideoRect},
+    coords::{VideoPos, VideoRect},
     source, VideoDim,
 };
 
@@ -19,20 +19,24 @@ pub(crate) fn draw_overlay(
     let mut rs = RectangleShape::default();
     rs.set_fill_color(Color::rgba(250, 250, 200, 128));
     for rect in rects {
-        let (w, h) = translate_up(
-            rect.width as i32,
-            rect.height as i32,
+        let dim = VideoDim::present_from_src(
+            VideoDim {
+                width: rect.width,
+                height: rect.height,
+            },
             src_info.dim,
             video_present_dim,
         );
-        rs.set_size((w as f32, h as f32));
-        let (x, y) = translate_up(
-            rect.left as i32,
-            rect.top as i32,
+        rs.set_size((dim.width as f32, dim.height as f32));
+        let pos = VideoPos::present_from_src(
+            VideoPos {
+                x: rect.left,
+                y: rect.top,
+            },
             src_info.dim,
             video_present_dim,
         );
-        rs.set_position((x as f32, y as f32));
+        rs.set_position((pos.x as f32, pos.y as f32));
         rw.draw(&rs);
     }
 }
