@@ -21,11 +21,11 @@ impl<Kind> Clone for VideoVector<Kind> {
 impl<Kind> Copy for VideoVector<Kind> {}
 
 /// Dimension (w, h)
-pub struct Dim;
+pub enum Dim {}
 pub type VideoDim = VideoVector<Dim>;
 
 /// Position (x, y)
-pub struct Pos;
+pub enum Pos {}
 pub type VideoPos = VideoVector<Pos>;
 
 impl<Kind> VideoVector<Kind> {
