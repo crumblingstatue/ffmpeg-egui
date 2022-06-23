@@ -82,7 +82,7 @@ fn main() {
     };
     let mut present = Present::new(src_info.dim.as_present());
 
-    let mut video_area_max_h = 100.0;
+    let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);
 
     while rw.is_open() {
         while let Some(event) = rw.poll_event() {
@@ -164,7 +164,7 @@ fn main() {
             ui::ui(
                 ctx,
                 &mut mpv,
-                &mut video_area_max_h,
+                &mut video_area_max_dim,
                 &mut present,
                 &mut rects,
                 &src_info,

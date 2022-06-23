@@ -1,7 +1,7 @@
 use egui_sfml::egui;
 
 use crate::{
-    coords::{Src, VideoMag, VideoRect},
+    coords::{self, Src, VideoDim, VideoMag, VideoRect},
     mpv::{
         properties::{Speed, TimePos, Volume},
         Mpv,
@@ -15,7 +15,7 @@ use crate::{
 pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
-    video_area_max_h: &mut f32,
+    video_area_max_dim: &mut VideoDim<coords::Present>,
     present: &mut Present,
     rects: &mut Vec<VideoRect<Src>>,
     src_info: &source::Info,
@@ -57,8 +57,12 @@ pub(crate) fn ui(
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
-                    present.dim.y = *video_area_max_h as VideoMag;
+                    present.dim.y = video_area_max_dim.y;
                     present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
+                    if present.dim.x > video_area_max_dim.x {
+                        present.dim.x = video_area_max_dim.x;
+                        present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
+                    }
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane
@@ -85,8 +89,8 @@ pub(crate) fn ui(
                 }
             });
         });
-        *video_area_max_h = re.response.rect.top();
-        egui::SidePanel::right("right_panel").show(ctx, |ui| {
+        video_area_max_dim.y = re.response.rect.top() as VideoMag;
+        let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
             if ui.button("Add rect").clicked() {
                 rects.push(VideoRect::new(0, 0, 0, 0));
             }
@@ -118,5 +122,6 @@ pub(crate) fn ui(
                 }
             });
         });
+        video_area_max_dim.x = re.response.rect.left() as VideoMag;
     }
 }
