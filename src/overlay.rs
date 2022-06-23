@@ -2,10 +2,7 @@ use sfml::graphics::{
     Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
 };
 
-use crate::{
-    coords::{VideoPos, VideoRect},
-    source, VideoDim,
-};
+use crate::{coords::VideoRect, source, VideoDim};
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
@@ -19,24 +16,10 @@ pub(crate) fn draw_overlay(
     let mut rs = RectangleShape::default();
     rs.set_fill_color(Color::rgba(250, 250, 200, 128));
     for rect in rects {
-        let dim = VideoDim::present_from_src(
-            VideoDim {
-                width: rect.width,
-                height: rect.height,
-            },
-            src_info.dim,
-            video_present_dim,
-        );
-        rs.set_size((dim.width as f32, dim.height as f32));
-        let pos = VideoPos::present_from_src(
-            VideoPos {
-                x: rect.left,
-                y: rect.top,
-            },
-            src_info.dim,
-            video_present_dim,
-        );
-        rs.set_position((pos.x as f32, pos.y as f32));
+        let dim = rect.dim.to_present(src_info.dim, video_present_dim);
+        rs.set_size((dim.x.into(), dim.y.into()));
+        let pos = rect.pos.to_present(src_info.dim, video_present_dim);
+        rs.set_position((pos.x.into(), pos.y.into()));
         rw.draw(&rs);
     }
 }

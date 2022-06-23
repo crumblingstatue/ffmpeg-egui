@@ -84,12 +84,9 @@ impl Mpv {
             self.pix_buf.resize(pix_size, 0);
         }
         unsafe {
-            let mut size: [c_int; 2] = [
-                c_int::from(present_dim.width),
-                c_int::from(present_dim.height),
-            ];
+            let mut size: [c_int; 2] = [c_int::from(present_dim.x), c_int::from(present_dim.y)];
             let mut format = *b"rgb0\0";
-            let mut stride: usize = present_dim.width as usize * 4;
+            let mut stride: usize = present_dim.x as usize * 4;
             let mut params = [
                 ffi::mpv_render_param {
                     type_: ffi::mpv_render_param_type_MPV_RENDER_PARAM_SW_SIZE,

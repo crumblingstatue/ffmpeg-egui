@@ -76,10 +76,7 @@ fn main() {
     let actual_video_h = mpv.get_property::<Height>().unwrap();
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
     let mut src_info = source::Info {
-        dim: VideoDim {
-            width: actual_video_w as VideoMag,
-            height: actual_video_h as VideoMag,
-        },
+        dim: VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag),
         w_h_ratio,
         duration: 0.0,
     };
@@ -123,8 +120,7 @@ fn main() {
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {
-                                rects[drag.idx].left = pos.x;
-                                rects[drag.idx].top = pos.y;
+                                rects[drag.idx].pos = pos;
                                 drag.status = RectDragStatus::ClickedTopLeft;
                             }
                             RectDragStatus::ClickedTopLeft => {}
@@ -141,8 +137,8 @@ fn main() {
                         match drag.status {
                             RectDragStatus::Init => {}
                             RectDragStatus::ClickedTopLeft => {
-                                rects[drag.idx].width = pos.x - rects[drag.idx].left;
-                                rects[drag.idx].height = pos.y - rects[drag.idx].top;
+                                rects[drag.idx].dim.x = pos.x - rects[drag.idx].pos.x;
+                                rects[drag.idx].dim.y = pos.y - rects[drag.idx].pos.y;
                                 interact_state.rect_drag = None;
                             }
                         }
@@ -159,8 +155,8 @@ fn main() {
             match drag.status {
                 RectDragStatus::Init => {}
                 RectDragStatus::ClickedTopLeft => {
-                    rects[drag.idx].width = src_mouse_pos.x - rects[drag.idx].left;
-                    rects[drag.idx].height = src_mouse_pos.y - rects[drag.idx].top;
+                    rects[drag.idx].dim.x = src_mouse_pos.x - rects[drag.idx].pos.x;
+                    rects[drag.idx].dim.y = src_mouse_pos.y - rects[drag.idx].pos.y;
                 }
             }
         }
@@ -183,8 +179,8 @@ fn main() {
             let pixels = mpv.get_frame_as_pixels(present.dim);
             present.texture.update_from_pixels(
                 pixels,
-                present.dim.width.into(),
-                present.dim.height.into(),
+                present.dim.x.into(),
+                present.dim.y.into(),
                 0,
                 0,
             );

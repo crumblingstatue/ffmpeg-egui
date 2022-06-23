@@ -1,5 +1,4 @@
 use egui_sfml::egui;
-use sfml::graphics::Rect;
 
 use crate::{
     coords::{VideoMag, VideoRect},
@@ -43,41 +42,32 @@ pub(crate) fn ui(
             ui.horizontal(|ui| {
                 let mut changed = false;
                 ui.label("Video width");
-                if ui
-                    .add(egui::DragValue::new(&mut present.dim.width))
-                    .changed()
-                {
-                    present.dim.height =
-                        (present.dim.width as f64 / src_info.w_h_ratio) as VideoMag;
+                if ui.add(egui::DragValue::new(&mut present.dim.x)).changed() {
+                    present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 ui.label("Video height");
-                if ui
-                    .add(egui::DragValue::new(&mut present.dim.height))
-                    .changed()
-                {
-                    present.dim.width =
-                        (present.dim.height as f64 * src_info.w_h_ratio) as VideoMag;
+                if ui.add(egui::DragValue::new(&mut present.dim.y)).changed() {
+                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 if ui.button("orig").clicked() {
-                    present.dim.width = src_info.dim.width as VideoMag;
-                    present.dim.height = src_info.dim.height as VideoMag;
+                    present.dim.x = src_info.dim.x as VideoMag;
+                    present.dim.y = src_info.dim.y as VideoMag;
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
-                    present.dim.height = *video_area_max_h as VideoMag;
-                    present.dim.width =
-                        (present.dim.height as f64 * src_info.w_h_ratio) as VideoMag;
+                    present.dim.y = *video_area_max_h as VideoMag;
+                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane
-                present.dim.width = (present.dim.width).clamp(1, 4096);
-                present.dim.height = (present.dim.height).clamp(1, 4096);
+                present.dim.x = (present.dim.x).clamp(1, 4096);
+                present.dim.y = (present.dim.y).clamp(1, 4096);
                 if changed
                     && !present
                         .texture
-                        .create((present.dim.width).into(), (present.dim.height).into())
+                        .create((present.dim.x).into(), (present.dim.y).into())
                 {
                     panic!("Failed to create texture");
                 }
@@ -98,22 +88,22 @@ pub(crate) fn ui(
         *video_area_max_h = re.response.rect.top();
         egui::SidePanel::right("right_panel").show(ctx, |ui| {
             if ui.button("Add rect").clicked() {
-                rects.push(Rect::default());
+                rects.push(VideoRect::new(0, 0, 0, 0));
             }
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.separator();
                 for (i, rect) in rects.iter_mut().enumerate() {
                     ui.horizontal(|ui| {
                         ui.label("x");
-                        ui.add(egui::DragValue::new(&mut rect.left));
+                        ui.add(egui::DragValue::new(&mut rect.pos.x));
                         ui.label("y");
-                        ui.add(egui::DragValue::new(&mut rect.top));
+                        ui.add(egui::DragValue::new(&mut rect.pos.y));
                     });
                     ui.horizontal(|ui| {
                         ui.label("w");
-                        ui.add(egui::DragValue::new(&mut rect.width));
+                        ui.add(egui::DragValue::new(&mut rect.dim.x));
                         ui.label("h");
-                        ui.add(egui::DragValue::new(&mut rect.height));
+                        ui.add(egui::DragValue::new(&mut rect.dim.y));
                     });
                     if ui
                         .add_enabled(

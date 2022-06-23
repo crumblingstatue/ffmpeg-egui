@@ -1,68 +1,89 @@
+use std::marker::PhantomData;
+
 /// Video size magnitude
 pub type VideoMag = u16;
 
-/// Video dimension
-#[derive(Clone, Copy)]
-pub struct VideoDim {
-    pub width: VideoMag,
-    pub height: VideoMag,
-}
-
-/// Video position
-#[derive(Clone, Copy)]
-pub struct VideoPos {
+pub struct VideoVector<Kind> {
     pub x: VideoMag,
     pub y: VideoMag,
+    kind: PhantomData<Kind>,
 }
 
-impl VideoPos {
-    pub fn present_from_src(src: Self, src_dim: VideoDim, present_dim: VideoDim) -> Self {
-        let (x, y) = translate_up(src.x.into(), src.y.into(), src_dim, present_dim);
-        Self { x, y }
-    }
-    pub(crate) fn from_mouse(x: i32, y: i32, src: VideoDim, present: VideoDim) -> Self {
-        let (x, y) = translate_down(x, y, src, present);
-        Self { x, y }
-    }
-}
-
-pub type VideoRect = sfml::graphics::Rect<VideoMag>;
-
-impl VideoDim {
-    /// The length of an RGBA buffer that can hold the data of a video of this dimension
-    pub fn rgba_bytes_len(&self) -> usize {
-        usize::from(self.width) * usize::from(self.height) * 4
-    }
-    pub fn present_from_src(src: Self, src_dim: VideoDim, present_dim: VideoDim) -> Self {
-        let (w, h) = translate_up(src.width.into(), src.height.into(), src_dim, present_dim);
+impl<Kind> Clone for VideoVector<Kind> {
+    fn clone(&self) -> Self {
         Self {
-            width: w,
-            height: h,
+            x: self.x,
+            y: self.y,
+            kind: PhantomData,
+        }
+    }
+}
+impl<Kind> Copy for VideoVector<Kind> {}
+
+/// Dimension (w, h)
+pub struct Dim;
+pub type VideoDim = VideoVector<Dim>;
+
+/// Position (x, y)
+pub struct Pos;
+pub type VideoPos = VideoVector<Pos>;
+
+impl<Kind> VideoVector<Kind> {
+    pub fn new(x: VideoMag, y: VideoMag) -> Self {
+        Self {
+            x,
+            y,
+            kind: PhantomData,
+        }
+    }
+    pub fn to_src(self, src: VideoVector<Dim>, present: VideoVector<Dim>) -> Self {
+        let w_ratio = src.x as f64 / present.x as f64;
+        let h_ratio = src.y as f64 / present.y as f64;
+        Self {
+            x: (self.x as f64 * w_ratio) as VideoMag,
+            y: (self.y as f64 * h_ratio) as VideoMag,
+            kind: PhantomData,
+        }
+    }
+    pub fn to_present(self, src: VideoVector<Dim>, present: VideoVector<Dim>) -> Self {
+        let w_ratio = present.x as f64 / src.x as f64;
+        let h_ratio = present.y as f64 / src.y as f64;
+        Self {
+            x: (self.x as f64 * w_ratio) as VideoMag,
+            y: (self.y as f64 * h_ratio) as VideoMag,
+            kind: PhantomData,
         }
     }
 }
 
-/// window -> vid coords
-fn translate_down(
-    x: i32,
-    y: i32,
-    src_dim: VideoDim,
-    present_dim: VideoDim,
-) -> (VideoMag, VideoMag) {
-    let w_ratio = src_dim.width as f64 / present_dim.width as f64;
-    let h_ratio = src_dim.height as f64 / present_dim.height as f64;
-    (
-        (x as f64 * w_ratio) as VideoMag,
-        (y as f64 * h_ratio) as VideoMag,
-    )
+impl VideoVector<Pos> {
+    pub(crate) fn from_mouse(
+        x: i32,
+        y: i32,
+        src: VideoVector<Dim>,
+        present: VideoVector<Dim>,
+    ) -> Self {
+        Self::new(x as u16, y as u16).to_src(src, present)
+    }
 }
 
-/// vid -> window coords
-fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (VideoMag, VideoMag) {
-    let w_ratio = present_dim.width as f64 / src_dim.width as f64;
-    let h_ratio = present_dim.height as f64 / src_dim.height as f64;
-    (
-        (x as f64 * w_ratio) as VideoMag,
-        (y as f64 * h_ratio) as VideoMag,
-    )
+pub struct VideoRect {
+    pub pos: VideoPos,
+    pub dim: VideoDim,
+}
+
+impl VideoRect {
+    pub fn new(x: VideoMag, y: VideoMag, w: VideoMag, h: VideoMag) -> Self {
+        Self {
+            pos: VideoPos::new(x, y),
+            dim: VideoDim::new(w, h),
+        }
+    }
+}
+
+impl VideoVector<Dim> {
+    /// The length of an RGBA buffer that can hold the data of a video of this dimension
+    pub fn rgba_bytes_len(&self) -> usize {
+        usize::from(self.x) * usize::from(self.y) * 4
+    }
 }
