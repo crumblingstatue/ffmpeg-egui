@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{VideoDim, VideoPos, VideoRect};
+use coords::{VideoDim, VideoMag, VideoPos, VideoRect};
 use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
@@ -77,8 +77,8 @@ fn main() {
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
     let mut src_info = source::Info {
         dim: VideoDim {
-            width: actual_video_w as u16,
-            height: actual_video_h as u16,
+            width: actual_video_w as VideoMag,
+            height: actual_video_h as VideoMag,
         },
         w_h_ratio,
         duration: 0.0,
@@ -159,8 +159,8 @@ fn main() {
             match drag.status {
                 RectDragStatus::Init => {}
                 RectDragStatus::ClickedTopLeft => {
-                    rects[drag.idx].width = src_mouse_pos.x as u16 - rects[drag.idx].left;
-                    rects[drag.idx].height = src_mouse_pos.y as u16 - rects[drag.idx].top;
+                    rects[drag.idx].width = src_mouse_pos.x - rects[drag.idx].left;
+                    rects[drag.idx].height = src_mouse_pos.y - rects[drag.idx].top;
                 }
             }
         }

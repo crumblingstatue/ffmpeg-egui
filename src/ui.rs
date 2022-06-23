@@ -2,7 +2,7 @@ use egui_sfml::egui;
 use sfml::graphics::Rect;
 
 use crate::{
-    coords::VideoRect,
+    coords::{VideoMag, VideoRect},
     mpv::{
         properties::{Speed, TimePos, Volume},
         Mpv,
@@ -47,7 +47,8 @@ pub(crate) fn ui(
                     .add(egui::DragValue::new(&mut present.dim.width))
                     .changed()
                 {
-                    present.dim.height = (present.dim.width as f64 / src_info.w_h_ratio) as u16;
+                    present.dim.height =
+                        (present.dim.width as f64 / src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 ui.label("Video height");
@@ -55,17 +56,19 @@ pub(crate) fn ui(
                     .add(egui::DragValue::new(&mut present.dim.height))
                     .changed()
                 {
-                    present.dim.width = (present.dim.height as f64 * src_info.w_h_ratio) as u16;
+                    present.dim.width =
+                        (present.dim.height as f64 * src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 if ui.button("orig").clicked() {
-                    present.dim.width = src_info.dim.width as u16;
-                    present.dim.height = src_info.dim.height as u16;
+                    present.dim.width = src_info.dim.width as VideoMag;
+                    present.dim.height = src_info.dim.height as VideoMag;
                     changed = true;
                 }
                 if ui.button("fit").clicked() {
-                    present.dim.height = *video_area_max_h as u16;
-                    present.dim.width = (present.dim.height as f64 * src_info.w_h_ratio) as u16;
+                    present.dim.height = *video_area_max_h as VideoMag;
+                    present.dim.width =
+                        (present.dim.height as f64 * src_info.w_h_ratio) as VideoMag;
                     changed = true;
                 }
                 // Clamp range to make it somewhat sane

@@ -1,15 +1,18 @@
+/// Video size magnitude
+pub type VideoMag = u16;
+
 /// Video dimension
 #[derive(Clone, Copy)]
 pub struct VideoDim {
-    pub width: u16,
-    pub height: u16,
+    pub width: VideoMag,
+    pub height: VideoMag,
 }
 
 /// Video position
 #[derive(Clone, Copy)]
 pub struct VideoPos {
-    pub x: u16,
-    pub y: u16,
+    pub x: VideoMag,
+    pub y: VideoMag,
 }
 
 impl VideoPos {
@@ -19,7 +22,7 @@ impl VideoPos {
     }
 }
 
-pub type VideoRect = sfml::graphics::Rect<u16>;
+pub type VideoRect = sfml::graphics::Rect<VideoMag>;
 
 impl VideoDim {
     /// The length of an RGBA buffer that can hold the data of a video of this dimension
@@ -36,17 +39,28 @@ impl VideoDim {
 }
 
 /// window -> vid coords
-fn translate_down(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (u16, u16) {
+fn translate_down(
+    x: i32,
+    y: i32,
+    src_dim: VideoDim,
+    present_dim: VideoDim,
+) -> (VideoMag, VideoMag) {
     let w_ratio = src_dim.width as f64 / present_dim.width as f64;
     let h_ratio = src_dim.height as f64 / present_dim.height as f64;
-    ((x as f64 * w_ratio) as u16, (y as f64 * h_ratio) as u16)
+    (
+        (x as f64 * w_ratio) as VideoMag,
+        (y as f64 * h_ratio) as VideoMag,
+    )
 }
 
 /// vid -> window coords
-fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (u16, u16) {
+fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (VideoMag, VideoMag) {
     let w_ratio = present_dim.width as f64 / src_dim.width as f64;
     let h_ratio = present_dim.height as f64 / src_dim.height as f64;
-    ((x as f64 * w_ratio) as u16, (y as f64 * h_ratio) as u16)
+    (
+        (x as f64 * w_ratio) as VideoMag,
+        (y as f64 * h_ratio) as VideoMag,
+    )
 }
 impl VideoPos {
     pub(crate) fn from_mouse(x: i32, y: i32, src: VideoDim, present: VideoDim) -> Self {
