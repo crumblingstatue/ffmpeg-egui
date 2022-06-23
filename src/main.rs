@@ -191,7 +191,15 @@ fn main() {
         }
         rw.draw(&Sprite::with_texture(&present.texture));
         if overlay_show {
-            draw_overlay(&mut rw, &pos_string, &font, &rects, &src_info, present.dim);
+            draw_overlay(
+                &mut rw,
+                &pos_string,
+                &font,
+                &rects,
+                &src_info,
+                present.dim,
+                video_area_max_dim,
+            );
         }
         sf_egui.draw(&mut rw, None);
         rw.display();

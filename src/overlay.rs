@@ -14,6 +14,7 @@ pub(crate) fn draw_overlay(
     rects: &Vec<VideoRect<Src>>,
     src_info: &source::Info,
     video_present_dim: VideoDim<Present>,
+    video_area_max_dim: VideoDim<Present>,
 ) {
     rw.draw(&Text::new(pos_string, font, 32));
     let mut rs = RectangleShape::default();
@@ -25,4 +26,16 @@ pub(crate) fn draw_overlay(
         rs.set_position((pos.x.into(), pos.y.into()));
         rw.draw(&rs);
     }
+    // Draw timeline
+    rs.set_outline_color(Color::WHITE);
+    rs.set_outline_thickness(2.0);
+    rs.set_fill_color(Color::TRANSPARENT);
+    rs.set_position((20.0, video_area_max_dim.y as f32 - 40.0));
+    let full_w = video_area_max_dim.x as f32 - 40.0;
+    rs.set_size((full_w, 20.0));
+    rw.draw(&rs);
+    rs.set_fill_color(Color::WHITE);
+    let completed_ratio = src_info.time_pos / src_info.duration;
+    rs.set_size((full_w * completed_ratio as f32, 20.0));
+    rw.draw(&rs);
 }
