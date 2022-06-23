@@ -2,16 +2,13 @@ use sfml::graphics::{
     Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
 };
 
-use crate::{
-    coords::{Present, Src, VideoRect},
-    source, VideoDim,
-};
+use crate::{coords::Present, source, SourceMarkers, VideoDim};
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
     pos_string: &String,
     font: &sfml::SfBox<Font>,
-    rects: &Vec<VideoRect<Src>>,
+    source_markers: &SourceMarkers,
     src_info: &source::Info,
     video_present_dim: VideoDim<Present>,
     video_area_max_dim: VideoDim<Present>,
@@ -19,7 +16,7 @@ pub(crate) fn draw_overlay(
     rw.draw(&Text::new(pos_string, font, 32));
     let mut rs = RectangleShape::default();
     rs.set_fill_color(Color::rgba(250, 250, 200, 128));
-    for rect in rects {
+    for rect in &source_markers.rects {
         let dim = rect.dim.to_present(src_info.dim, video_present_dim);
         rs.set_size((dim.x.into(), dim.y.into()));
         let pos = rect.pos.to_present(src_info.dim, video_present_dim);

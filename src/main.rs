@@ -34,6 +34,12 @@ struct RectDrag {
     status: RectDragStatus,
 }
 
+#[derive(Default)]
+struct SourceMarkers {
+    rects: Vec<VideoRect<Src>>,
+    timespans: Vec<TimeSpan>,
+}
+
 impl RectDrag {
     fn new(idx: usize) -> Self {
         Self {
@@ -65,7 +71,7 @@ fn main() {
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.command_async(LoadFile { path: &path });
-    let mut rects: Vec<VideoRect<Src>> = Vec::new();
+    let mut source_markers = SourceMarkers::default();
     let mut rw = RenderWindow::new(
         (960, 600),
         "ffmpeg-egui",
@@ -130,7 +136,7 @@ fn main() {
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
                             RectDragStatus::Init => {
-                                rects[drag.idx].pos = pos;
+                                source_markers.rects[drag.idx].pos = pos;
                                 drag.status = RectDragStatus::ClickedTopLeft;
                             }
                             RectDragStatus::ClickedTopLeft => {}
@@ -147,8 +153,10 @@ fn main() {
                         match drag.status {
                             RectDragStatus::Init => {}
                             RectDragStatus::ClickedTopLeft => {
-                                rects[drag.idx].dim.x = pos.x - rects[drag.idx].pos.x;
-                                rects[drag.idx].dim.y = pos.y - rects[drag.idx].pos.y;
+                                source_markers.rects[drag.idx].dim.x =
+                                    pos.x - source_markers.rects[drag.idx].pos.x;
+                                source_markers.rects[drag.idx].dim.y =
+                                    pos.y - source_markers.rects[drag.idx].pos.y;
                                 interact_state.rect_drag = None;
                             }
                         }
@@ -166,8 +174,10 @@ fn main() {
             match drag.status {
                 RectDragStatus::Init => {}
                 RectDragStatus::ClickedTopLeft => {
-                    rects[drag.idx].dim.x = src_mouse_pos.x - rects[drag.idx].pos.x;
-                    rects[drag.idx].dim.y = src_mouse_pos.y - rects[drag.idx].pos.y;
+                    source_markers.rects[drag.idx].dim.x =
+                        src_mouse_pos.x - source_markers.rects[drag.idx].pos.x;
+                    source_markers.rects[drag.idx].dim.y =
+                        src_mouse_pos.y - source_markers.rects[drag.idx].pos.y;
                 }
             }
         }
@@ -177,7 +187,7 @@ fn main() {
                 &mut mpv,
                 &mut video_area_max_dim,
                 &mut present,
-                &mut rects,
+                &mut source_markers,
                 &src_info,
                 &mut interact_state,
                 &mut ui_state,
@@ -203,7 +213,7 @@ fn main() {
                 &mut rw,
                 &pos_string,
                 &font,
-                &rects,
+                &source_markers,
                 &src_info,
                 present.dim,
                 video_area_max_dim,

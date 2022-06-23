@@ -9,7 +9,7 @@ use crate::{
     present::Present,
     source,
     time_fmt::FfmpegTimeFmt,
-    InteractState, RectDrag,
+    InteractState, RectDrag, SourceMarkers,
 };
 
 pub struct UiState {
@@ -43,7 +43,7 @@ pub(crate) fn ui(
     mpv: &mut Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
     present: &mut Present,
-    rects: &mut Vec<VideoRect<Src>>,
+    source_markers: &mut SourceMarkers,
     src_info: &source::Info,
     interact_state: &mut InteractState,
     ui_state: &mut UiState,
@@ -54,7 +54,7 @@ pub(crate) fn ui(
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            right_panel_ui(ui, ui_state, rects, interact_state);
+            right_panel_ui(ui, ui_state, source_markers, interact_state);
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
     }
@@ -63,7 +63,7 @@ pub(crate) fn ui(
 fn right_panel_ui(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
-    rects: &mut Vec<VideoRect<Src>>,
+    source_markers: &mut SourceMarkers,
     interact_state: &mut InteractState,
 ) {
     ui.horizontal(|ui| {
@@ -72,7 +72,7 @@ fn right_panel_ui(
     });
     ui.separator();
     match ui_state.tab {
-        Tab::Rects => rects_ui(ui, rects, interact_state),
+        Tab::Rects => rects_ui(ui, &mut source_markers.rects, interact_state),
         Tab::TimeSpans => timespans_ui(ui),
     }
 }
