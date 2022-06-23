@@ -157,8 +157,8 @@ fn timespans_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, src_info: &sourc
     if ui.button("Add").clicked() {
         markers.timespans.push(TimespanMarker {
             timespan: TimeSpan {
-                begin: 0.0,
-                end: 0.0,
+                begin: src_info.time_pos,
+                end: src_info.time_pos,
             },
             color: random_color(),
         });

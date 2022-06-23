@@ -2,7 +2,12 @@ use sfml::graphics::{
     Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
 };
 
-use crate::{coords::Present, source, ui::EguiFriendlyColorExt, SourceMarkers, VideoDim};
+use crate::{
+    coords::{Dim, Present, VideoVector},
+    source,
+    ui::EguiFriendlyColorExt,
+    SourceMarkers, VideoDim,
+};
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
@@ -15,6 +20,7 @@ pub(crate) fn draw_overlay(
 ) {
     rw.draw(&Text::new(pos_string, font, 32));
     let mut rs = RectangleShape::default();
+    // Rect markers
     for marker in &source_markers.rects {
         let dim = marker.rect.dim.to_present(src_info.dim, video_present_dim);
         rs.set_size((dim.x.into(), dim.y.into()));
@@ -25,7 +31,7 @@ pub(crate) fn draw_overlay(
         rs.set_fill_color(fill_c);
         rw.draw(&rs);
     }
-    // Draw timeline
+    // Timeline
     rs.set_outline_color(Color::WHITE);
     rs.set_outline_thickness(2.0);
     rs.set_fill_color(Color::TRANSPARENT);
@@ -37,4 +43,39 @@ pub(crate) fn draw_overlay(
     let completed_ratio = src_info.time_pos / src_info.duration;
     rs.set_size((full_w * completed_ratio as f32, 20.0));
     rw.draw(&rs);
+    // Timespan markers
+    for marker in &source_markers.timespans {
+        draw_timespan_marker(
+            full_w,
+            marker.timespan.begin / src_info.duration,
+            &mut rs,
+            video_area_max_dim,
+            marker,
+            rw,
+        );
+        draw_timespan_marker(
+            full_w,
+            marker.timespan.end / src_info.duration,
+            &mut rs,
+            video_area_max_dim,
+            marker,
+            rw,
+        );
+    }
+}
+
+fn draw_timespan_marker(
+    full_w: f32,
+    pos_ratio: f64,
+    rs: &mut RectangleShape,
+    video_area_max_dim: VideoVector<Dim, Present>,
+    marker: &crate::TimespanMarker,
+    rw: &mut RenderWindow,
+) {
+    let x = (full_w * pos_ratio as f32) + 20.0;
+    rs.set_position((x, (video_area_max_dim.y - 60) as f32));
+    rs.set_fill_color(marker.color.to_sfml());
+    rs.set_size((3.0, 14.0));
+    rs.set_outline_thickness(0.0);
+    rw.draw(&*rs);
 }
