@@ -20,6 +20,10 @@ impl VideoPos {
         let (x, y) = translate_up(src.x.into(), src.y.into(), src_dim, present_dim);
         Self { x, y }
     }
+    pub(crate) fn from_mouse(x: i32, y: i32, src: VideoDim, present: VideoDim) -> Self {
+        let (x, y) = translate_down(x, y, src, present);
+        Self { x, y }
+    }
 }
 
 pub type VideoRect = sfml::graphics::Rect<VideoMag>;
@@ -61,10 +65,4 @@ fn translate_up(x: i32, y: i32, src_dim: VideoDim, present_dim: VideoDim) -> (Vi
         (x as f64 * w_ratio) as VideoMag,
         (y as f64 * h_ratio) as VideoMag,
     )
-}
-impl VideoPos {
-    pub(crate) fn from_mouse(x: i32, y: i32, src: VideoDim, present: VideoDim) -> Self {
-        let (x, y) = translate_down(x, y, src, present);
-        Self { x, y }
-    }
 }
