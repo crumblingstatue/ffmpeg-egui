@@ -23,22 +23,21 @@ pub(crate) fn ui(
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            if let Some(mut pos) = mpv.get_property::<TimePos>() {
-                ui.horizontal(|ui| {
-                    ui.label(format!(
-                        "{}/{}",
-                        FfmpegTimeFmt(pos),
-                        FfmpegTimeFmt(src_info.duration)
-                    ));
-                    ui.style_mut().spacing.slider_width = ui.available_width();
-                    if ui
-                        .add(egui::Slider::new(&mut pos, 0.0..=src_info.duration).show_value(false))
-                        .changed()
-                    {
-                        mpv.set_property::<TimePos>(pos);
-                    }
-                });
-            }
+            ui.horizontal(|ui| {
+                ui.label(format!(
+                    "{}/{}",
+                    FfmpegTimeFmt(src_info.time_pos),
+                    FfmpegTimeFmt(src_info.duration)
+                ));
+                ui.style_mut().spacing.slider_width = ui.available_width();
+                let mut pos = src_info.time_pos;
+                if ui
+                    .add(egui::Slider::new(&mut pos, 0.0..=src_info.duration).show_value(false))
+                    .changed()
+                {
+                    mpv.set_property::<TimePos>(pos);
+                }
+            });
             ui.horizontal(|ui| {
                 let mut changed = false;
                 ui.label("Video width");

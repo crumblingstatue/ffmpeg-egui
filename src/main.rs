@@ -17,7 +17,9 @@ use std::fmt::Write;
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
-    properties::{AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, Width},
+    properties::{
+        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos, Width,
+    },
     property::{YesNo, YesNoAlways},
     Mpv,
 };
@@ -79,6 +81,7 @@ fn main() {
         dim: VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag),
         w_h_ratio,
         duration: 0.0,
+        time_pos: 0.0,
     };
     let mut present = Present::new(src_info.dim.as_present());
 
@@ -151,6 +154,7 @@ fn main() {
         let src_mouse_pos =
             VideoPos::from_present(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
         src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
+        src_info.time_pos = mpv.get_property::<TimePos>().unwrap_or(0.0);
         if let Some(drag) = &interact_state.rect_drag {
             match drag.status {
                 RectDragStatus::Init => {}
