@@ -1,5 +1,5 @@
 #![feature(array_chunks)]
-#![feature(generic_const_exprs, generic_associated_types)]
+#![feature(generic_const_exprs, generic_associated_types, lint_reasons)]
 
 mod coords;
 mod mpv;
@@ -14,6 +14,7 @@ use egui_sfml::SfEgui;
 use overlay::draw_overlay;
 use present::Present;
 use std::fmt::Write;
+use ui::UiState;
 
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
@@ -52,6 +53,11 @@ struct InteractState {
     rect_drag: Option<RectDrag>,
 }
 
+struct TimeSpan {
+    begin: f64,
+    end: f64,
+}
+
 fn main() {
     let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
@@ -84,6 +90,7 @@ fn main() {
         time_pos: 0.0,
     };
     let mut present = Present::new(src_info.dim.as_present());
+    let mut ui_state = UiState::default();
 
     let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);
 
@@ -173,6 +180,7 @@ fn main() {
                 &mut rects,
                 &src_info,
                 &mut interact_state,
+                &mut ui_state,
             )
         });
         pos_string.truncate(prefix.len());

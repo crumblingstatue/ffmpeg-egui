@@ -12,6 +12,32 @@ use crate::{
     InteractState, RectDrag,
 };
 
+pub struct UiState {
+    tab: Tab,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self { tab: Tab::Rects }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+enum Tab {
+    Rects,
+    TimeSpans,
+}
+
+impl Tab {
+    fn name(&self) -> &'static str {
+        match self {
+            Tab::Rects => "Rects",
+            Tab::TimeSpans => "Time spans",
+        }
+    }
+}
+
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
@@ -20,6 +46,7 @@ pub(crate) fn ui(
     rects: &mut Vec<VideoRect<Src>>,
     src_info: &source::Info,
     interact_state: &mut InteractState,
+    ui_state: &mut UiState,
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -90,37 +117,57 @@ pub(crate) fn ui(
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            if ui.button("Add rect").clicked() {
-                rects.push(VideoRect::new(0, 0, 0, 0));
-            }
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.separator();
-                for (i, rect) in rects.iter_mut().enumerate() {
-                    ui.horizontal(|ui| {
-                        ui.label("x");
-                        ui.add(egui::DragValue::new(&mut rect.pos.x));
-                        ui.label("y");
-                        ui.add(egui::DragValue::new(&mut rect.pos.y));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("w");
-                        ui.add(egui::DragValue::new(&mut rect.dim.x));
-                        ui.label("h");
-                        ui.add(egui::DragValue::new(&mut rect.dim.y));
-                    });
-                    if ui
-                        .add_enabled(
-                            interact_state.rect_drag.is_none(),
-                            egui::Button::new("select with mouse"),
-                        )
-                        .clicked()
-                    {
-                        interact_state.rect_drag = Some(RectDrag::new(i));
-                    }
-                    ui.separator();
-                }
+            ui.horizontal(|ui| {
+                ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
+                ui.selectable_value(&mut ui_state.tab, Tab::TimeSpans, Tab::TimeSpans.name());
             });
+            ui.separator();
+            match ui_state.tab {
+                Tab::Rects => rects_ui(ui, rects, interact_state),
+                Tab::TimeSpans => timespans_ui(ui),
+            }
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
     }
+}
+
+fn timespans_ui(ui: &mut egui::Ui) {
+    ui.label("Time spans ui");
+}
+
+fn rects_ui(
+    ui: &mut egui::Ui,
+    rects: &mut Vec<VideoRect<Src>>,
+    interact_state: &mut InteractState,
+) {
+    if ui.button("Add").clicked() {
+        rects.push(VideoRect::new(0, 0, 0, 0));
+    }
+    egui::ScrollArea::vertical().show(ui, |ui| {
+        ui.separator();
+        for (i, rect) in rects.iter_mut().enumerate() {
+            ui.horizontal(|ui| {
+                ui.label("x");
+                ui.add(egui::DragValue::new(&mut rect.pos.x));
+                ui.label("y");
+                ui.add(egui::DragValue::new(&mut rect.pos.y));
+            });
+            ui.horizontal(|ui| {
+                ui.label("w");
+                ui.add(egui::DragValue::new(&mut rect.dim.x));
+                ui.label("h");
+                ui.add(egui::DragValue::new(&mut rect.dim.y));
+            });
+            if ui
+                .add_enabled(
+                    interact_state.rect_drag.is_none(),
+                    egui::Button::new("select with mouse"),
+                )
+                .clicked()
+            {
+                interact_state.rect_drag = Some(RectDrag::new(i));
+            }
+            ui.separator();
+        }
+    });
 }
