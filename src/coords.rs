@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 /// Video size magnitude
 pub type VideoMag = u16;
 
+#[derive(Debug)]
 pub struct VideoVector<Kind, Space> {
     pub x: VideoMag,
     pub y: VideoMag,
@@ -23,17 +24,21 @@ impl<Kind, Space> Clone for VideoVector<Kind, Space> {
 impl<Kind, Space> Copy for VideoVector<Kind, Space> {}
 
 /// Dimension (w, h)
+#[derive(Debug)]
 pub enum Dim {}
 pub type VideoDim<Space> = VideoVector<Dim, Space>;
 
 /// Position (x, y)
+#[derive(Debug)]
 pub enum Pos {}
 pub type VideoPos<Space> = VideoVector<Pos, Space>;
 
 /// Source coordinate space
+#[derive(Debug)]
 pub enum Src {}
 
 /// Present coordinate space
+#[derive(Debug)]
 pub enum Present {}
 
 impl<Kind, Space> VideoVector<Kind, Space> {
@@ -100,6 +105,7 @@ impl VideoVector<Pos, Src> {
     }
 }
 
+#[derive(Debug)]
 pub struct VideoRect<Space> {
     pub pos: VideoPos<Space>,
     pub dim: VideoDim<Space>,

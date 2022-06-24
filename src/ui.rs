@@ -70,7 +70,15 @@ pub(crate) fn ui(
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            bottom_bar_ui(ui, src_info, present, mpv, video_area_max_dim, ui_state);
+            bottom_bar_ui(
+                ui,
+                src_info,
+                present,
+                mpv,
+                video_area_max_dim,
+                ui_state,
+                source_markers,
+            );
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
@@ -106,6 +114,7 @@ fn bottom_bar_ui(
     mpv: &mut Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
     ui_state: &mut UiState,
+    source_markers: &SourceMarkers,
 ) {
     ui.horizontal(|ui| {
         ui.label(format!(
@@ -185,7 +194,7 @@ fn bottom_bar_ui(
             if ui.button("run").clicked()
                 || (re.lost_focus() && ui.input().key_pressed(egui::Key::Enter))
             {
-                ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string);
+                ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info);
             }
             if ui_state.ffmpeg_cli.first_frame {
                 re.request_focus();

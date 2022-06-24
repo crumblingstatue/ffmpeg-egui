@@ -5,4 +5,5 @@ pub struct Info {
     pub w_h_ratio: f64,
     pub duration: f64,
     pub time_pos: f64,
+    pub path: String,
 }

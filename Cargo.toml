@@ -11,3 +11,4 @@ egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git", version 
 libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", features = ["use-bindgen"] }
 rand = "0.8.5"
 sfml = { git = "https://github.com/jeremyletang/rust-sfml.git", version = "0.16.0" }
+thiserror = "1.0.31"

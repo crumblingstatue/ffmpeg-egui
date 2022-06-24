@@ -109,6 +109,7 @@ fn main() {
         w_h_ratio,
         duration: 0.0,
         time_pos: 0.0,
+        path: path.to_owned(),
     };
     let mut present = Present::new(src_info.dim.as_present());
     let mut ui_state = UiState::default();
