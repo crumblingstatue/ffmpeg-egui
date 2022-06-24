@@ -160,7 +160,7 @@ enum Token<'a> {
 #[test]
 fn test_resolve() {
     use crate::coords::{VideoDim, VideoPos, VideoRect};
-    use crate::{RectMarker, SourceMarkers};
+    use crate::{RectMarker, SourceMarkers, TimeSpan};
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {
             rect: VideoRect {
@@ -170,7 +170,14 @@ fn test_resolve() {
             name: "0".into(),
             color: [0., 0., 0.],
         }],
-        timespans: vec![],
+        timespans: vec![TimespanMarker {
+            timespan: TimeSpan {
+                begin: 10.0,
+                end: 20.0,
+            },
+            name: "0".into(),
+            color: [0., 0., 0.],
+        }],
     };
     let test_src_info = source::Info {
         dim: VideoDim::new(0, 0),
@@ -180,7 +187,7 @@ fn test_resolve() {
         path: "/home/my_video.mp4".into(),
     };
     assert_eq!(
-        &resolve("-i {i} crop={r.0}", &test_markers, &test_src_info).unwrap(),
-        "-i /home/my_video.mp4 crop=100:100:0:0"
+        &resolve("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
+        "-i /home/my_video.mp4 -ss 10 -t 10 crop=100:100:0:0"
     );
 }
