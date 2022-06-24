@@ -228,6 +228,7 @@ fn timespans_ui(
         if ui.button("A-B loop").clicked() {
             mpv.set_property::<AbLoopA>(marker.timespan.begin);
             mpv.set_property::<AbLoopB>(marker.timespan.end);
+            mpv.set_property::<TimePos>(marker.timespan.begin);
         }
     }
     ui.separator();
