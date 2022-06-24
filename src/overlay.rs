@@ -50,7 +50,6 @@ pub(crate) fn draw_overlay(
     video_present_dim: VideoDim<Present>,
     video_area_max_dim: VideoDim<Present>,
 ) {
-    rw.draw(&Text::new(pos_string, font, 32));
     let mut rs = RectangleShape::default();
     // Rect markers
     for marker in &source_markers.rects {
@@ -97,6 +96,13 @@ pub(crate) fn draw_overlay(
             rw,
         );
     }
+    // Test text overlay
+    let mut mp_text = Text::new(pos_string, font, 14);
+    mp_text.set_position((
+        video_area_max_dim.x as f32 - 240.0,
+        timeline_rect.top - 20.0,
+    ));
+    rw.draw(&mp_text);
 }
 
 fn timeline_rect(video_area_max_dim: VideoVector<Dim, Present>) -> VideoRect {
