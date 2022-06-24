@@ -1,4 +1,4 @@
-use super::property::{Property, PropertyWrite, YesNo, YesNoAlways};
+use super::property::{Property, PropertyUnset, PropertyWrite, YesNo, YesNoAlways};
 
 /// The time position mpv is currently at
 pub enum TimePos {}
@@ -99,6 +99,11 @@ unsafe impl Property for AbLoopA {
 }
 
 unsafe impl PropertyWrite for AbLoopA {}
+unsafe impl PropertyUnset for AbLoopA {
+    type UnsetType = &'static str;
+
+    const UNSET_VALUE: <Self as PropertyUnset>::UnsetType = "no";
+}
 
 pub enum AbLoopB {}
 
@@ -109,3 +114,8 @@ unsafe impl Property for AbLoopB {
 }
 
 unsafe impl PropertyWrite for AbLoopB {}
+unsafe impl PropertyUnset for AbLoopB {
+    type UnsetType = &'static str;
+
+    const UNSET_VALUE: <Self as PropertyUnset>::UnsetType = "no";
+}

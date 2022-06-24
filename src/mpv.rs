@@ -14,7 +14,7 @@ use crate::coords::{Present, VideoDim};
 
 use self::{
     command::Command,
-    property::{Property, PropertyType, PropertyTypeRaw, PropertyWrite},
+    property::{Property, PropertyType, PropertyTypeRaw, PropertyUnset, PropertyWrite},
 };
 
 pub struct Mpv {
@@ -148,6 +148,17 @@ impl Mpv {
             ) >= 0
         });
         ret
+    }
+
+    pub fn unset_property<P: PropertyUnset>(&self) {
+        P::UNSET_VALUE.with_c(|mut cvalue| unsafe {
+            ffi::mpv_set_property(
+                self.mpv_handle,
+                P::NAME.as_bytes().as_ptr() as _,
+                <P::UnsetType as PropertyType>::CType::FORMAT,
+                (&mut cvalue) as *mut _ as *mut c_void,
+            );
+        });
     }
 }
 

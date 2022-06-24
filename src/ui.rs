@@ -231,8 +231,24 @@ fn timespans_ui(
         }
     }
     ui.separator();
-    if ui.button("Clear A-B loop").clicked() {
-        todo!()
+    let label_string = match (mpv.get_property::<AbLoopA>(), mpv.get_property::<AbLoopB>()) {
+        (Some(a), Some(b)) => {
+            format!("ab-loop: {}-{}", a, b)
+        }
+        (Some(a), None) => {
+            format!("loop from {}", a)
+        }
+        (None, Some(b)) => {
+            format!("loop to {}", b)
+        }
+        (None, None) => String::new(),
+    };
+    if !label_string.is_empty() {
+        ui.label(label_string);
+        if ui.button("Clear A-B loop").clicked() {
+            mpv.unset_property::<AbLoopA>();
+            mpv.unset_property::<AbLoopB>();
+        }
     }
 }
 

@@ -170,3 +170,10 @@ impl PropertyType for YesNoAlways {
 /// # Safety
 /// This property must be writable
 pub unsafe trait PropertyWrite: Property {}
+
+/// # Safety
+/// Must specify the correct type and value to "unset" this property
+pub unsafe trait PropertyUnset: Property {
+    type UnsetType: PropertyType;
+    const UNSET_VALUE: Self::UnsetType;
+}
