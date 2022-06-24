@@ -17,6 +17,7 @@ use crate::{
 pub struct UiState {
     tab: Tab,
     selected_timespan: Option<usize>,
+    rename_index: Option<usize>,
 }
 
 impl Default for UiState {
@@ -24,6 +25,7 @@ impl Default for UiState {
         Self {
             tab: Tab::Rects,
             selected_timespan: None,
+            rename_index: None,
         }
     }
 }
@@ -178,11 +180,18 @@ fn timespans_ui(
         for (i, marker) in markers.timespans.iter_mut().enumerate() {
             ui.horizontal(|ui| {
                 egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
-                if ui
-                    .selectable_label(ui_state.selected_timespan == Some(i), &marker.name)
-                    .clicked()
-                {
-                    ui_state.selected_timespan = Some(i);
+                if ui_state.rename_index == Some(i) {
+                    let re = ui.text_edit_singleline(&mut marker.name);
+                    if re.lost_focus() {
+                        ui_state.rename_index = None;
+                    }
+                    re.request_focus();
+                } else {
+                    let re =
+                        ui.selectable_label(ui_state.selected_timespan == Some(i), &marker.name);
+                    if re.clicked() {
+                        ui_state.selected_timespan = Some(i);
+                    }
                 }
             });
         }
@@ -203,6 +212,9 @@ fn timespans_ui(
         }
         if ui.button("Set end to current").clicked() {
             marker.timespan.end = src_info.time_pos;
+        }
+        if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
+            ui_state.rename_index = Some(timespan_idx);
         }
     }
 }

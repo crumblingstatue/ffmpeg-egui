@@ -155,7 +155,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.18.1"
-source = "git+https://github.com/emilk/egui.git#bd5f553c3a33fd9de0f396634044117bd519342d"
+source = "git+https://github.com/emilk/egui.git#eeae485629fca24a81a7251739460b671e1420f7"
 dependencies = [
  "ahash",
  "epaint",
@@ -165,7 +165,7 @@ dependencies = [
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#be7e09a5f1cfe9895f7bc7ab1abb0c4896ade50c"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#9b3f6493ab71fd09f3ecb4270edaa035c6f71a07"
 dependencies = [
  "egui",
  "glu-sys",
@@ -181,7 +181,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.18.0"
-source = "git+https://github.com/emilk/egui.git#bd5f553c3a33fd9de0f396634044117bd519342d"
+source = "git+https://github.com/emilk/egui.git#eeae485629fca24a81a7251739460b671e1420f7"
 
 [[package]]
 name = "env_logger"
@@ -199,7 +199,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.18.1"
-source = "git+https://github.com/emilk/egui.git#bd5f553c3a33fd9de0f396634044117bd519342d"
+source = "git+https://github.com/emilk/egui.git#eeae485629fca24a81a7251739460b671e1420f7"
 dependencies = [
  "ab_glyph",
  "ahash",
