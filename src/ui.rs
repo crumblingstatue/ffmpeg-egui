@@ -62,7 +62,7 @@ pub(crate) fn ui(
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            right_panel_ui(ui, ui_state, source_markers, interact_state, src_info);
+            right_panel_ui(ui, ui_state, source_markers, interact_state, src_info, mpv);
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
     }
@@ -74,6 +74,7 @@ fn right_panel_ui(
     source_markers: &mut SourceMarkers,
     interact_state: &mut InteractState,
     src_info: &source::Info,
+    mpv: &mut Mpv,
 ) {
     ui.horizontal(|ui| {
         ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
@@ -82,7 +83,7 @@ fn right_panel_ui(
     ui.separator();
     match ui_state.tab {
         Tab::Rects => rects_ui(ui, source_markers, interact_state),
-        Tab::TimeSpans => timespans_ui(ui, source_markers, src_info, ui_state),
+        Tab::TimeSpans => timespans_ui(ui, source_markers, src_info, ui_state, mpv),
     }
 }
 
@@ -164,6 +165,7 @@ fn timespans_ui(
     markers: &mut SourceMarkers,
     src_info: &source::Info,
     ui_state: &mut UiState,
+    mpv: &mut Mpv,
 ) {
     if ui.button("Add").clicked() {
         markers.timespans.push(TimespanMarker {
@@ -205,11 +207,17 @@ fn timespans_ui(
             if ui.button("=").on_hover_text("Set to current").clicked() {
                 marker.timespan.begin = src_info.time_pos;
             }
+            if ui.button("▶").on_hover_text("Seek here").clicked() {
+                mpv.set_property::<TimePos>(marker.timespan.begin);
+            }
             ui.end_row();
             ui.label("end");
             ui.add(egui::DragValue::new(&mut marker.timespan.end));
             if ui.button("=").on_hover_text("Set to current").clicked() {
                 marker.timespan.end = src_info.time_pos;
+            }
+            if ui.button("▶").on_hover_text("Seek here").clicked() {
+                mpv.set_property::<TimePos>(marker.timespan.end);
             }
             ui.end_row();
         });
