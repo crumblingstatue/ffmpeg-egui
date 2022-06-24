@@ -2,6 +2,7 @@
 #![feature(generic_const_exprs, generic_associated_types, lint_reasons)]
 
 mod coords;
+mod ffmpeg;
 mod mpv;
 mod overlay;
 mod present;

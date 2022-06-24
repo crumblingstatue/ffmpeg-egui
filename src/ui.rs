@@ -4,6 +4,7 @@ use sfml::graphics::Color;
 
 use crate::{
     coords::{self, VideoDim, VideoMag, VideoRect},
+    ffmpeg,
     mpv::{
         properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
         Mpv,
@@ -19,6 +20,13 @@ pub struct UiState {
     selected_timespan: Option<usize>,
     rename_index: Option<usize>,
     selected_rect: Option<usize>,
+    ffmpeg_cli: FfmpegCli,
+}
+
+#[derive(Default)]
+struct FfmpegCli {
+    pub open: bool,
+    pub source_string: String,
 }
 
 impl Default for UiState {
@@ -28,6 +36,7 @@ impl Default for UiState {
             selected_timespan: None,
             rename_index: None,
             selected_rect: None,
+            ffmpeg_cli: FfmpegCli::default(),
         }
     }
 }
@@ -60,7 +69,7 @@ pub(crate) fn ui(
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            bottom_bar_ui(ui, src_info, present, mpv, video_area_max_dim);
+            bottom_bar_ui(ui, src_info, present, mpv, video_area_max_dim, ui_state);
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
@@ -95,6 +104,7 @@ fn bottom_bar_ui(
     present: &mut Present,
     mpv: &mut Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
+    ui_state: &mut UiState,
 ) {
     ui.horizontal(|ui| {
         ui.label(format!(
@@ -159,7 +169,23 @@ fn bottom_bar_ui(
                 mpv.set_property::<Volume>(vol);
             }
         }
+        if ui
+            .selectable_label(ui_state.ffmpeg_cli.open, "ffmpeg cli")
+            .clicked()
+        {
+            ui_state.ffmpeg_cli.open ^= true;
+        }
     });
+    if ui_state.ffmpeg_cli.open {
+        ui.horizontal(|ui| {
+            ui.label("ffmpeg");
+            ui.text_edit_singleline(&mut ui_state.ffmpeg_cli.source_string);
+            if ui.button("run").clicked() {
+                ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string);
+            }
+            ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
+        });
+    }
 }
 
 fn timespans_ui(
