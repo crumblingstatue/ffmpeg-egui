@@ -27,6 +27,7 @@ pub struct UiState {
 struct FfmpegCli {
     pub open: bool,
     pub source_string: String,
+    pub first_frame: bool,
 }
 
 impl Default for UiState {
@@ -174,6 +175,7 @@ fn bottom_bar_ui(
             .clicked()
         {
             ui_state.ffmpeg_cli.open ^= true;
+            ui_state.ffmpeg_cli.first_frame = true;
         }
     });
     if ui_state.ffmpeg_cli.open {
@@ -185,8 +187,12 @@ fn bottom_bar_ui(
             {
                 ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string);
             }
+            if ui_state.ffmpeg_cli.first_frame {
+                re.request_focus();
+            }
             ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
         });
+        ui_state.ffmpeg_cli.first_frame = false;
     }
 }
 
