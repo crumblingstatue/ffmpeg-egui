@@ -199,19 +199,19 @@ fn timespans_ui(
     if let Some(timespan_idx) = ui_state.selected_timespan {
         ui.separator();
         let marker = &mut markers.timespans[timespan_idx];
-        ui.horizontal(|ui| {
+        egui::Grid::new("begin_end_grid").show(ui, |ui| {
             ui.label("begin");
             ui.add(egui::DragValue::new(&mut marker.timespan.begin));
-            if ui.button("Set to current").clicked() {
+            if ui.button("=").on_hover_text("Set to current").clicked() {
                 marker.timespan.begin = src_info.time_pos;
             }
-        });
-        ui.horizontal(|ui| {
+            ui.end_row();
             ui.label("end");
             ui.add(egui::DragValue::new(&mut marker.timespan.end));
-            if ui.button("Set to current").clicked() {
+            if ui.button("=").on_hover_text("Set to current").clicked() {
                 marker.timespan.end = src_info.time_pos;
             }
+            ui.end_row();
         });
 
         if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
