@@ -179,7 +179,9 @@ fn timespans_ui(
     }
     ui.separator();
     ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-        for (i, marker) in markers.timespans.iter_mut().enumerate() {
+        let mut i = 0;
+        markers.timespans.retain_mut(|marker| {
+            let mut retain = true;
             ui.horizontal(|ui| {
                 egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
                 if ui_state.rename_index == Some(i) {
@@ -195,8 +197,16 @@ fn timespans_ui(
                         ui_state.selected_timespan = Some(i);
                     }
                 }
+                if ui.button("🗑").clicked() {
+                    if ui_state.selected_timespan == Some(i) {
+                        ui_state.selected_timespan = None;
+                    }
+                    retain = false;
+                }
             });
-        }
+            i += 1;
+            retain
+        });
     });
     if let Some(timespan_idx) = ui_state.selected_timespan {
         ui.separator();
