@@ -19,7 +19,8 @@ use ui::{EguiFriendlyColor, UiState};
 use mpv::{
     commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
     properties::{
-        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos, Width,
+        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos, Volume,
+        Width,
     },
     property::{YesNo, YesNoAlways},
     Mpv,
@@ -80,6 +81,7 @@ fn main() {
     mpv.set_property::<AudioPitchCorrection>(false);
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
+    mpv.set_property::<Volume>(75.0);
     mpv.command_async(LoadFile { path: &path });
     let mut source_markers = SourceMarkers::default();
     let mut rw = RenderWindow::new(
