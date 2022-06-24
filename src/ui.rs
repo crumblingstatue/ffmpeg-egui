@@ -5,7 +5,7 @@ use sfml::graphics::Color;
 use crate::{
     coords::{self, VideoDim, VideoMag, VideoRect},
     mpv::{
-        properties::{Speed, TimePos, Volume},
+        properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
         Mpv,
     },
     present::Present,
@@ -225,6 +225,14 @@ fn timespans_ui(
         if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
             ui_state.rename_index = Some(timespan_idx);
         }
+        if ui.button("A-B loop").clicked() {
+            mpv.set_property::<AbLoopA>(marker.timespan.begin);
+            mpv.set_property::<AbLoopB>(marker.timespan.end);
+        }
+    }
+    ui.separator();
+    if ui.button("Clear A-B loop").clicked() {
+        todo!()
     }
 }
 

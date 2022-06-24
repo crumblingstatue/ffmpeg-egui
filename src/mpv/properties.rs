@@ -89,3 +89,23 @@ unsafe impl Property for Height {
 
     const NAME: &'static str = "height\0";
 }
+
+pub enum AbLoopA {}
+
+unsafe impl Property for AbLoopA {
+    type Type<'a> = f64;
+
+    const NAME: &'static str = "ab-loop-a\0";
+}
+
+unsafe impl PropertyWrite for AbLoopA {}
+
+pub enum AbLoopB {}
+
+unsafe impl Property for AbLoopB {
+    type Type<'a> = f64;
+
+    const NAME: &'static str = "ab-loop-b\0";
+}
+
+unsafe impl PropertyWrite for AbLoopB {}
