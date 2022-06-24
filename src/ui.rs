@@ -18,6 +18,7 @@ pub struct UiState {
     tab: Tab,
     selected_timespan: Option<usize>,
     rename_index: Option<usize>,
+    selected_rect: Option<usize>,
 }
 
 impl Default for UiState {
@@ -26,6 +27,7 @@ impl Default for UiState {
             tab: Tab::Rects,
             selected_timespan: None,
             rename_index: None,
+            selected_rect: None,
         }
     }
 }
@@ -82,7 +84,7 @@ fn right_panel_ui(
     });
     ui.separator();
     match ui_state.tab {
-        Tab::Rects => rects_ui(ui, source_markers, interact_state),
+        Tab::Rects => rects_ui(ui, source_markers, interact_state, ui_state),
         Tab::TimeSpans => timespans_ui(ui, source_markers, src_info, ui_state, mpv),
     }
 }
@@ -263,23 +265,57 @@ fn timespans_ui(
     }
 }
 
-fn rects_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, interact_state: &mut InteractState) {
+fn rects_ui(
+    ui: &mut egui::Ui,
+    markers: &mut SourceMarkers,
+    interact_state: &mut InteractState,
+    ui_state: &mut UiState,
+) {
     if ui.button("Add").clicked() {
         markers.rects.push(RectMarker {
             rect: VideoRect::new(0, 0, 0, 0),
+            name: format!("Rect {}", markers.rects.len()),
             color: random_color(),
         });
     }
+    ui.separator();
     egui::ScrollArea::vertical().show(ui, |ui| {
-        ui.separator();
-        for (i, marker) in markers.rects.iter_mut().enumerate() {
+        let mut i = 0;
+        markers.rects.retain_mut(|marker| {
+            let mut retain = true;
             ui.horizontal(|ui| {
+                egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
+                if ui_state.rename_index == Some(i) {
+                    let re = ui.text_edit_singleline(&mut marker.name);
+                    if re.lost_focus() {
+                        ui_state.rename_index = None;
+                    }
+                    re.request_focus();
+                } else if ui
+                    .selectable_label(ui_state.selected_rect == Some(i), &marker.name)
+                    .clicked()
+                {
+                    ui_state.selected_rect = Some(i);
+                }
+                if ui.button("🗑").clicked() {
+                    if ui_state.selected_rect == Some(i) {
+                        ui_state.selected_rect = None;
+                    }
+                    retain = false;
+                }
+            });
+            i += 1;
+            retain
+        });
+        if let Some(idx) = ui_state.selected_rect {
+            ui.separator();
+            let marker = &mut markers.rects[idx];
+            egui::Grid::new("rects_grid").show(ui, |ui| {
                 ui.label("x");
                 ui.add(egui::DragValue::new(&mut marker.rect.pos.x));
                 ui.label("y");
                 ui.add(egui::DragValue::new(&mut marker.rect.pos.y));
-            });
-            ui.horizontal(|ui| {
+                ui.end_row();
                 ui.label("w");
                 ui.add(egui::DragValue::new(&mut marker.rect.dim.x));
                 ui.label("h");
@@ -292,11 +328,11 @@ fn rects_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, interact_state: &mut
                 )
                 .clicked()
             {
-                interact_state.rect_drag = Some(RectDrag::new(i));
+                interact_state.rect_drag = Some(RectDrag::new(idx));
             }
-
-            egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
-            ui.separator();
+            if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
+                ui_state.rename_index = Some(idx);
+            }
         }
     });
 }

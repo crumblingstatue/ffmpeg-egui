@@ -37,6 +37,7 @@ struct RectDrag {
 
 struct RectMarker {
     rect: VideoRect<Src>,
+    name: String,
     color: EguiFriendlyColor,
 }
 
