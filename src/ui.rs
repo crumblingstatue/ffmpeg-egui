@@ -1,4 +1,4 @@
-use egui_sfml::egui;
+use egui_sfml::egui::{self, ScrollArea};
 use rand::{thread_rng, Rng};
 use sfml::graphics::Color;
 
@@ -174,17 +174,19 @@ fn timespans_ui(
         });
     }
     ui.separator();
-    for (i, marker) in markers.timespans.iter_mut().enumerate() {
-        ui.horizontal(|ui| {
-            egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
-            if ui
-                .selectable_label(ui_state.selected_timespan == Some(i), &marker.name)
-                .clicked()
-            {
-                ui_state.selected_timespan = Some(i);
-            }
-        });
-    }
+    ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+        for (i, marker) in markers.timespans.iter_mut().enumerate() {
+            ui.horizontal(|ui| {
+                egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
+                if ui
+                    .selectable_label(ui_state.selected_timespan == Some(i), &marker.name)
+                    .clicked()
+                {
+                    ui_state.selected_timespan = Some(i);
+                }
+            });
+        }
+    });
     if let Some(timespan_idx) = ui_state.selected_timespan {
         ui.separator();
         let marker = &mut markers.timespans[timespan_idx];
