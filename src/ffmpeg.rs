@@ -1,12 +1,8 @@
 use std::fmt::Write;
-use std::marker::PhantomData;
 
 use thiserror::Error;
 
-use crate::{
-    coords::{VideoDim, VideoPos, VideoRect},
-    source, RectMarker, SourceMarkers,
-};
+use crate::{source, SourceMarkers};
 
 pub(crate) fn invoke(input: &str, markers: &SourceMarkers, src_info: &source::Info) {
     let resolved = resolve(input, markers, src_info);
