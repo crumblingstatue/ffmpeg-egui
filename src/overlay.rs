@@ -1,13 +1,45 @@
-use sfml::graphics::{
-    Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
+use sfml::{
+    graphics::{
+        Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
+    },
+    window::{mouse, Event},
 };
 
 use crate::{
-    coords::{Dim, Present, VideoVector},
+    coords::{Dim, Present, VideoMag, VideoVector},
+    mpv::{properties::TimePos, Mpv},
     source,
     ui::EguiFriendlyColorExt,
     SourceMarkers, VideoDim,
 };
+
+const TIMELINE_MARGIN: VideoMag = 20;
+const TIMELINE_H: VideoMag = 12;
+
+type VideoRect = Rect<VideoMag>;
+
+pub fn handle_event(
+    event: &Event,
+    mpv: &mut Mpv,
+    src_info: &source::Info,
+    video_area_max_dim: VideoDim<Present>,
+) {
+    if let Event::MouseButtonPressed {
+        button: mouse::Button::Left,
+        x,
+        y,
+    } = *event
+    {
+        let x = x as VideoMag;
+        let y = y as VideoMag;
+        let timeline_rect = timeline_rect(video_area_max_dim);
+        if timeline_rect.contains((x, y).into()) {
+            let x_offset = x - timeline_rect.left;
+            let ratio: f64 = x_offset as f64 / timeline_rect.width as f64;
+            mpv.set_property::<TimePos>(ratio * src_info.duration);
+        }
+    }
+}
 
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
@@ -35,18 +67,21 @@ pub(crate) fn draw_overlay(
     rs.set_outline_color(Color::WHITE);
     rs.set_outline_thickness(2.0);
     rs.set_fill_color(Color::TRANSPARENT);
-    rs.set_position((20.0, video_area_max_dim.y as f32 - 40.0));
-    let full_w = video_area_max_dim.x as f32 - 40.0;
-    rs.set_size((full_w, 20.0));
+    let timeline_rect: Rect<f32> = timeline_rect(video_area_max_dim).into_other();
+    rs.set_position(timeline_rect.position());
+    rs.set_size(timeline_rect.size());
     rw.draw(&rs);
     rs.set_fill_color(Color::WHITE);
     let completed_ratio = src_info.time_pos / src_info.duration;
-    rs.set_size((full_w * completed_ratio as f32, 20.0));
+    rs.set_size((
+        timeline_rect.width * completed_ratio as f32,
+        TIMELINE_H.into(),
+    ));
     rw.draw(&rs);
     // Timespan markers
     for marker in &source_markers.timespans {
         draw_timespan_marker(
-            full_w,
+            timeline_rect.width,
             marker.timespan.begin / src_info.duration,
             &mut rs,
             video_area_max_dim,
@@ -54,7 +89,7 @@ pub(crate) fn draw_overlay(
             rw,
         );
         draw_timespan_marker(
-            full_w,
+            timeline_rect.width,
             marker.timespan.end / src_info.duration,
             &mut rs,
             video_area_max_dim,
@@ -62,6 +97,14 @@ pub(crate) fn draw_overlay(
             rw,
         );
     }
+}
+
+fn timeline_rect(video_area_max_dim: VideoVector<Dim, Present>) -> VideoRect {
+    let left = TIMELINE_MARGIN;
+    let top = video_area_max_dim.y - TIMELINE_MARGIN;
+    let width = video_area_max_dim.x - TIMELINE_MARGIN * 2;
+    let height = TIMELINE_H;
+    Rect::new(left, top, width, height)
 }
 
 fn draw_timespan_marker(

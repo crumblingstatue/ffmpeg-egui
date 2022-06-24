@@ -113,6 +113,7 @@ fn main() {
     while rw.is_open() {
         while let Some(event) = rw.poll_event() {
             sf_egui.add_event(&event);
+            overlay::handle_event(&event, &mut mpv, &src_info, video_area_max_dim);
             match event {
                 Event::Closed => rw.close(),
                 Event::KeyPressed { code, .. } => match code {
