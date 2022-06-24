@@ -26,11 +26,10 @@ fn resolve(
         match tok {
             Token::Raw(raw) => out.push_str(raw),
             Token::SubsRect(name) => {
-                dbg!(name);
                 let marker = markers
                     .rects
                     .iter()
-                    .find(|marker| dbg!(&marker.name) == dbg!(name))
+                    .find(|marker| marker.name == name)
                     .unwrap();
                 write!(
                     &mut out,
@@ -39,7 +38,20 @@ fn resolve(
                 )
                 .unwrap();
             }
-            Token::SubsTimespan(ts) => todo!(),
+            Token::SubsTimespan(name) => {
+                let marker = markers
+                    .timespans
+                    .iter()
+                    .find(|marker| marker.name == name)
+                    .unwrap();
+                write!(
+                    &mut out,
+                    "-ss {} -t {}",
+                    marker.timespan.begin,
+                    marker.timespan.end - marker.timespan.begin
+                )
+                .unwrap();
+            }
             Token::SubsInput => out.push_str(&src_info.path),
         }
     }
@@ -147,6 +159,8 @@ enum Token<'a> {
 
 #[test]
 fn test_resolve() {
+    use crate::coords::{VideoDim, VideoPos, VideoRect};
+    use crate::{RectMarker, SourceMarkers};
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {
             rect: VideoRect {
