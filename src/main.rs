@@ -10,7 +10,7 @@ mod time_fmt;
 mod ui;
 
 use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
-use egui_sfml::SfEgui;
+use egui_sfml::{egui, SfEgui};
 use overlay::draw_overlay;
 use present::Present;
 use std::fmt::Write;
@@ -120,24 +120,13 @@ fn main() {
             overlay::handle_event(&event, &mut mpv, &src_info, video_area_max_dim);
             match event {
                 Event::Closed => rw.close(),
-                Event::KeyPressed { code, .. } => match code {
-                    Key::Escape => rw.close(),
-                    Key::Tab => overlay_show ^= true,
-                    Key::Space => {
-                        let pause_flag = mpv.get_property::<Pause>().unwrap_or(false);
-                        if !pause_flag {
-                            mpv.set_property::<Pause>(true);
-                        } else {
-                            mpv.set_property::<Pause>(false);
-                        }
-                    }
-                    Key::Period => mpv.command_async(FrameStep),
-                    Key::Comma => mpv.command_async(FrameBackStep),
-                    Key::P => mpv.command_async(PlaylistPlay::Current),
-                    Key::S => mpv.command_async(PlaylistPlay::None),
-                    Key::R => mpv.command_async(PlaylistPlay::Index(0)),
-                    _ => {}
-                },
+                Event::KeyPressed { code, .. } => handle_keypress(
+                    code,
+                    &mut rw,
+                    &mut overlay_show,
+                    &mut mpv,
+                    sf_egui.context(),
+                ),
                 Event::Resized { width, height } => {
                     let view = View::from_rect(&Rect::new(0., 0., width as f32, height as f32));
                     rw.set_view(&view);
@@ -236,5 +225,35 @@ fn main() {
         }
         sf_egui.draw(&mut rw, None);
         rw.display();
+    }
+}
+
+fn handle_keypress(
+    code: Key,
+    rw: &mut RenderWindow,
+    overlay_show: &mut bool,
+    mpv: &mut Mpv,
+    egui_ctx: &egui::Context,
+) {
+    if egui_ctx.wants_keyboard_input() {
+        return;
+    }
+    match code {
+        Key::Escape => rw.close(),
+        Key::Tab => *overlay_show ^= true,
+        Key::Space => {
+            let pause_flag = mpv.get_property::<Pause>().unwrap_or(false);
+            if !pause_flag {
+                mpv.set_property::<Pause>(true);
+            } else {
+                mpv.set_property::<Pause>(false);
+            }
+        }
+        Key::Period => mpv.command_async(FrameStep),
+        Key::Comma => mpv.command_async(FrameBackStep),
+        Key::P => mpv.command_async(PlaylistPlay::Current),
+        Key::S => mpv.command_async(PlaylistPlay::None),
+        Key::R => mpv.command_async(PlaylistPlay::Index(0)),
+        _ => {}
     }
 }
