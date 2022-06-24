@@ -179,8 +179,10 @@ fn bottom_bar_ui(
     if ui_state.ffmpeg_cli.open {
         ui.horizontal(|ui| {
             ui.label("ffmpeg");
-            ui.text_edit_singleline(&mut ui_state.ffmpeg_cli.source_string);
-            if ui.button("run").clicked() {
+            let re = ui.text_edit_singleline(&mut ui_state.ffmpeg_cli.source_string);
+            if ui.button("run").clicked()
+                || (re.lost_focus() && ui.input().key_pressed(egui::Key::Enter))
+            {
                 ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string);
             }
             ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
