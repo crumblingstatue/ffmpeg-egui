@@ -16,11 +16,15 @@ use crate::{
 
 pub struct UiState {
     tab: Tab,
+    selected_timespan: Option<usize>,
 }
 
 impl Default for UiState {
     fn default() -> Self {
-        Self { tab: Tab::Rects }
+        Self {
+            tab: Tab::Rects,
+            selected_timespan: None,
+        }
     }
 }
 
@@ -76,7 +80,7 @@ fn right_panel_ui(
     ui.separator();
     match ui_state.tab {
         Tab::Rects => rects_ui(ui, source_markers, interact_state),
-        Tab::TimeSpans => timespans_ui(ui, source_markers, src_info),
+        Tab::TimeSpans => timespans_ui(ui, source_markers, src_info, ui_state),
     }
 }
 
@@ -153,34 +157,51 @@ fn bottom_bar_ui(
     });
 }
 
-fn timespans_ui(ui: &mut egui::Ui, markers: &mut SourceMarkers, src_info: &source::Info) {
+fn timespans_ui(
+    ui: &mut egui::Ui,
+    markers: &mut SourceMarkers,
+    src_info: &source::Info,
+    ui_state: &mut UiState,
+) {
     if ui.button("Add").clicked() {
         markers.timespans.push(TimespanMarker {
             timespan: TimeSpan {
                 begin: src_info.time_pos,
                 end: src_info.time_pos,
             },
+            name: format!("Timespan {}", markers.timespans.len()),
             color: random_color(),
         });
     }
     ui.separator();
-    for marker in &mut markers.timespans {
+    for (i, marker) in markers.timespans.iter_mut().enumerate() {
+        ui.horizontal(|ui| {
+            egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
+            if ui
+                .selectable_label(ui_state.selected_timespan == Some(i), &marker.name)
+                .clicked()
+            {
+                ui_state.selected_timespan = Some(i);
+            }
+        });
+    }
+    if let Some(timespan_idx) = ui_state.selected_timespan {
+        ui.separator();
+        let marker = &mut markers.timespans[timespan_idx];
         ui.horizontal(|ui| {
             ui.label("begin");
             ui.add(egui::DragValue::new(&mut marker.timespan.begin));
+        });
+        ui.horizontal(|ui| {
             ui.label("end");
             ui.add(egui::DragValue::new(&mut marker.timespan.end));
         });
-        ui.horizontal(|ui| {
-            if ui.button("begin=current").clicked() {
-                marker.timespan.begin = src_info.time_pos;
-            }
-            if ui.button("end=current").clicked() {
-                marker.timespan.end = src_info.time_pos;
-            }
-        });
-        egui::color_picker::color_edit_button_rgb(ui, &mut marker.color);
-        ui.separator();
+        if ui.button("Set begin to current").clicked() {
+            marker.timespan.begin = src_info.time_pos;
+        }
+        if ui.button("Set end to current").clicked() {
+            marker.timespan.end = src_info.time_pos;
+        }
     }
 }
 

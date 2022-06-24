@@ -42,6 +42,7 @@ struct RectMarker {
 
 struct TimespanMarker {
     timespan: TimeSpan,
+    name: String,
     color: EguiFriendlyColor,
 }
 
