@@ -202,17 +202,18 @@ fn timespans_ui(
         ui.horizontal(|ui| {
             ui.label("begin");
             ui.add(egui::DragValue::new(&mut marker.timespan.begin));
+            if ui.button("Set to current").clicked() {
+                marker.timespan.begin = src_info.time_pos;
+            }
         });
         ui.horizontal(|ui| {
             ui.label("end");
             ui.add(egui::DragValue::new(&mut marker.timespan.end));
+            if ui.button("Set to current").clicked() {
+                marker.timespan.end = src_info.time_pos;
+            }
         });
-        if ui.button("Set begin to current").clicked() {
-            marker.timespan.begin = src_info.time_pos;
-        }
-        if ui.button("Set end to current").clicked() {
-            marker.timespan.end = src_info.time_pos;
-        }
+
         if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
             ui_state.rename_index = Some(timespan_idx);
         }
