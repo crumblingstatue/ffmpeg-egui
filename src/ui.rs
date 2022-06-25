@@ -187,9 +187,11 @@ fn bottom_bar_ui(
                 mpv.set_property::<Volume>(vol);
             }
         }
+        let f5 = ui.input().key_pressed(egui::Key::F5);
         if ui
-            .selectable_label(ui_state.ffmpeg_cli.open, "ffmpeg cli")
+            .selectable_label(ui_state.ffmpeg_cli.open, "ffmpeg cli (F5)")
             .clicked()
+            || f5
         {
             ui_state.ffmpeg_cli.open ^= true;
             ui_state.ffmpeg_cli.first_frame = true;
