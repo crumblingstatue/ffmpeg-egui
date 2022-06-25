@@ -1,4 +1,6 @@
-use egui_sfml::egui::{self, ScrollArea};
+use std::io::Read;
+
+use egui_sfml::egui::{self, RichText, ScrollArea};
 use rand::{thread_rng, Rng};
 use sfml::graphics::Color;
 
@@ -28,6 +30,11 @@ struct FfmpegCli {
     pub open: bool,
     pub source_string: String,
     pub first_frame: bool,
+    child: Option<std::process::Child>,
+    err_str: String,
+    exit_status: Option<i32>,
+    stdout: String,
+    stderr: String,
 }
 
 impl Default for UiState {
@@ -85,12 +92,65 @@ pub(crate) fn ui(
                     .consume_key(egui::Modifiers::CTRL, egui::Key::Enter);
                 let re = ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.source_string);
                 if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
-                    ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info);
+                    ui_state.ffmpeg_cli.exit_status = None;
+                    ui_state.ffmpeg_cli.err_str.clear();
+                    match ffmpeg::invoke(
+                        &ui_state.ffmpeg_cli.source_string,
+                        source_markers,
+                        src_info,
+                    ) {
+                        Ok(child) => ui_state.ffmpeg_cli.child = Some(child),
+                        Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
+                    }
                 }
                 if ui_state.ffmpeg_cli.first_frame {
                     re.request_focus();
                 }
                 ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
+                if !ui_state.ffmpeg_cli.err_str.is_empty() {
+                    ui.label(RichText::new(&ui_state.ffmpeg_cli.err_str).color(egui::Color32::RED));
+                }
+                if let Some(child) = &mut ui_state.ffmpeg_cli.child {
+                    ui.horizontal(|ui| {
+                        ui.label("running ffmpeg");
+                        ui.spinner();
+                    });
+                    match child.try_wait() {
+                        Ok(Some(status)) => {
+                            ui_state.ffmpeg_cli.exit_status = status.code();
+                            if let Some(mut stdout) = child.stdout.take() {
+                                let mut buf = Vec::new();
+                                stdout.read_to_end(&mut buf).unwrap();
+                                ui_state.ffmpeg_cli.stdout =
+                                    String::from_utf8_lossy(&buf).into_owned();
+                            }
+                            if let Some(mut stderr) = child.stderr.take() {
+                                let mut buf = Vec::new();
+                                stderr.read_to_end(&mut buf).unwrap();
+                                ui_state.ffmpeg_cli.stderr =
+                                    String::from_utf8_lossy(&buf).into_owned();
+                            }
+                            ui_state.ffmpeg_cli.child = None;
+                        }
+                        Ok(None) => {}
+                        Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
+                    }
+                }
+                if let Some(code) = ui_state.ffmpeg_cli.exit_status {
+                    ui.label(format!("Exit status: {}", code));
+                }
+                if !ui_state.ffmpeg_cli.stdout.is_empty() {
+                    ui.label("Standard output:");
+                    ScrollArea::vertical().show(ui, |ui| {
+                        ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stdout);
+                    });
+                }
+                if !ui_state.ffmpeg_cli.stderr.is_empty() {
+                    ui.label("Standard error:");
+                    ScrollArea::vertical().stick_to_bottom().show(ui, |ui| {
+                        ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
+                    });
+                }
             });
             ui_state.ffmpeg_cli.first_frame = false;
         }

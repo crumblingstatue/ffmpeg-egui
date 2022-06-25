@@ -1,18 +1,24 @@
-use std::{fmt::Write, process::Command};
+use std::{
+    fmt::Write,
+    process::{Child, Command, Stdio},
+};
 
 use egui_sfml::egui::TextBuffer;
 use thiserror::Error;
 
 use crate::{source, SourceMarkers};
 
-pub(crate) fn invoke(input: &str, markers: &SourceMarkers, src_info: &source::Info) {
-    match resolve(input, markers, src_info) {
-        Ok(resolved) => {
-            eprintln!("{:?}", resolved);
-            eprintln!("{:?}", Command::new("ffmpeg").args(resolved).status());
-        }
-        Err(e) => eprintln!("{:?}", e),
-    }
+pub(crate) fn invoke(
+    input: &str,
+    markers: &SourceMarkers,
+    src_info: &source::Info,
+) -> anyhow::Result<Child> {
+    let resolved = resolve(input, markers, src_info)?;
+    Ok(Command::new("ffmpeg")
+        .args(resolved)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?)
 }
 
 #[derive(Error, Debug)]
