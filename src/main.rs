@@ -159,10 +159,17 @@ fn main() {
                         match drag.status {
                             RectDragStatus::Init => {}
                             RectDragStatus::ClickedTopLeft => {
-                                source_markers.rects[drag.idx].rect.dim.x =
-                                    pos.x - source_markers.rects[drag.idx].rect.pos.x;
-                                source_markers.rects[drag.idx].rect.dim.y =
-                                    pos.y - source_markers.rects[drag.idx].rect.pos.y;
+                                let rect = &mut source_markers.rects[drag.idx].rect;
+                                rect.dim.x = pos.x - rect.pos.x;
+                                rect.dim.y = pos.y - rect.pos.y;
+                                if rect.pos.x + rect.dim.x > src_info.dim.x {
+                                    let diff = src_info.dim.x - rect.pos.x;
+                                    rect.dim.x = diff;
+                                }
+                                if rect.pos.y + rect.dim.y > src_info.dim.y {
+                                    let diff = src_info.dim.y - rect.pos.y;
+                                    rect.dim.y = diff;
+                                }
                                 interact_state.rect_drag = None;
                             }
                         }
