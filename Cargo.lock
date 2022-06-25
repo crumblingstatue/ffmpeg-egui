@@ -165,7 +165,7 @@ dependencies = [
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#9b3f6493ab71fd09f3ecb4270edaa035c6f71a07"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#8d166a3b23fc07474a2ed04a13d8464113dc56bd"
 dependencies = [
  "egui",
  "glu-sys",
@@ -525,7 +525,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "sfml"
 version = "0.16.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#eb5d938324ade26e5568ce668c5907600e0708ac"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#0bb7c96f8f63b2ca49cb9c4a943b89f70dd371a1"
 dependencies = [
  "bindgen",
  "bitflags",

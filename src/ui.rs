@@ -70,21 +70,30 @@ pub(crate) fn ui(
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            bottom_bar_ui(
-                ui,
-                src_info,
-                present,
-                mpv,
-                video_area_max_dim,
-                ui_state,
-                source_markers,
-            );
+            bottom_bar_ui(ui, src_info, present, mpv, video_area_max_dim, ui_state);
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
             right_panel_ui(ui, ui_state, source_markers, interact_state, src_info, mpv);
         });
         video_area_max_dim.x = re.response.rect.left() as VideoMag;
+        if ui_state.ffmpeg_cli.open {
+            egui::Window::new("ffmpeg").show(ctx, |ui| {
+                ui.label("ffmpeg");
+                let ctrl_enter = ui
+                    .input_mut()
+                    .consume_key(egui::Modifiers::CTRL, egui::Key::Enter);
+                let re = ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.source_string);
+                if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
+                    ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info);
+                }
+                if ui_state.ffmpeg_cli.first_frame {
+                    re.request_focus();
+                }
+                ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
+            });
+            ui_state.ffmpeg_cli.first_frame = false;
+        }
     }
 }
 
@@ -114,7 +123,6 @@ fn bottom_bar_ui(
     mpv: &mut Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
     ui_state: &mut UiState,
-    source_markers: &SourceMarkers,
 ) {
     ui.horizontal(|ui| {
         ui.label(format!(
@@ -187,22 +195,6 @@ fn bottom_bar_ui(
             ui_state.ffmpeg_cli.first_frame = true;
         }
     });
-    if ui_state.ffmpeg_cli.open {
-        ui.horizontal(|ui| {
-            ui.label("ffmpeg");
-            let re = ui.text_edit_singleline(&mut ui_state.ffmpeg_cli.source_string);
-            if ui.button("run").clicked()
-                || (re.lost_focus() && ui.input().key_pressed(egui::Key::Enter))
-            {
-                ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info);
-            }
-            if ui_state.ffmpeg_cli.first_frame {
-                re.request_focus();
-            }
-            ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
-        });
-        ui_state.ffmpeg_cli.first_frame = false;
-    }
 }
 
 fn timespans_ui(
