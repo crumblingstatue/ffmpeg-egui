@@ -19,6 +19,12 @@ pub(crate) fn invoke(input: &str, markers: &SourceMarkers, src_info: &source::In
 enum ResolveError {
     #[error("{0}")]
     Parse(#[from] ParseError),
+    #[error("{0}")]
+    ShellParseError(#[from] shell_words::ParseError),
+    #[error("Mising item: {name}")]
+    MissingItem { name: String },
+    #[error("Format error: {0}")]
+    FmtError(#[from] std::fmt::Error),
 }
 
 fn resolve(
@@ -26,13 +32,13 @@ fn resolve(
     markers: &SourceMarkers,
     src_info: &source::Info,
 ) -> Result<Vec<String>, ResolveError> {
-    let words = shell_words::split(input).unwrap();
+    let words = shell_words::split(input)?;
     let mut out = Vec::new();
     for word in words {
         dbg!(&word);
         let tokens = tokenize_word(&word)?;
         dbg!(&tokens);
-        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info));
+        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info)?);
     }
     Ok(out)
 }
@@ -46,7 +52,7 @@ fn resolve_word_tokens(
     tokens: &[Token],
     markers: &SourceMarkers,
     src_info: &source::Info,
-) -> Vec<String> {
+) -> Result<Vec<String>, ResolveError> {
     let mut resolved = Vec::new();
     let mut current_string = String::new();
     for tok in tokens {
@@ -57,20 +63,23 @@ fn resolve_word_tokens(
                     .rects
                     .iter()
                     .find(|marker| &marker.name == name)
-                    .unwrap();
+                    .ok_or_else(|| ResolveError::MissingItem {
+                        name: name.to_string(),
+                    })?;
                 write!(
                     &mut current_string,
                     "{}:{}:{}:{}",
                     marker.rect.dim.x, marker.rect.dim.y, marker.rect.pos.x, marker.rect.pos.y
-                )
-                .unwrap();
+                )?;
             }
             Token::SubsTimespan(name) => {
                 let marker = markers
                     .timespans
                     .iter()
                     .find(|marker| &marker.name == name)
-                    .unwrap();
+                    .ok_or_else(|| ResolveError::MissingItem {
+                        name: name.to_string(),
+                    })?;
                 resolved.push("-ss".into());
                 resolved.push(marker.timespan.begin.to_string());
                 resolved.push("-t".into());
@@ -82,7 +91,7 @@ fn resolve_word_tokens(
     if !current_string.is_empty() {
         resolved.push(current_string.take());
     }
-    resolved
+    Ok(resolved)
 }
 
 enum Status {
@@ -150,7 +159,7 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                     state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::TimeSpan;
                 }
-                _ => panic!("Invalid token: {}", byte),
+                _ => return Err(ParseError::UnexpectedToken),
             },
             Status::SubsCategAccess => {
                 if byte == b'.' {
