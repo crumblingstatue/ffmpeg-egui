@@ -329,6 +329,12 @@ fn timespans_ui(
                 mpv.set_property::<TimePos>(marker.timespan.end);
             }
             ui.end_row();
+            ui.label("Duration");
+            let dur_s = format!("{:.03}", marker.timespan.end - marker.timespan.begin);
+            ui.label(&dur_s);
+            if ui.button("copy").clicked() {
+                ui.output().copied_text = dur_s;
+            }
         });
 
         if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
