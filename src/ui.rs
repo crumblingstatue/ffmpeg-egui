@@ -218,7 +218,7 @@ fn timespans_ui(
                 begin: src_info.time_pos,
                 end: src_info.time_pos,
             },
-            name: format!("timespan{}", markers.timespans.len()),
+            name: format!("{}", markers.timespans.len()),
             color: random_color(),
         });
     }
@@ -317,7 +317,7 @@ fn rects_ui(
     if ui.button("Add").clicked() {
         markers.rects.push(RectMarker {
             rect: VideoRect::new(0, 0, 0, 0),
-            name: format!("rect{}", markers.rects.len()),
+            name: format!("{}", markers.rects.len()),
             color: random_color(),
         });
     }
