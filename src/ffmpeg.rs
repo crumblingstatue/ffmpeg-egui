@@ -35,9 +35,7 @@ fn resolve(
     let words = shell_words::split(input)?;
     let mut out = Vec::new();
     for word in words {
-        dbg!(&word);
         let tokens = tokenize_word(&word)?;
-        dbg!(&tokens);
         out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info)?);
     }
     Ok(out)
