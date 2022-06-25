@@ -325,6 +325,9 @@ fn timespans_ui(
             if ui.button("=").on_hover_text("Set to current").clicked() {
                 marker.timespan.end = src_info.time_pos;
             }
+            if ui.button(">").on_hover_text("Set to end").clicked() {
+                marker.timespan.end = src_info.duration;
+            }
             if ui.button("▶").on_hover_text("Seek here").clicked() {
                 mpv.set_property::<TimePos>(marker.timespan.end);
             }
