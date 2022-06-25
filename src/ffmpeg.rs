@@ -1,12 +1,18 @@
-use std::fmt::Write;
+use std::{fmt::Write, process::Command};
 
+use egui_sfml::egui::TextBuffer;
 use thiserror::Error;
 
 use crate::{source, SourceMarkers};
 
 pub(crate) fn invoke(input: &str, markers: &SourceMarkers, src_info: &source::Info) {
-    let resolved = resolve(input, markers, src_info);
-    eprintln!("{:?}", resolved);
+    match resolve(input, markers, src_info) {
+        Ok(resolved) => {
+            eprintln!("{:?}", resolved);
+            eprintln!("{:?}", Command::new("ffmpeg").args(resolved).status());
+        }
+        Err(e) => eprintln!("{:?}", e),
+    }
 }
 
 #[derive(Error, Debug)]
@@ -19,20 +25,41 @@ fn resolve(
     input: &str,
     markers: &SourceMarkers,
     src_info: &source::Info,
-) -> Result<String, ResolveError> {
-    let tokens = tokenize(input)?;
-    let mut out = String::new();
+) -> Result<Vec<String>, ResolveError> {
+    let words = shell_words::split(input).unwrap();
+    let mut out = Vec::new();
+    for word in words {
+        dbg!(&word);
+        let tokens = tokenize_word(&word)?;
+        dbg!(&tokens);
+        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info));
+    }
+    Ok(out)
+}
+
+/// Takes a token stream of word tokens, and turns it into one more more resolved strings
+///
+/// Example:
+/// rect turns into: ["w:h:x:y"], single token
+/// timespan turns into ["-ss", "begin", "-t", "duration"], 4 tokens
+fn resolve_word_tokens(
+    tokens: &[Token],
+    markers: &SourceMarkers,
+    src_info: &source::Info,
+) -> Vec<String> {
+    let mut resolved = Vec::new();
+    let mut current_string = String::new();
     for tok in tokens {
         match tok {
-            Token::Raw(raw) => out.push_str(raw),
+            Token::Raw(raw) => current_string.push_str(raw),
             Token::SubsRect(name) => {
                 let marker = markers
                     .rects
                     .iter()
-                    .find(|marker| marker.name == name)
+                    .find(|marker| &marker.name == name)
                     .unwrap();
                 write!(
-                    &mut out,
+                    &mut current_string,
                     "{}:{}:{}:{}",
                     marker.rect.dim.x, marker.rect.dim.y, marker.rect.pos.x, marker.rect.pos.y
                 )
@@ -42,20 +69,20 @@ fn resolve(
                 let marker = markers
                     .timespans
                     .iter()
-                    .find(|marker| marker.name == name)
+                    .find(|marker| &marker.name == name)
                     .unwrap();
-                write!(
-                    &mut out,
-                    "-ss {} -t {}",
-                    marker.timespan.begin,
-                    marker.timespan.end - marker.timespan.begin
-                )
-                .unwrap();
+                resolved.push("-ss".into());
+                resolved.push(marker.timespan.begin.to_string());
+                resolved.push("-t".into());
+                resolved.push((marker.timespan.end - marker.timespan.begin).to_string());
             }
-            Token::SubsInput => out.push_str(&src_info.path),
+            Token::SubsInput => current_string.push_str(&src_info.path),
         }
     }
-    Ok(out)
+    if !current_string.is_empty() {
+        resolved.push(current_string.take());
+    }
+    resolved
 }
 
 enum Status {
@@ -76,6 +103,7 @@ enum SubsType {
 struct ParseState {
     status: Status,
     subs_type: SubsType,
+    token_begin: usize,
 }
 
 impl Default for ParseState {
@@ -83,6 +111,7 @@ impl Default for ParseState {
         Self {
             status: Status::Init,
             subs_type: SubsType::Rect,
+            token_begin: 0,
         }
     }
 }
@@ -93,63 +122,73 @@ enum ParseError {
     UnexpectedToken,
 }
 
-fn tokenize(input: &str) -> Result<Vec<Token>, ParseError> {
-    let mut tokens = Vec::new();
+fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
     let mut state = ParseState::default();
-    let mut tok_begin = 0;
-    for (i, byte) in input.bytes().enumerate() {
+    let mut tokens = Vec::new();
+    for (i, byte) in word.bytes().enumerate() {
         match state.status {
             Status::Init => {
-                if let b'{' = byte {
-                    let slice = &input[tok_begin..i];
-                    if !slice.is_empty() {
-                        tokens.push(Token::Raw(slice));
+                if byte == b'{' {
+                    let raw = &word[state.token_begin..i];
+                    if !raw.is_empty() {
+                        tokens.push(Token::Raw(raw));
                     }
                     state.status = Status::SubsBegin;
                 }
             }
             Status::SubsBegin => match byte {
+                b'i' => {
+                    state.status = Status::SubsMeat;
+                    state.subs_type = SubsType::Input;
+                    state.token_begin = i + 1;
+                }
                 b'r' => {
+                    state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::Rect;
-                    state.status = Status::SubsCategAccess
                 }
                 b't' => {
+                    state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::TimeSpan;
-                    state.status = Status::SubsCategAccess
                 }
-                b'i' => {
-                    state.subs_type = SubsType::Input;
-                    state.status = Status::SubsMeat;
-                }
-                _ => return Err(ParseError::UnexpectedToken),
+                _ => panic!("Invalid token: {}", byte),
             },
             Status::SubsCategAccess => {
-                if byte != b'.' {
-                    return Err(ParseError::UnexpectedToken);
+                if byte == b'.' {
+                    state.token_begin = i + 1;
+                    state.status = Status::SubsMeat;
                 }
-                tok_begin = i + 1;
-                state.status = Status::SubsMeat;
             }
             Status::SubsMeat => {
                 if byte == b'}' {
-                    let slice = &input[tok_begin..i];
-                    if !slice.is_empty() {
-                        match state.subs_type {
-                            SubsType::Rect => tokens.push(Token::SubsRect(slice)),
-                            SubsType::TimeSpan => tokens.push(Token::SubsTimespan(slice)),
-                            SubsType::Input => tokens.push(Token::SubsInput),
-                        }
-                    }
-                    tok_begin = i + 1;
+                    let raw = &word[state.token_begin..i];
+                    let tok = match state.subs_type {
+                        SubsType::Rect => Token::SubsRect(raw),
+                        SubsType::TimeSpan => Token::SubsTimespan(raw),
+                        SubsType::Input => Token::SubsInput,
+                    };
+                    tokens.push(tok);
+                    state.token_begin = i + 1;
                     state.status = Status::Init;
                 }
             }
         }
     }
+    // Do end-of-input handling
+    match state.status {
+        Status::Init => {
+            let substr = &word[state.token_begin..];
+            if !substr.is_empty() {
+                tokens.push(Token::Raw(substr));
+            }
+        }
+        Status::SubsBegin => todo!(),
+        Status::SubsCategAccess => todo!(),
+        Status::SubsMeat => todo!(),
+    }
     Ok(tokens)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Token<'a> {
     Raw(&'a str),
     SubsRect(&'a str),
@@ -160,7 +199,7 @@ enum Token<'a> {
 #[test]
 fn test_resolve() {
     use crate::coords::{VideoDim, VideoPos, VideoRect};
-    use crate::{RectMarker, SourceMarkers, TimeSpan};
+    use crate::{RectMarker, SourceMarkers, TimeSpan, TimespanMarker};
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {
             rect: VideoRect {
@@ -187,7 +226,15 @@ fn test_resolve() {
         path: "/home/my_video.mp4".into(),
     };
     assert_eq!(
-        &resolve("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
-        "-i /home/my_video.mp4 -ss 10 -t 10 crop=100:100:0:0"
+        resolve("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
+        vec![
+            "-i".to_string(),
+            "/home/my_video.mp4".to_string(),
+            "-ss".to_string(),
+            "10".to_string(),
+            "-t".to_string(),
+            "10".to_string(),
+            "crop=100:100:0:0".to_string()
+        ]
     );
 }
