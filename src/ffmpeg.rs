@@ -13,9 +13,12 @@ pub(crate) fn invoke(
     markers: &SourceMarkers,
     src_info: &source::Info,
 ) -> anyhow::Result<Child> {
+    let input = input.trim_start_matches("ffmpeg");
     let resolved = resolve(input, markers, src_info)?;
     Ok(Command::new("ffmpeg")
         .args(resolved)
+        // Always overwrite file, otherwise it just hangs because it can't ask y/n question
+        .arg("-y")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?)
