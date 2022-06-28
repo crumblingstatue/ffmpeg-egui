@@ -107,6 +107,8 @@ fn ffmpeg_cli_ui(
     if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
         ui_state.ffmpeg_cli.exit_status = None;
         ui_state.ffmpeg_cli.err_str.clear();
+        ui_state.ffmpeg_cli.stderr.clear();
+        ui_state.ffmpeg_cli.stdout.clear();
         match ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info) {
             Ok(child) => ui_state.ffmpeg_cli.child = Some(child),
             Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
