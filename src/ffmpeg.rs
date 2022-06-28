@@ -133,6 +133,8 @@ impl Default for ParseState {
 enum ParseError {
     #[error("Unexpected token")]
     UnexpectedToken,
+    #[error("Unexpected end")]
+    UnexpectedEnd,
 }
 
 fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
@@ -194,9 +196,10 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                 tokens.push(Token::Raw(substr));
             }
         }
-        Status::SubsBegin => todo!(),
-        Status::SubsCategAccess => todo!(),
-        Status::SubsMeat => todo!(),
+
+        Status::SubsBegin | Status::SubsCategAccess | Status::SubsMeat => {
+            return Err(ParseError::UnexpectedEnd)
+        }
     }
     Ok(tokens)
 }
