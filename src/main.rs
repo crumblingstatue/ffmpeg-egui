@@ -1,5 +1,9 @@
-#![feature(array_chunks)]
-#![feature(generic_const_exprs, generic_associated_types, lint_reasons)]
+#![feature(
+    array_chunks,
+    generic_const_exprs,
+    generic_associated_types,
+    lint_reasons
+)]
 
 mod coords;
 mod ffmpeg;
