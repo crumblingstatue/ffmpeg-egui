@@ -118,13 +118,13 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn get_property<P: Property>(&self) -> Option<P::Type<'_>> {
-        let mut out: MaybeUninit<<P::Type<'_> as PropertyType>::CType> = MaybeUninit::uninit();
+    pub fn get_property<P: Property>(&self) -> Option<P::Type> {
+        let mut out: MaybeUninit<<P::Type as PropertyType>::CType> = MaybeUninit::uninit();
         unsafe {
             if ffi::mpv_get_property(
                 self.mpv_handle,
                 P::NAME.as_bytes().as_ptr() as _,
-                <P::Type<'_> as PropertyType>::CType::FORMAT,
+                <P::Type as PropertyType>::CType::FORMAT,
                 out.as_mut_ptr() as _,
             ) < 0
             {
@@ -137,13 +137,13 @@ impl Mpv {
     }
 
     /// See [`properties`] for the properties you can use.
-    pub fn set_property<P: PropertyWrite>(&self, value: P::Type<'_>) -> bool {
+    pub fn set_property<P: PropertyWrite>(&self, value: P::Type) -> bool {
         let mut ret = false;
         value.with_c(|mut cvalue| unsafe {
             ret = ffi::mpv_set_property(
                 self.mpv_handle,
                 P::NAME.as_bytes().as_ptr() as _,
-                <P::Type<'_> as PropertyType>::CType::FORMAT,
+                <P::Type as PropertyType>::CType::FORMAT,
                 (&mut cvalue) as *mut _ as *mut c_void,
             ) >= 0
         });

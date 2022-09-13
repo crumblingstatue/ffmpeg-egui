@@ -6,7 +6,7 @@ use std::{
 /// # Safety
 /// NAME must be null terminated
 pub unsafe trait Property {
-    type Type<'a>: PropertyType;
+    type Type: PropertyType;
     const NAME: &'static str;
 }
 
