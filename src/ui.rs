@@ -100,9 +100,7 @@ fn ffmpeg_cli_ui(
     src_info: &source::Info,
 ) {
     ui.label("ffmpeg");
-    let ctrl_enter = ui
-        .input_mut()
-        .consume_key(egui::Modifiers::CTRL, egui::Key::Enter);
+    let ctrl_enter = ui.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, egui::Key::Enter));
     let re = ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.source_string);
     if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
         ui_state.ffmpeg_cli.exit_status = None;
@@ -156,7 +154,7 @@ fn ffmpeg_cli_ui(
     }
     if !ui_state.ffmpeg_cli.stderr.is_empty() {
         ui.label("Standard error:");
-        ScrollArea::vertical().stick_to_bottom().show(ui, |ui| {
+        ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
             ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
         });
     }
@@ -252,7 +250,7 @@ fn bottom_bar_ui(
                 mpv.set_property::<Volume>(vol);
             }
         }
-        let f5 = ui.input().key_pressed(egui::Key::F5);
+        let f5 = ui.input(|inp| inp.key_pressed(egui::Key::F5));
         if ui
             .selectable_label(ui_state.ffmpeg_cli.open, "ffmpeg cli (F5)")
             .clicked()
@@ -341,11 +339,11 @@ fn timespans_ui(
             let dur_s = format!("{:.03}", marker.timespan.end - marker.timespan.begin);
             ui.label(&dur_s);
             if ui.button("copy").clicked() {
-                ui.output().copied_text = dur_s;
+                ui.output_mut(|o| o.copied_text = dur_s);
             }
         });
 
-        if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
+        if ui.button("Rename (F2)").clicked() || ui.input(|inp| inp.key_pressed(egui::Key::F2)) {
             ui_state.rename_index = Some(timespan_idx);
         }
         if ui.button("A-B loop").clicked() {
@@ -441,7 +439,8 @@ fn rects_ui(
             {
                 interact_state.rect_drag = Some(RectDrag::new(idx));
             }
-            if ui.button("Rename (F2)").clicked() || ui.input().key_pressed(egui::Key::F2) {
+            if ui.button("Rename (F2)").clicked() || ui.input(|inp| inp.key_pressed(egui::Key::F2))
+            {
                 ui_state.rename_index = Some(idx);
             }
         }

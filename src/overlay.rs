@@ -58,7 +58,7 @@ pub(crate) fn draw_overlay(
         let pos = marker.rect.pos.to_present(src_info.dim, video_present_dim);
         rs.set_position((pos.x.into(), pos.y.into()));
         let mut fill_c = marker.color.to_sfml();
-        *fill_c.alpha_mut() = 180;
+        fill_c.a = 180;
         rs.set_fill_color(fill_c);
         rw.draw(&rs);
     }

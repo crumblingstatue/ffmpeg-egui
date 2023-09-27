@@ -129,7 +129,7 @@ fn main() {
                     sf_egui.context(),
                 ),
                 Event::Resized { width, height } => {
-                    let view = View::from_rect(&Rect::new(0., 0., width as f32, height as f32));
+                    let view = View::from_rect(Rect::new(0., 0., width as f32, height as f32));
                     rw.set_view(&view);
                 }
                 Event::MouseButtonPressed {
@@ -193,18 +193,20 @@ fn main() {
                 }
             }
         }
-        sf_egui.do_frame(|ctx| {
-            ui::ui(
-                ctx,
-                &mut mpv,
-                &mut video_area_max_dim,
-                &mut present,
-                &mut source_markers,
-                &src_info,
-                &mut interact_state,
-                &mut ui_state,
-            )
-        });
+        sf_egui
+            .do_frame(|ctx| {
+                ui::ui(
+                    ctx,
+                    &mut mpv,
+                    &mut video_area_max_dim,
+                    &mut present,
+                    &mut source_markers,
+                    &src_info,
+                    &mut interact_state,
+                    &mut ui_state,
+                )
+            })
+            .unwrap();
         pos_string.truncate(prefix.len());
         write!(&mut pos_string, "{}, {}", src_mouse_pos.x, src_mouse_pos.y,).unwrap();
         rw.clear(Color::BLACK);
