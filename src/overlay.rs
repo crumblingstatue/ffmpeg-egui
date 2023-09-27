@@ -20,7 +20,7 @@ type VideoRect = Rect<VideoMag>;
 
 pub fn handle_event(
     event: &Event,
-    mpv: &mut Mpv,
+    mpv: &Mpv,
     src_info: &source::Info,
     video_area_max_dim: VideoDim<Present>,
 ) {

@@ -67,7 +67,7 @@ impl Tab {
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn ui(
     ctx: &egui::Context,
-    mpv: &mut Mpv,
+    mpv: &Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
     present: &mut Present,
     source_markers: &mut SourceMarkers,
@@ -96,7 +96,7 @@ pub(crate) fn ui(
 fn ffmpeg_cli_ui(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
-    source_markers: &mut SourceMarkers,
+    source_markers: &SourceMarkers,
     src_info: &source::Info,
 ) {
     ui.label("ffmpeg");
@@ -166,7 +166,7 @@ fn right_panel_ui(
     source_markers: &mut SourceMarkers,
     interact_state: &mut InteractState,
     src_info: &source::Info,
-    mpv: &mut Mpv,
+    mpv: &Mpv,
 ) {
     ui.horizontal(|ui| {
         ui.selectable_value(&mut ui_state.tab, Tab::Rects, Tab::Rects.name());
@@ -183,8 +183,8 @@ fn bottom_bar_ui(
     ui: &mut egui::Ui,
     src_info: &source::Info,
     present: &mut Present,
-    mpv: &mut Mpv,
-    video_area_max_dim: &mut VideoDim<coords::Present>,
+    mpv: &Mpv,
+    video_area_max_dim: &VideoDim<coords::Present>,
     ui_state: &mut UiState,
 ) {
     ui.horizontal(|ui| {
@@ -267,7 +267,7 @@ fn timespans_ui(
     markers: &mut SourceMarkers,
     src_info: &source::Info,
     ui_state: &mut UiState,
-    mpv: &mut Mpv,
+    mpv: &Mpv,
 ) {
     if ui.button("Add").clicked() {
         markers.timespans.push(TimespanMarker {

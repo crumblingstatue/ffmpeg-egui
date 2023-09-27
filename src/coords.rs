@@ -13,12 +13,7 @@ pub struct VideoVector<Kind, Space> {
 
 impl<Kind, Space> Clone for VideoVector<Kind, Space> {
     fn clone(&self) -> Self {
-        Self {
-            x: self.x,
-            y: self.y,
-            kind: PhantomData,
-            space: PhantomData,
-        }
+        *self
     }
 }
 impl<Kind, Space> Copy for VideoVector<Kind, Space> {}
