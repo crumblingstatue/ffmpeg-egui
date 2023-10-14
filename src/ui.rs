@@ -93,6 +93,12 @@ pub(crate) fn ui(
     }
 }
 
+const FFMPEG_HELP_TEXT: &str = "\
+{i}: Currently opened media file
+{r.x} Rectangle 'x'
+{t.x} Timespan 'x'
+";
+
 fn ffmpeg_cli_ui(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
@@ -115,7 +121,7 @@ fn ffmpeg_cli_ui(
     if ui_state.ffmpeg_cli.first_frame {
         re.request_focus();
     }
-    ui.label("help: {input}, {rect}, {t.x}");
+    ui.label(FFMPEG_HELP_TEXT);
     if !ui_state.ffmpeg_cli.err_str.is_empty() {
         ui.label(RichText::new(&ui_state.ffmpeg_cli.err_str).color(egui::Color32::RED));
     }
