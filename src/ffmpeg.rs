@@ -13,7 +13,7 @@ pub(crate) fn invoke(
     markers: &SourceMarkers,
     src_info: &source::Info,
 ) -> anyhow::Result<Child> {
-    let resolved = resolve(input, markers, src_info)?;
+    let resolved = resolve_arguments(input, markers, src_info)?;
     Ok(Command::new("ffmpeg")
         .args(resolved)
         // Always overwrite file, otherwise it just hangs because it can't ask y/n question
@@ -24,7 +24,7 @@ pub(crate) fn invoke(
 }
 
 #[derive(Error, Debug)]
-enum ResolveError {
+pub enum ResolveError {
     #[error("{0}")]
     Parse(#[from] ParseError),
     #[error("{0}")]
@@ -35,7 +35,7 @@ enum ResolveError {
     FmtError(#[from] std::fmt::Error),
 }
 
-fn resolve(
+pub fn resolve_arguments(
     input: &str,
     markers: &SourceMarkers,
     src_info: &source::Info,
@@ -132,7 +132,7 @@ impl Default for ParseState {
 }
 
 #[derive(Error, Debug)]
-enum ParseError {
+pub enum ParseError {
     #[error("Unexpected token")]
     UnexpectedToken,
     #[error("Unexpected end")]
@@ -244,7 +244,7 @@ fn test_resolve() {
         path: "/home/my_video.mp4".into(),
     };
     assert_eq!(
-        resolve("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
+        resolve_arguments("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
         vec![
             "-i".to_string(),
             "/home/my_video.mp4".to_string(),

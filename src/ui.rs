@@ -6,7 +6,7 @@ use sfml::graphics::Color;
 
 use crate::{
     coords::{self, VideoDim, VideoMag, VideoRect},
-    ffmpeg,
+    ffmpeg::{self, resolve_arguments},
     mpv::{
         properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
         Mpv,
@@ -110,14 +110,26 @@ fn ffmpeg_cli_ui(
         egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.source_string)
             .hint_text("arguments to ffmpeg"),
     );
-    if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
-        ui_state.ffmpeg_cli.exit_status = None;
-        ui_state.ffmpeg_cli.err_str.clear();
-        ui_state.ffmpeg_cli.stderr.clear();
-        ui_state.ffmpeg_cli.stdout.clear();
-        match ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info) {
-            Ok(child) => ui_state.ffmpeg_cli.child = Some(child),
-            Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
+    match resolve_arguments(&ui_state.ffmpeg_cli.source_string, source_markers, src_info) {
+        Ok(args) => {
+            let mut args_str = String::new();
+            for (i, arg) in args.iter().enumerate() {
+                args_str.push_str(&format!("{i}: `{arg}`\n"));
+            }
+            ui.label(RichText::new(args_str).color(egui::Color32::GOLD));
+            if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
+                ui_state.ffmpeg_cli.exit_status = None;
+                ui_state.ffmpeg_cli.err_str.clear();
+                ui_state.ffmpeg_cli.stderr.clear();
+                ui_state.ffmpeg_cli.stdout.clear();
+                match ffmpeg::invoke(&ui_state.ffmpeg_cli.source_string, source_markers, src_info) {
+                    Ok(child) => ui_state.ffmpeg_cli.child = Some(child),
+                    Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
+                }
+            }
+        }
+        Err(e) => {
+            ui.label(RichText::new(e.to_string()).color(egui::Color32::RED));
         }
     }
     if ui_state.ffmpeg_cli.first_frame {
