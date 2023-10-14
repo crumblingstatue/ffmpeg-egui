@@ -17,7 +17,7 @@ use std::fmt::Write;
 use ui::{EguiFriendlyColor, UiState};
 
 use mpv::{
-    commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay},
+    commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
     properties::{
         AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos, Volume,
         Width,
@@ -264,6 +264,10 @@ fn handle_keypress(
         Key::P => mpv.command_async(PlaylistPlay::Current),
         Key::S => mpv.command_async(PlaylistPlay::None),
         Key::R => mpv.command_async(PlaylistPlay::Index(0)),
+        Key::Left => mpv.command_async(SeekRelSeconds(-10.)),
+        Key::Right => mpv.command_async(SeekRelSeconds(10.)),
+        Key::Up => mpv.command_async(SeekRelSeconds(-30.)),
+        Key::Down => mpv.command_async(SeekRelSeconds(30.)),
         _ => {}
     }
 }

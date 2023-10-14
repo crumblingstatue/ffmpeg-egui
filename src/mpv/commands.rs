@@ -63,3 +63,14 @@ unsafe impl Command for PlaylistPlay {
         [CString::new(s).unwrap()]
     }
 }
+
+pub struct SeekRelSeconds(pub f32);
+
+unsafe impl Command for SeekRelSeconds {
+    const NAME: &'static str = "seek\0";
+    const ARGS_COUNT: usize = 1;
+
+    fn args(&self) -> [CString; Self::ARGS_COUNT] {
+        [CString::new(self.0.to_string()).unwrap()]
+    }
+}
