@@ -105,9 +105,11 @@ fn ffmpeg_cli_ui(
     source_markers: &SourceMarkers,
     src_info: &source::Info,
 ) {
-    ui.label("ffmpeg");
     let ctrl_enter = ui.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, egui::Key::Enter));
-    let re = ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.source_string);
+    let re = ui.add(
+        egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.source_string)
+            .hint_text("arguments to ffmpeg"),
+    );
     if ui.button("run (ctrl+enter)").clicked() || ctrl_enter {
         ui_state.ffmpeg_cli.exit_status = None;
         ui_state.ffmpeg_cli.err_str.clear();
