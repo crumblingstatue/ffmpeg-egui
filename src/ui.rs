@@ -115,7 +115,7 @@ fn ffmpeg_cli_ui(
     if ui_state.ffmpeg_cli.first_frame {
         re.request_focus();
     }
-    ui.label("help: {input}, {rect}, {timespan.begin}, {timespan.duration}");
+    ui.label("help: {input}, {rect}, {t.x}");
     if !ui_state.ffmpeg_cli.err_str.is_empty() {
         ui.label(RichText::new(&ui_state.ffmpeg_cli.err_str).color(egui::Color32::RED));
     }
