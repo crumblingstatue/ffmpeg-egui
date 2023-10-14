@@ -10,6 +10,7 @@ anyhow = "1.0.58"
 egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git" }
 libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", features = ["use-bindgen"] }
 rand = "0.8.5"
+rfd = "0.12.0"
 sfml = { git = "https://github.com/jeremyletang/rust-sfml.git" }
 shell-words = "1.1.0"
 thiserror = "1.0.31"

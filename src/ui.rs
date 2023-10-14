@@ -122,6 +122,15 @@ fn ffmpeg_cli_ui(
     if let Some(child) = &mut ui_state.ffmpeg_cli.child {
         ui.horizontal(|ui| {
             ui.label("running ffmpeg");
+            if ui.button("kill").clicked() {
+                if let Err(e) = child.kill() {
+                    rfd::MessageDialog::new()
+                        .set_level(rfd::MessageLevel::Error)
+                        .set_title("Process kill error")
+                        .set_description(e.to_string())
+                        .show();
+                }
+            }
             ui.spinner();
         });
         match child.try_wait() {
