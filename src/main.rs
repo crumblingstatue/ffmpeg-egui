@@ -1,4 +1,4 @@
-#![feature(array_chunks, generic_const_exprs, lint_reasons)]
+#![feature(array_chunks, generic_const_exprs, lint_reasons, let_chains)]
 
 mod coords;
 mod ffmpeg;
@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
+use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect, VideoVector};
 use egui_sfml::{egui, SfEgui};
 use overlay::draw_overlay;
 use present::Present;
@@ -26,7 +26,8 @@ use mpv::{
     Mpv,
 };
 use sfml::{
-    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, View},
+    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View},
+    system::Vector2f,
     window::{mouse, ContextSettings, Event, Key, Style},
 };
 
@@ -70,6 +71,9 @@ enum RectDragStatus {
 #[derive(Default)]
 struct InteractState {
     rect_drag: Option<RectDrag>,
+    pan_cursor_origin: Option<VideoPos<Src>>,
+    pan_image_original_pos: Option<Vector2f>,
+    pan_pos: Vector2f,
 }
 
 struct TimeSpan {
@@ -152,6 +156,9 @@ fn main() {
                             }
                             RectDragStatus::ClickedTopLeft => {}
                         }
+                    } else {
+                        interact_state.pan_cursor_origin = Some(pos);
+                        interact_state.pan_image_original_pos = Some(interact_state.pan_pos);
                     }
                 }
                 Event::MouseButtonReleased {
@@ -179,6 +186,7 @@ fn main() {
                             }
                         }
                     }
+                    interact_state.pan_cursor_origin = None;
                 }
                 _ => {}
             }
@@ -198,6 +206,14 @@ fn main() {
                         src_mouse_pos.y - source_markers.rects[drag.idx].rect.pos.y;
                 }
             }
+        }
+        if let Some(orig_cur) = &interact_state.pan_cursor_origin
+            && let Some(orig_img) = &interact_state.pan_image_original_pos
+        {
+            let diff_x = (orig_cur.x as i16 - src_mouse_pos.x as i16) as f32;
+            let diff_y = (orig_cur.y as i16 - src_mouse_pos.y as i16) as f32;
+            interact_state.pan_pos.x = orig_img.x + diff_x;
+            interact_state.pan_pos.y = orig_img.y + diff_y;
         }
         sf_egui
             .do_frame(|ctx| {
@@ -227,7 +243,9 @@ fn main() {
                 0,
             );
         }
-        rw.draw(&Sprite::with_texture(&present.texture));
+        let mut s = Sprite::with_texture(&present.texture);
+        s.set_position(interact_state.pan_pos);
+        rw.draw(&s);
         if overlay_show {
             draw_overlay(
                 &mut rw,
