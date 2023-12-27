@@ -78,8 +78,14 @@ struct TimeSpan {
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("Need path to media file");
     let mut mpv = Mpv::new().unwrap();
+    let path = match std::env::args().nth(1) {
+        Some(path) => path,
+        None => match rfd::FileDialog::new().pick_file() {
+            Some(path) => path.to_string_lossy().into_owned(),
+            None => return,
+        },
+    };
     mpv.set_property::<AudioPitchCorrection>(false);
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
