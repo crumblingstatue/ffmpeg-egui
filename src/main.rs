@@ -146,7 +146,10 @@ fn main() {
                     button: mouse::Button::Left,
                     x,
                     y,
-                } => {
+                } => 'block: {
+                    if sf_egui.context().wants_pointer_input() {
+                        break 'block;
+                    }
                     let pos = VideoPos::from_present(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &mut interact_state.rect_drag {
                         match drag.status {
