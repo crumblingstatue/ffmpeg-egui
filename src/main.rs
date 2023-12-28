@@ -5,6 +5,7 @@ mod ffmpeg;
 mod mpv;
 mod overlay;
 mod present;
+mod sfml_integ;
 mod source;
 mod time_fmt;
 mod ui;
@@ -13,6 +14,7 @@ use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
 use egui_sfml::{egui, SfEgui};
 use overlay::draw_overlay;
 use present::Present;
+use sfml_integ::VideoPosSfExt as _;
 use std::fmt::Write;
 use ui::{EguiFriendlyColor, UiState};
 
@@ -27,7 +29,6 @@ use mpv::{
 };
 use sfml::{
     graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View},
-    system::Vector2f,
     window::{mouse, ContextSettings, Event, Key, Style},
 };
 
@@ -68,12 +69,22 @@ enum RectDragStatus {
     ClickedTopLeft,
 }
 
-#[derive(Default)]
 struct InteractState {
     rect_drag: Option<RectDrag>,
     pan_cursor_origin: Option<VideoPos<Src>>,
-    pan_image_original_pos: Option<Vector2f>,
-    pan_pos: Vector2f,
+    pan_image_original_pos: Option<VideoPos<Src>>,
+    pan_pos: VideoPos<Src>,
+}
+
+impl Default for InteractState {
+    fn default() -> Self {
+        Self {
+            rect_drag: Default::default(),
+            pan_cursor_origin: Default::default(),
+            pan_image_original_pos: Default::default(),
+            pan_pos: VideoPos::new(0, 0),
+        }
+    }
 }
 
 struct TimeSpan {
@@ -213,8 +224,8 @@ fn main() {
         if let Some(orig_cur) = &interact_state.pan_cursor_origin
             && let Some(orig_img) = &interact_state.pan_image_original_pos
         {
-            let diff_x = (orig_cur.x - src_mouse_pos.x) as f32;
-            let diff_y = (orig_cur.y - src_mouse_pos.y) as f32;
+            let diff_x = orig_cur.x - src_mouse_pos.x;
+            let diff_y = orig_cur.y - src_mouse_pos.y;
             interact_state.pan_pos.x = orig_img.x - diff_x;
             interact_state.pan_pos.y = orig_img.y - diff_y;
         }
@@ -247,7 +258,7 @@ fn main() {
             );
         }
         let mut s = Sprite::with_texture(&present.texture);
-        s.set_position(interact_state.pan_pos);
+        s.set_position(interact_state.pan_pos.to_sf());
         rw.draw(&s);
         if overlay_show {
             draw_overlay(
