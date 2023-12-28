@@ -1,15 +1,5 @@
 #![feature(array_chunks, generic_const_exprs, lint_reasons, let_chains)]
 
-mod coords;
-mod ffmpeg;
-mod mpv;
-mod overlay;
-mod present;
-mod sfml_integ;
-mod source;
-mod time_fmt;
-mod ui;
-
 use {
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{egui, SfEgui},
@@ -32,6 +22,16 @@ use {
     std::fmt::Write,
     ui::{EguiFriendlyColor, UiState},
 };
+
+mod coords;
+mod ffmpeg;
+mod mpv;
+mod overlay;
+mod present;
+mod sfml_integ;
+mod source;
+mod time_fmt;
+mod ui;
 
 struct RectDrag {
     idx: usize,

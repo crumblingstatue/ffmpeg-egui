@@ -1,8 +1,3 @@
-mod command;
-pub mod commands;
-pub mod properties;
-pub mod property;
-
 use {
     self::{
         command::Command,
@@ -15,6 +10,11 @@ use {
         os::raw::{c_int, c_void},
     },
 };
+
+mod command;
+pub mod commands;
+pub mod properties;
+pub mod property;
 
 pub struct Mpv {
     mpv_handle: *mut ffi::mpv_handle,
