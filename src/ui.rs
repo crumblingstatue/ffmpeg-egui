@@ -1,6 +1,6 @@
 use {
     crate::{
-        coords::{self, VideoDim, VideoMag, VideoRect},
+        coords::{self, VideoDim, VideoMag, VideoPos, VideoRect},
         ffmpeg::{self, resolve_arguments},
         mpv::{
             properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
@@ -77,7 +77,15 @@ pub(crate) fn ui(
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            bottom_bar_ui(ui, src_info, present, mpv, video_area_max_dim, ui_state);
+            bottom_bar_ui(
+                ui,
+                src_info,
+                present,
+                mpv,
+                video_area_max_dim,
+                ui_state,
+                interact_state,
+            );
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
         let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
@@ -215,6 +223,7 @@ fn bottom_bar_ui(
     mpv: &Mpv,
     video_area_max_dim: &VideoDim<coords::Present>,
     ui_state: &mut UiState,
+    interact_state: &mut InteractState,
 ) {
     ui.horizontal(|ui| {
         ui.label(format!(
@@ -232,42 +241,20 @@ fn bottom_bar_ui(
         }
     });
     ui.horizontal(|ui| {
-        let mut changed = false;
+        let mut present_size_changed = false;
         ui.label("Video width");
         if ui.add(egui::DragValue::new(&mut present.dim.x)).changed() {
             present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
-            changed = true;
+            present_size_changed = true;
         }
         ui.label("Video height");
         if ui.add(egui::DragValue::new(&mut present.dim.y)).changed() {
             present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
-            changed = true;
-        }
-        if ui.button("orig").clicked() {
-            present.dim.x = src_info.dim.x as VideoMag;
-            present.dim.y = src_info.dim.y as VideoMag;
-            changed = true;
-        }
-        if ui.button("fit").clicked() {
-            present.dim.y = video_area_max_dim.y;
-            present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
-            if present.dim.x > video_area_max_dim.x {
-                present.dim.x = video_area_max_dim.x;
-                present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
-            }
-            changed = true;
+            present_size_changed = true;
         }
         // Clamp range to make it somewhat sane
         present.dim.x = (present.dim.x).clamp(1, 4096);
         present.dim.y = (present.dim.y).clamp(1, 4096);
-        if changed
-            && !present.texture.create(
-                (present.dim.x).try_into().unwrap(),
-                (present.dim.y).try_into().unwrap(),
-            )
-        {
-            panic!("Failed to create texture");
-        }
         if let Some(mut speed) = mpv.get_property::<Speed>() {
             ui.label("Playback speed");
             if ui.add(egui::Slider::new(&mut speed, 0.1..=2.0)).changed() {
@@ -288,6 +275,38 @@ fn bottom_bar_ui(
         {
             ui_state.ffmpeg_cli.open ^= true;
             ui_state.ffmpeg_cli.first_frame = true;
+        }
+        ui.menu_button("Menu", |ui| {
+            if ui.button("Reset pan").clicked() {
+                interact_state.pan_pos = VideoPos::new(0, 0);
+                ui.close_menu();
+            }
+            ui.menu_button("Video size", |ui| {
+                if ui.button("orig").clicked() {
+                    present.dim.x = src_info.dim.x as VideoMag;
+                    present.dim.y = src_info.dim.y as VideoMag;
+                    present_size_changed = true;
+                    ui.close_menu();
+                }
+                if ui.button("fit").clicked() {
+                    present.dim.y = video_area_max_dim.y;
+                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
+                    if present.dim.x > video_area_max_dim.x {
+                        present.dim.x = video_area_max_dim.x;
+                        present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
+                    }
+                    present_size_changed = true;
+                    ui.close_menu();
+                }
+            });
+        });
+        if present_size_changed
+            && !present.texture.create(
+                (present.dim.x).try_into().unwrap(),
+                (present.dim.y).try_into().unwrap(),
+            )
+        {
+            panic!("Failed to create texture");
         }
     });
 }
