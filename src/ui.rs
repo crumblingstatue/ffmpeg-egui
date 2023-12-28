@@ -282,13 +282,13 @@ fn bottom_bar_ui(
                 ui.close_menu();
             }
             ui.menu_button("Video size", |ui| {
-                if ui.button("orig").clicked() {
+                if ui.button("Original").clicked() {
                     present.dim.x = src_info.dim.x as VideoMag;
                     present.dim.y = src_info.dim.y as VideoMag;
                     present_size_changed = true;
                     ui.close_menu();
                 }
-                if ui.button("fit").clicked() {
+                if ui.button("Fit").clicked() {
                     present.dim.y = video_area_max_dim.y;
                     present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
                     if present.dim.x > video_area_max_dim.x {
