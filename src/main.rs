@@ -212,8 +212,8 @@ fn main() {
         {
             let diff_x = (orig_cur.x - src_mouse_pos.x) as f32;
             let diff_y = (orig_cur.y - src_mouse_pos.y) as f32;
-            interact_state.pan_pos.x = orig_img.x + diff_x;
-            interact_state.pan_pos.y = orig_img.y + diff_y;
+            interact_state.pan_pos.x = orig_img.x - diff_x;
+            interact_state.pan_pos.y = orig_img.y - diff_y;
         }
         sf_egui
             .do_frame(|ctx| {
