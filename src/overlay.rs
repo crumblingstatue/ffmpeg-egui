@@ -1,17 +1,19 @@
-use sfml::{
-    graphics::{
-        Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Transformable,
+use {
+    crate::{
+        coords::{Dim, Present, VideoMag, VideoVector},
+        mpv::{properties::TimePos, Mpv},
+        source,
+        time_fmt::FfmpegTimeFmt,
+        ui::EguiFriendlyColorExt,
+        SourceMarkers, VideoDim,
     },
-    window::{mouse, Event},
-};
-
-use crate::{
-    coords::{Dim, Present, VideoMag, VideoVector},
-    mpv::{properties::TimePos, Mpv},
-    source,
-    time_fmt::FfmpegTimeFmt,
-    ui::EguiFriendlyColorExt,
-    SourceMarkers, VideoDim,
+    sfml::{
+        graphics::{
+            Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
+            Transformable,
+        },
+        window::{mouse, Event},
+    },
 };
 
 const TIMELINE_MARGIN: VideoMag = 20;

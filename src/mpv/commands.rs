@@ -1,6 +1,4 @@
-use std::ffi::CString;
-
-use super::command::Command;
+use {super::command::Command, std::ffi::CString};
 
 pub struct LoadFile<'a> {
     pub path: &'a str,

@@ -1,12 +1,12 @@
-use std::{
-    fmt::Write,
-    process::{Child, Command, Stdio},
+use {
+    crate::{source, SourceMarkers},
+    egui_sfml::egui::TextBuffer,
+    std::{
+        fmt::Write,
+        process::{Child, Command, Stdio},
+    },
+    thiserror::Error,
 };
-
-use egui_sfml::egui::TextBuffer;
-use thiserror::Error;
-
-use crate::{source, SourceMarkers};
 
 pub(crate) fn invoke(
     input: &str,
@@ -216,8 +216,10 @@ enum Token<'a> {
 
 #[test]
 fn test_resolve() {
-    use crate::coords::{VideoDim, VideoPos, VideoRect};
-    use crate::{RectMarker, SourceMarkers, TimeSpan, TimespanMarker};
+    use crate::{
+        coords::{VideoDim, VideoPos, VideoRect},
+        RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
+    };
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {
             rect: VideoRect {

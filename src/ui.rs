@@ -1,20 +1,20 @@
-use std::io::Read;
-
-use egui_sfml::egui::{self, RichText, ScrollArea};
-use rand::{thread_rng, Rng};
-use sfml::graphics::Color;
-
-use crate::{
-    coords::{self, VideoDim, VideoMag, VideoRect},
-    ffmpeg::{self, resolve_arguments},
-    mpv::{
-        properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
-        Mpv,
+use {
+    crate::{
+        coords::{self, VideoDim, VideoMag, VideoRect},
+        ffmpeg::{self, resolve_arguments},
+        mpv::{
+            properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
+            Mpv,
+        },
+        present::Present,
+        source,
+        time_fmt::FfmpegTimeFmt,
+        InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
     },
-    present::Present,
-    source,
-    time_fmt::FfmpegTimeFmt,
-    InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
+    egui_sfml::egui::{self, RichText, ScrollArea},
+    rand::{thread_rng, Rng},
+    sfml::graphics::Color,
+    std::io::Read,
 };
 
 pub struct UiState {

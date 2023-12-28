@@ -1,6 +1,4 @@
-use sfml::system::Vector2f;
-
-use crate::coords::VideoPos;
+use {crate::coords::VideoPos, sfml::system::Vector2f};
 
 pub trait VideoPosSfExt {
     fn to_sf(&self) -> Vector2f;

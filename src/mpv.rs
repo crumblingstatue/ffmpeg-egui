@@ -3,18 +3,17 @@ pub mod commands;
 pub mod properties;
 pub mod property;
 
-use std::{
-    mem::MaybeUninit,
-    os::raw::{c_int, c_void},
-};
-
-use libmpv_sys as ffi;
-
-use crate::coords::{Present, VideoDim};
-
-use self::{
-    command::Command,
-    property::{Property, PropertyType, PropertyTypeRaw, PropertyUnset, PropertyWrite},
+use {
+    self::{
+        command::Command,
+        property::{Property, PropertyType, PropertyTypeRaw, PropertyUnset, PropertyWrite},
+    },
+    crate::coords::{Present, VideoDim},
+    libmpv_sys as ffi,
+    std::{
+        mem::MaybeUninit,
+        os::raw::{c_int, c_void},
+    },
 };
 
 pub struct Mpv {

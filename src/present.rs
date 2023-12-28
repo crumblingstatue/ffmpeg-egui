@@ -1,6 +1,7 @@
-use sfml::{graphics::Texture, SfBox};
-
-use crate::coords::VideoDim;
+use {
+    crate::coords::VideoDim,
+    sfml::{graphics::Texture, SfBox},
+};
 
 pub struct Present {
     pub dim: VideoDim<crate::coords::Present>,

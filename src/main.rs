@@ -10,26 +10,27 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
-use egui_sfml::{egui, SfEgui};
-use overlay::draw_overlay;
-use present::Present;
-use sfml_integ::VideoPosSfExt as _;
-use std::fmt::Write;
-use ui::{EguiFriendlyColor, UiState};
-
-use mpv::{
-    commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
-    properties::{
-        AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos, Volume,
-        Width,
+use {
+    coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
+    egui_sfml::{egui, SfEgui},
+    mpv::{
+        commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
+        properties::{
+            AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos,
+            Volume, Width,
+        },
+        property::{YesNo, YesNoAlways},
+        Mpv,
     },
-    property::{YesNo, YesNoAlways},
-    Mpv,
-};
-use sfml::{
-    graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View},
-    window::{mouse, ContextSettings, Event, Key, Style},
+    overlay::draw_overlay,
+    present::Present,
+    sfml::{
+        graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View},
+        window::{mouse, ContextSettings, Event, Key, Style},
+    },
+    sfml_integ::VideoPosSfExt as _,
+    std::fmt::Write,
+    ui::{EguiFriendlyColor, UiState},
 };
 
 struct RectDrag {
