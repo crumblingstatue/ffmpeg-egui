@@ -9,7 +9,7 @@ mod source;
 mod time_fmt;
 mod ui;
 
-use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect, VideoVector};
+use coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect};
 use egui_sfml::{egui, SfEgui};
 use overlay::draw_overlay;
 use present::Present;
