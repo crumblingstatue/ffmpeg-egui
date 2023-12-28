@@ -41,7 +41,7 @@ pub fn handle_event(
     }
 }
 
-fn timeline_rect_timepos(timeline_rect: Rect<u16>, x: u16, src_info: &source::Info) -> f64 {
+fn timeline_rect_timepos(timeline_rect: Rect<i16>, x: i16, src_info: &source::Info) -> f64 {
     let x_offset = x - timeline_rect.left;
     let ratio: f64 = x_offset as f64 / timeline_rect.width as f64;
     ratio * src_info.duration
@@ -112,7 +112,7 @@ pub(crate) fn draw_overlay(
     ));
     rw.draw(&text);
     if timeline_rect.contains(mouse_pos.as_other()) {
-        let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as u16, src_info);
+        let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as i16, src_info);
         text.set_position((timeline_rect_sf.left, timeline_rect_sf.top - 20.0));
         text.set_string(&format!("Mouse time pos: {}", FfmpegTimeFmt(timepos)));
         rw.draw(&text);

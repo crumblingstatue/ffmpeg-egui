@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-/// Video size magnitude
-pub type VideoMag = u16;
+/// Video position magnitude
+pub type VideoMag = i16;
 
 #[derive(Debug)]
 pub struct VideoVector<Kind, Space> {
@@ -96,7 +96,7 @@ impl VideoVector<Pos, Src> {
         src: VideoVector<Dim, Src>,
         present: VideoVector<Dim, Present>,
     ) -> Self {
-        VideoVector::<Pos, Present>::new(x as u16, y as u16).to_src(src, present)
+        VideoVector::<Pos, Present>::new(x as i16, y as i16).to_src(src, present)
     }
 }
 
@@ -118,6 +118,6 @@ impl<Kind> VideoRect<Kind> {
 impl<Space> VideoVector<Dim, Space> {
     /// The length of an RGBA buffer that can hold the data of a video of this dimension
     pub fn rgba_bytes_len(&self) -> usize {
-        usize::from(self.x) * usize::from(self.y) * 4
+        usize::try_from(self.x).unwrap_or(0) * usize::try_from(self.y).unwrap_or(0) * 4
     }
 }

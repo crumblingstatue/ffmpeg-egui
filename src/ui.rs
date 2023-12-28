@@ -261,9 +261,10 @@ fn bottom_bar_ui(
         present.dim.x = (present.dim.x).clamp(1, 4096);
         present.dim.y = (present.dim.y).clamp(1, 4096);
         if changed
-            && !present
-                .texture
-                .create((present.dim.x).into(), (present.dim.y).into())
+            && !present.texture.create(
+                (present.dim.x).try_into().unwrap(),
+                (present.dim.y).try_into().unwrap(),
+            )
         {
             panic!("Failed to create texture");
         }
