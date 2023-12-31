@@ -35,6 +35,7 @@ def_properties! {
     CropY, c"video-params/crop-y", i64;
     CropW, c"video-params/crop-w", i64;
     CropH, c"video-params/crop-h", i64;
+    Rotate, c"video-params/rotate", i64;
 }
 
 unsafe impl PropertyWrite for TimePos {}

@@ -1,7 +1,7 @@
 #![feature(array_chunks, generic_const_exprs, lint_reasons, let_chains)]
 
 use {
-    crate::mpv::properties::{CropH, CropW, CropY},
+    crate::mpv::properties::{CropH, CropW, CropY, Rotate},
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{egui, SfEgui},
     mpv::{
@@ -129,7 +129,12 @@ fn main() {
     let crop_y = mpv.get_property::<CropY>().unwrap();
     let crop_w = mpv.get_property::<CropW>().unwrap();
     let crop_h = mpv.get_property::<CropH>().unwrap();
-    dbg!(crop_x, crop_y, crop_w, crop_h);
+    let rotate = mpv.get_property::<Rotate>().unwrap();
+    dbg!(crop_x, crop_y, crop_w, crop_h, rotate);
+    if rotate != 0 {
+        eprintln!("Rotated videos are currently unsupported");
+        return;
+    }
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
     let mut src_info = source::Info {
         dim: VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag),
