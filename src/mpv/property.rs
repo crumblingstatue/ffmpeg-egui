@@ -7,7 +7,7 @@ use std::{
 /// NAME must be null terminated
 pub unsafe trait Property {
     type Type: PropertyType;
-    const NAME: &'static str;
+    const NAME: &'static CStr;
 }
 
 /// # Safety

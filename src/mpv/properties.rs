@@ -1,4 +1,7 @@
-use super::property::{Property, PropertyUnset, PropertyWrite, YesNo, YesNoAlways};
+use {
+    super::property::{Property, PropertyUnset, PropertyWrite, YesNo, YesNoAlways},
+    std::ffi::CStr,
+};
 
 macro_rules! def_properties {
     ($($(#[$attr:meta])? $ident:ident, $str:literal, $ty:ty;)*) => {
@@ -8,7 +11,7 @@ macro_rules! def_properties {
 
             unsafe impl Property for $ident {
                 type Type = $ty;
-                const NAME: &'static str = $str;
+                const NAME: &'static CStr = $str;
             }
         )*
     };
@@ -16,22 +19,22 @@ macro_rules! def_properties {
 
 def_properties! {
     /// The time position mpv is currently at
-    TimePos, "time-pos\0", f64;
-    Speed, "speed\0", f64;
-    Volume, "volume\0", f64;
-    Duration, "duration\0", f64;
-    Pause, "pause\0", bool;
-    AudioPitchCorrection, "audio-pitch-correction\0", bool;
-    KeepOpen, "keep-open\0", YesNoAlways;
-    KeepOpenPause, "keep-open-pause\0", YesNo;
-    Width, "width\0", i64;
-    Height, "height\0", i64;
-    AbLoopA, "ab-loop-a\0", f64;
-    AbLoopB, "ab-loop-b\0", f64;
-    CropX, "video-params/crop-x\0", i64;
-    CropY, "video-params/crop-y\0", i64;
-    CropW, "video-params/crop-w\0", i64;
-    CropH, "video-params/crop-h\0", i64;
+    TimePos, c"time-pos", f64;
+    Speed, c"speed", f64;
+    Volume, c"volume", f64;
+    Duration, c"duration", f64;
+    Pause, c"pause", bool;
+    AudioPitchCorrection, c"audio-pitch-correction", bool;
+    KeepOpen, c"keep-open", YesNoAlways;
+    KeepOpenPause, c"keep-open-pause", YesNo;
+    Width, c"width", i64;
+    Height, c"height", i64;
+    AbLoopA, c"ab-loop-a", f64;
+    AbLoopB, c"ab-loop-b", f64;
+    CropX, c"video-params/crop-x", i64;
+    CropY, c"video-params/crop-y", i64;
+    CropW, c"video-params/crop-w", i64;
+    CropH, c"video-params/crop-h", i64;
 }
 
 unsafe impl PropertyWrite for TimePos {}

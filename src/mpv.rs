@@ -122,7 +122,7 @@ impl Mpv {
         unsafe {
             if ffi::mpv_get_property(
                 self.mpv_handle,
-                P::NAME.as_bytes().as_ptr() as _,
+                P::NAME.as_ptr(),
                 <P::Type as PropertyType>::CType::FORMAT,
                 out.as_mut_ptr() as _,
             ) < 0
@@ -141,7 +141,7 @@ impl Mpv {
         value.with_c(|mut cvalue| unsafe {
             ret = ffi::mpv_set_property(
                 self.mpv_handle,
-                P::NAME.as_bytes().as_ptr() as _,
+                P::NAME.as_ptr(),
                 <P::Type as PropertyType>::CType::FORMAT,
                 (&mut cvalue) as *mut _ as *mut c_void,
             ) >= 0
@@ -153,7 +153,7 @@ impl Mpv {
         P::UNSET_VALUE.with_c(|mut cvalue| unsafe {
             ffi::mpv_set_property(
                 self.mpv_handle,
-                P::NAME.as_bytes().as_ptr() as _,
+                P::NAME.as_ptr(),
                 <P::UnsetType as PropertyType>::CType::FORMAT,
                 (&mut cvalue) as *mut _ as *mut c_void,
             );
