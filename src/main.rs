@@ -1,12 +1,13 @@
 #![feature(array_chunks, generic_const_exprs, lint_reasons, let_chains)]
 
 use {
+    crate::mpv::properties::{CropH, CropW, CropY},
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{egui, SfEgui},
     mpv::{
         commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
         properties::{
-            AudioPitchCorrection, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos,
+            AudioPitchCorrection, CropX, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos,
             Volume, Width,
         },
         property::{YesNo, YesNoAlways},
@@ -124,6 +125,11 @@ fn main() {
     let mut overlay_show = true;
     let actual_video_w = mpv.get_property::<Width>().unwrap();
     let actual_video_h = mpv.get_property::<Height>().unwrap();
+    let crop_x = mpv.get_property::<CropX>().unwrap();
+    let crop_y = mpv.get_property::<CropY>().unwrap();
+    let crop_w = mpv.get_property::<CropW>().unwrap();
+    let crop_h = mpv.get_property::<CropH>().unwrap();
+    dbg!(crop_x, crop_y, crop_w, crop_h);
     let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
     let mut src_info = source::Info {
         dim: VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag),

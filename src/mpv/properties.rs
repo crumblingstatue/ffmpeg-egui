@@ -28,6 +28,10 @@ def_properties! {
     Height, "height\0", i64;
     AbLoopA, "ab-loop-a\0", f64;
     AbLoopB, "ab-loop-b\0", f64;
+    CropX, "video-params/crop-x\0", i64;
+    CropY, "video-params/crop-y\0", i64;
+    CropW, "video-params/crop-w\0", i64;
+    CropH, "video-params/crop-h\0", i64;
 }
 
 unsafe impl PropertyWrite for TimePos {}
