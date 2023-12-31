@@ -241,20 +241,6 @@ fn bottom_bar_ui(
         }
     });
     ui.horizontal(|ui| {
-        let mut present_size_changed = false;
-        ui.label("Video width");
-        if ui.add(egui::DragValue::new(&mut present.dim.x)).changed() {
-            present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
-            present_size_changed = true;
-        }
-        ui.label("Video height");
-        if ui.add(egui::DragValue::new(&mut present.dim.y)).changed() {
-            present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
-            present_size_changed = true;
-        }
-        // Clamp range to make it somewhat sane
-        present.dim.x = (present.dim.x).clamp(1, 4096);
-        present.dim.y = (present.dim.y).clamp(1, 4096);
         if let Some(mut speed) = mpv.get_property::<Speed>() {
             ui.label("Playback speed");
             if ui.add(egui::Slider::new(&mut speed, 0.1..=2.0)).changed() {
@@ -282,6 +268,7 @@ fn bottom_bar_ui(
                 ui.close_menu();
             }
             ui.menu_button("Video size", |ui| {
+                let mut present_size_changed = false;
                 if ui.button("Original").clicked() {
                     present.dim.x = src_info.dim.x as VideoMag;
                     present.dim.y = src_info.dim.y as VideoMag;
@@ -298,16 +285,29 @@ fn bottom_bar_ui(
                     present_size_changed = true;
                     ui.close_menu();
                 }
+                ui.label("Width");
+                if ui.add(egui::DragValue::new(&mut present.dim.x)).changed() {
+                    present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
+                    present_size_changed = true;
+                }
+                ui.label("Height");
+                if ui.add(egui::DragValue::new(&mut present.dim.y)).changed() {
+                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
+                    present_size_changed = true;
+                }
+                // Clamp range to make it somewhat sane
+                present.dim.x = (present.dim.x).clamp(1, 4096);
+                present.dim.y = (present.dim.y).clamp(1, 4096);
+                if present_size_changed
+                    && !present.texture.create(
+                        (present.dim.x).try_into().unwrap(),
+                        (present.dim.y).try_into().unwrap(),
+                    )
+                {
+                    panic!("Failed to create texture");
+                }
             });
         });
-        if present_size_changed
-            && !present.texture.create(
-                (present.dim.x).try_into().unwrap(),
-                (present.dim.y).try_into().unwrap(),
-            )
-        {
-            panic!("Failed to create texture");
-        }
     });
 }
 
