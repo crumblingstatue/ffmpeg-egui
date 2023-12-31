@@ -1,118 +1,48 @@
 use super::property::{Property, PropertyUnset, PropertyWrite, YesNo, YesNoAlways};
 
-/// The time position mpv is currently at
-pub enum TimePos {}
+macro_rules! def_properties {
+    ($($(#[$attr:meta])? $ident:ident, $str:literal, $ty:ty;)*) => {
+        $(
+            $(#[$attr])?
+            pub enum $ident {}
 
-unsafe impl Property for TimePos {
-    type Type = f64;
-    const NAME: &'static str = "time-pos\0";
+            unsafe impl Property for $ident {
+                type Type = $ty;
+                const NAME: &'static str = $str;
+            }
+        )*
+    };
+}
+
+def_properties! {
+    /// The time position mpv is currently at
+    TimePos, "time-pos\0", f64;
+    Speed, "speed\0", f64;
+    Volume, "volume\0", f64;
+    Duration, "duration\0", f64;
+    Pause, "pause\0", bool;
+    AudioPitchCorrection, "audio-pitch-correction\0", bool;
+    KeepOpen, "keep-open\0", YesNoAlways;
+    KeepOpenPause, "keep-open-pause\0", YesNo;
+    Width, "width\0", i64;
+    Height, "height\0", i64;
+    AbLoopA, "ab-loop-a\0", f64;
+    AbLoopB, "ab-loop-b\0", f64;
 }
 
 unsafe impl PropertyWrite for TimePos {}
-
-pub enum Speed {}
-
-unsafe impl Property for Speed {
-    type Type = f64;
-    const NAME: &'static str = "speed\0";
-}
-
 unsafe impl PropertyWrite for Speed {}
-
-pub enum Volume {}
-
-unsafe impl Property for Volume {
-    type Type = f64;
-    const NAME: &'static str = "volume\0";
-}
-
 unsafe impl PropertyWrite for Volume {}
-
-pub enum Duration {}
-
-unsafe impl Property for Duration {
-    type Type = f64;
-    const NAME: &'static str = "duration\0";
-}
-
-pub enum Pause {}
-
-unsafe impl Property for Pause {
-    type Type = bool;
-    const NAME: &'static str = "pause\0";
-}
-
 unsafe impl PropertyWrite for Pause {}
-
-pub enum AudioPitchCorrection {}
-
-unsafe impl Property for AudioPitchCorrection {
-    type Type = bool;
-
-    const NAME: &'static str = "audio-pitch-correction\0";
-}
-
 unsafe impl PropertyWrite for AudioPitchCorrection {}
-
-pub enum KeepOpen {}
-
-unsafe impl Property for KeepOpen {
-    type Type = YesNoAlways;
-
-    const NAME: &'static str = "keep-open\0";
-}
-
 unsafe impl PropertyWrite for KeepOpen {}
-
-pub enum KeepOpenPause {}
-
-unsafe impl Property for KeepOpenPause {
-    type Type = YesNo;
-
-    const NAME: &'static str = "keep-open-pause\0";
-}
-
 unsafe impl PropertyWrite for KeepOpenPause {}
-
-pub enum Width {}
-
-unsafe impl Property for Width {
-    type Type = i64;
-
-    const NAME: &'static str = "width\0";
-}
-
-pub enum Height {}
-
-unsafe impl Property for Height {
-    type Type = i64;
-
-    const NAME: &'static str = "height\0";
-}
-
-pub enum AbLoopA {}
-
-unsafe impl Property for AbLoopA {
-    type Type = f64;
-
-    const NAME: &'static str = "ab-loop-a\0";
-}
-
 unsafe impl PropertyWrite for AbLoopA {}
 unsafe impl PropertyUnset for AbLoopA {
     type UnsetType = &'static str;
 
     const UNSET_VALUE: <Self as PropertyUnset>::UnsetType = "no";
 }
-
-pub enum AbLoopB {}
-
-unsafe impl Property for AbLoopB {
-    type Type = f64;
-
-    const NAME: &'static str = "ab-loop-b\0";
-}
-
 unsafe impl PropertyWrite for AbLoopB {}
 unsafe impl PropertyUnset for AbLoopB {
     type UnsetType = &'static str;
