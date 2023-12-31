@@ -125,11 +125,11 @@ fn main() {
     let mut overlay_show = true;
     let actual_video_w = mpv.get_property::<Width>().unwrap();
     let actual_video_h = mpv.get_property::<Height>().unwrap();
-    let crop_x = mpv.get_property::<CropX>().unwrap();
-    let crop_y = mpv.get_property::<CropY>().unwrap();
-    let crop_w = mpv.get_property::<CropW>().unwrap();
-    let crop_h = mpv.get_property::<CropH>().unwrap();
-    let rotate = mpv.get_property::<Rotate>().unwrap();
+    let crop_x = mpv.get_property::<CropX>().unwrap_or(0);
+    let crop_y = mpv.get_property::<CropY>().unwrap_or(0);
+    let crop_w = mpv.get_property::<CropW>().unwrap_or(0);
+    let crop_h = mpv.get_property::<CropH>().unwrap_or(0);
+    let rotate = mpv.get_property::<Rotate>().unwrap_or(0);
     dbg!(crop_x, crop_y, crop_w, crop_h, rotate);
     if rotate != 0 {
         eprintln!("Rotated videos are currently unsupported");
