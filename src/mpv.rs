@@ -29,6 +29,8 @@ impl Mpv {
             panic!("Failed to create mpv instance");
         }
         let render_ctx = unsafe {
+            // If we don't set "libmpv" as video output, mpv opens its own window.
+            ffi::mpv_set_option_string(mpv_handle, c"vo".as_ptr(), c"libmpv".as_ptr());
             if ffi::mpv_initialize(mpv_handle) < 0 {
                 panic!("Failed to initialize mpv");
             }
