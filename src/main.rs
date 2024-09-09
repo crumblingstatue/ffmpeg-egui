@@ -1,4 +1,4 @@
-#![feature(array_chunks, generic_const_exprs, lint_reasons, let_chains)]
+#![feature(array_chunks, generic_const_exprs, let_chains)]
 
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
