@@ -3,7 +3,16 @@
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
-    egui_sfml::{egui, SfEgui},
+    egui_sfml::{
+        egui,
+        sfml::{
+            graphics::{
+                Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View,
+            },
+            window::{mouse, ContextSettings, Event, Key, Style},
+        },
+        SfEgui,
+    },
     mpv::{
         commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
         properties::{
@@ -15,10 +24,6 @@ use {
     },
     overlay::draw_overlay,
     present::Present,
-    sfml::{
-        graphics::{Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View},
-        window::{mouse, ContextSettings, Event, Key, Style},
-    },
     sfml_integ::VideoPosSfExt as _,
     std::fmt::Write,
     ui::{EguiFriendlyColor, UiState},

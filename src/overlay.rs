@@ -7,7 +7,7 @@ use {
         ui::EguiFriendlyColorExt,
         SourceMarkers, VideoDim,
     },
-    sfml::{
+    egui_sfml::sfml::{
         graphics::{
             Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
             Transformable,
@@ -52,7 +52,7 @@ fn timeline_rect_timepos(timeline_rect: Rect<i16>, x: i16, src_info: &source::In
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
     pos_string: &String,
-    font: &sfml::SfBox<Font>,
+    font: &egui_sfml::sfml::SfBox<Font>,
     source_markers: &SourceMarkers,
     src_info: &source::Info,
     video_present_dim: VideoDim<Present>,

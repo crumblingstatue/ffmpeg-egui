@@ -11,9 +11,11 @@ use {
         time_fmt::FfmpegTimeFmt,
         InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
     },
-    egui_sfml::egui::{self, RichText, ScrollArea},
+    egui_sfml::{
+        egui::{self, RichText, ScrollArea},
+        sfml::graphics::Color,
+    },
     rand::{thread_rng, Rng},
-    sfml::graphics::Color,
     std::io::Read,
 };
 
@@ -299,10 +301,13 @@ fn bottom_bar_ui(
                 present.dim.x = (present.dim.x).clamp(1, 4096);
                 present.dim.y = (present.dim.y).clamp(1, 4096);
                 if present_size_changed
-                    && !present.texture.create(
-                        (present.dim.x).try_into().unwrap(),
-                        (present.dim.y).try_into().unwrap(),
-                    )
+                    && present
+                        .texture
+                        .create(
+                            (present.dim.x).try_into().unwrap(),
+                            (present.dim.y).try_into().unwrap(),
+                        )
+                        .is_err()
                 {
                     panic!("Failed to create texture");
                 }
