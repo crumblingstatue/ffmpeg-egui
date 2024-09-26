@@ -247,7 +247,7 @@ fn main() {
             interact_state.pan_pos.y = orig_img.y - diff_y;
         }
         sf_egui
-            .do_frame(&mut rw, |ctx| {
+            .do_pass(&mut rw, |ctx| {
                 ui::ui(
                     ctx,
                     &mpv,
