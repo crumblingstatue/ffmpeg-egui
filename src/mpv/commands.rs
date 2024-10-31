@@ -4,7 +4,7 @@ pub struct LoadFile<'a> {
     pub path: &'a str,
 }
 
-unsafe impl<'a> Command for LoadFile<'a> {
+unsafe impl Command for LoadFile<'_> {
     const NAME: &'static str = "loadfile\0";
     const ARGS_COUNT: usize = 1;
 
