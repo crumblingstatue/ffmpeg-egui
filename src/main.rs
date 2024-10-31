@@ -100,8 +100,15 @@ struct TimeSpan {
     end: f64,
 }
 
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum TabOpen {
+    Rects,
+    Timespans,
+}
+
 #[derive(clap::Parser)]
 struct Args {
+    /// File to open. File picker will open if not supplied.
     file: Option<String>,
     /// Preset the contents of the FFmpeg CLI input
     #[arg(long)]
@@ -109,6 +116,9 @@ struct Args {
     /// Start with FFmpeg CLI window open
     #[arg(long)]
     open_cli_win: bool,
+    /// Start with a tab open
+    #[arg(long)]
+    tab: Option<TabOpen>,
 }
 
 fn main() {
@@ -168,6 +178,12 @@ fn main() {
     }
     if args.open_cli_win {
         ui_state.ffmpeg_cli.open = true;
+    }
+    if let Some(tab) = args.tab {
+        match tab {
+            TabOpen::Rects => ui_state.tab = ui::Tab::Rects,
+            TabOpen::Timespans => ui_state.tab = ui::Tab::TimeSpans,
+        }
     }
 
     let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);

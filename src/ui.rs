@@ -20,7 +20,7 @@ use {
 };
 
 pub struct UiState {
-    tab: Tab,
+    pub tab: Tab,
     selected_timespan: Option<usize>,
     rename_index: Option<usize>,
     selected_rect: Option<usize>,
@@ -52,7 +52,7 @@ impl Default for UiState {
 }
 
 #[derive(PartialEq, Eq)]
-enum Tab {
+pub enum Tab {
     Rects,
     TimeSpans,
 }
