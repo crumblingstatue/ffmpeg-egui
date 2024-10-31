@@ -103,8 +103,12 @@ struct TimeSpan {
 #[derive(clap::Parser)]
 struct Args {
     file: Option<String>,
+    /// Preset the contents of the FFmpeg CLI input
     #[arg(long)]
     ffmpeg_preset: Option<String>,
+    /// Start with FFmpeg CLI window open
+    #[arg(long)]
+    open_cli_win: bool,
 }
 
 fn main() {
@@ -161,6 +165,9 @@ fn main() {
     let mut ui_state = UiState::default();
     if let Some(preset) = args.ffmpeg_preset {
         ui_state.ffmpeg_cli.source_string = preset;
+    }
+    if args.open_cli_win {
+        ui_state.ffmpeg_cli.open = true;
     }
 
     let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);
