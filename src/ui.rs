@@ -187,15 +187,22 @@ fn ffmpeg_cli_ui(
     }
     if !ui_state.ffmpeg_cli.stdout.is_empty() {
         ui.label("Standard output:");
-        ScrollArea::vertical().show(ui, |ui| {
-            ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stdout);
-        });
+        ScrollArea::vertical()
+            .max_height(400.0)
+            .id_salt("stdout")
+            .show(ui, |ui| {
+                ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stdout);
+            });
     }
     if !ui_state.ffmpeg_cli.stderr.is_empty() {
         ui.label("Standard error:");
-        ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
-            ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
-        });
+        ScrollArea::vertical()
+            .max_height(400.0)
+            .id_salt("stderr")
+            .stick_to_bottom(true)
+            .show(ui, |ui| {
+                ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
+            });
     }
 }
 
