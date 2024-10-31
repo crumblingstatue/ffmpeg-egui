@@ -2,6 +2,7 @@
 
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
+    clap::Parser,
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{
         egui,
@@ -99,9 +100,17 @@ struct TimeSpan {
     end: f64,
 }
 
+#[derive(clap::Parser)]
+struct Args {
+    file: Option<String>,
+    #[arg(long)]
+    ffmpeg_preset: Option<String>,
+}
+
 fn main() {
+    let args = Args::parse();
     let mut mpv = Mpv::new().unwrap();
-    let path = match std::env::args().nth(1) {
+    let path = match args.file {
         Some(path) => path,
         None => match rfd::FileDialog::new().pick_file() {
             Some(path) => path.to_string_lossy().into_owned(),
@@ -150,6 +159,9 @@ fn main() {
     };
     let mut present = Present::new(src_info.dim.as_present());
     let mut ui_state = UiState::default();
+    if let Some(preset) = args.ffmpeg_preset {
+        ui_state.ffmpeg_cli.source_string = preset;
+    }
 
     let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);
 

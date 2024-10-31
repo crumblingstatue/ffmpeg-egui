@@ -24,11 +24,11 @@ pub struct UiState {
     selected_timespan: Option<usize>,
     rename_index: Option<usize>,
     selected_rect: Option<usize>,
-    ffmpeg_cli: FfmpegCli,
+    pub ffmpeg_cli: FfmpegCli,
 }
 
 #[derive(Default)]
-struct FfmpegCli {
+pub struct FfmpegCli {
     pub open: bool,
     pub source_string: String,
     pub first_frame: bool,
