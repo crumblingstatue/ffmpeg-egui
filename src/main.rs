@@ -142,7 +142,8 @@ fn main() {
         "ffmpeg-egui",
         Style::RESIZE,
         &ContextSettings::default(),
-    );
+    )
+    .unwrap();
     rw.set_framerate_limit(60);
     let mut interact_state = InteractState::default();
     let mut sf_egui = SfEgui::new(&rw);
@@ -202,7 +203,8 @@ fn main() {
                     sf_egui.context(),
                 ),
                 Event::Resized { width, height } => {
-                    let view = View::from_rect(Rect::new(0., 0., width as f32, height as f32));
+                    let view =
+                        View::from_rect(Rect::new(0., 0., width as f32, height as f32)).unwrap();
                     rw.set_view(&view);
                 }
                 Event::MouseButtonPressed {
@@ -281,8 +283,8 @@ fn main() {
             interact_state.pan_pos.x = orig_img.x - diff_x;
             interact_state.pan_pos.y = orig_img.y - diff_y;
         }
-        sf_egui
-            .do_pass(&mut rw, |ctx| {
+        let di = sf_egui
+            .run(&mut rw, |_rw, ctx| {
                 ui::ui(
                     ctx,
                     &mpv,
@@ -299,16 +301,14 @@ fn main() {
         write!(&mut pos_string, "{}, {}", src_mouse_pos.x, src_mouse_pos.y,).unwrap();
         rw.clear(Color::BLACK);
 
-        unsafe {
-            let pixels = mpv.get_frame_as_pixels(present.dim);
-            present.texture.update_from_pixels(
-                pixels,
-                present.dim.x.try_into().unwrap(),
-                present.dim.y.try_into().unwrap(),
-                0,
-                0,
-            );
-        }
+        let pixels = mpv.get_frame_as_pixels(present.dim);
+        present.texture.update_from_pixels(
+            pixels,
+            present.dim.x.try_into().unwrap(),
+            present.dim.y.try_into().unwrap(),
+            0,
+            0,
+        );
         let mut s = Sprite::with_texture(&present.texture);
         s.set_position(interact_state.pan_pos.to_sf());
         rw.draw(&s);
@@ -323,7 +323,7 @@ fn main() {
                 video_area_max_dim,
             );
         }
-        sf_egui.draw(&mut rw, None);
+        sf_egui.draw(di, &mut rw, None);
         rw.display();
     }
 }

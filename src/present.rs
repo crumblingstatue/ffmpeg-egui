@@ -1,11 +1,11 @@
 use {
     crate::coords::VideoDim,
-    egui_sfml::sfml::{graphics::Texture, SfBox},
+    egui_sfml::sfml::{cpp::FBox, graphics::Texture},
 };
 
 pub struct Present {
     pub dim: VideoDim<crate::coords::Present>,
-    pub texture: SfBox<Texture>,
+    pub texture: FBox<Texture>,
 }
 
 impl Present {

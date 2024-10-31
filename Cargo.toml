@@ -11,6 +11,6 @@ clap = { version = "4.5.20", features = ["derive"] }
 egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git" }
 libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", features = ["use-bindgen"] }
 rand = "0.8.5"
-rfd = "0.12.1"
+rfd = "0.15.0"
 shell-words = "1.1.0"
 thiserror = "1.0.50"
