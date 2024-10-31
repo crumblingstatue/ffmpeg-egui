@@ -130,8 +130,8 @@ impl PropertyType for YesNo {
         F: FnOnce(Self::CType),
     {
         match self {
-            YesNo::Yes => f(b"yes\0".as_ptr() as *mut c_char),
-            YesNo::No => f(b"no\0".as_ptr() as *mut c_char),
+            YesNo::Yes => f(c"yes".as_ptr().cast_mut()),
+            YesNo::No => f(c"no".as_ptr().cast_mut()),
         }
     }
 }
@@ -160,9 +160,9 @@ impl PropertyType for YesNoAlways {
         F: FnOnce(Self::CType),
     {
         match self {
-            YesNoAlways::Yes => f(b"yes\0".as_ptr() as *mut c_char),
-            YesNoAlways::No => f(b"no\0".as_ptr() as *mut c_char),
-            YesNoAlways::Always => f(b"always\0".as_ptr() as *mut c_char),
+            YesNoAlways::Yes => f(c"yes".as_ptr().cast_mut()),
+            YesNoAlways::No => f(c"no".as_ptr().cast_mut()),
+            YesNoAlways::Always => f(c"always".as_ptr().cast_mut()),
         }
     }
 }
