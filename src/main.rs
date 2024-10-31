@@ -128,8 +128,8 @@ fn main() {
     let prefix = "Mouse video pos: ";
     let mut pos_string = String::from(prefix);
     let mut overlay_show = true;
-    let actual_video_w = mpv.get_property::<Width>().unwrap();
-    let actual_video_h = mpv.get_property::<Height>().unwrap();
+    let actual_video_w = mpv.get_property::<Width>().unwrap_or(0);
+    let actual_video_h = mpv.get_property::<Height>().unwrap_or(0);
     let crop_x = mpv.get_property::<CropX>().unwrap_or(0);
     let crop_y = mpv.get_property::<CropY>().unwrap_or(0);
     let crop_w = mpv.get_property::<CropW>().unwrap_or(0);

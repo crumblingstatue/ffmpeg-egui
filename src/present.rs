@@ -15,7 +15,7 @@ impl Present {
             .create(dim.x.try_into().unwrap(), dim.y.try_into().unwrap())
             .is_err()
         {
-            panic!("Failed to create texture");
+            eprintln!("Failed to create texture");
         }
         Present { dim, texture }
     }
