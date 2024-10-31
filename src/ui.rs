@@ -332,6 +332,7 @@ fn timespans_ui(
             name: format!("{}", markers.timespans.len()),
             color: random_color(),
         });
+        ui_state.selected_timespan = Some(markers.timespans.len().saturating_sub(1));
     }
     ui.separator();
     ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
