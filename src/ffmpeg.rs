@@ -1,5 +1,5 @@
 use {
-    crate::{source, SourceMarkers},
+    crate::{SourceMarkers, source},
     egui_sfml::egui::TextBuffer,
     std::{
         fmt::Write,
@@ -200,7 +200,7 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
         }
 
         Status::SubsBegin | Status::SubsCategAccess | Status::SubsMeat => {
-            return Err(ParseError::UnexpectedEnd)
+            return Err(ParseError::UnexpectedEnd);
         }
     }
     Ok(tokens)
@@ -217,8 +217,8 @@ enum Token<'a> {
 #[test]
 fn test_resolve() {
     use crate::{
-        coords::{VideoDim, VideoPos, VideoRect},
         RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
+        coords::{VideoDim, VideoPos, VideoRect},
     };
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {

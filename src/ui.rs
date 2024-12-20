@@ -1,21 +1,21 @@
 use {
     crate::{
+        InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
         coords::{self, VideoDim, VideoMag, VideoPos, VideoRect},
         ffmpeg::{self, resolve_arguments},
         mpv::{
-            properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
             Mpv,
+            properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
         },
         present::Present,
         source,
         time_fmt::FfmpegTimeFmt,
-        InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
     },
     egui_sfml::{
         egui::{self, RichText, ScrollArea},
         sfml::graphics::Color,
     },
-    rand::{thread_rng, Rng},
+    rand::{Rng, thread_rng},
     std::io::Read,
 };
 

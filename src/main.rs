@@ -5,23 +5,22 @@ use {
     clap::Parser,
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{
-        egui,
+        SfEgui, egui,
         sfml::{
             graphics::{
                 Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View,
             },
-            window::{mouse, ContextSettings, Event, Key, Style},
+            window::{ContextSettings, Event, Key, Style, mouse},
         },
-        SfEgui,
     },
     mpv::{
+        Mpv,
         commands::{FrameBackStep, FrameStep, LoadFile, PlaylistPlay, SeekRelSeconds},
         properties::{
             AudioPitchCorrection, CropX, Duration, Height, KeepOpen, KeepOpenPause, Pause, TimePos,
             Volume, Width,
         },
         property::{YesNo, YesNoAlways},
-        Mpv,
     },
     overlay::draw_overlay,
     present::Present,

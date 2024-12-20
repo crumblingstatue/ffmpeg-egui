@@ -1,18 +1,18 @@
 use {
     crate::{
+        SourceMarkers, VideoDim,
         coords::{Dim, Present, VideoMag, VideoVector},
-        mpv::{properties::TimePos, Mpv},
+        mpv::{Mpv, properties::TimePos},
         source,
         time_fmt::FfmpegTimeFmt,
         ui::EguiFriendlyColorExt,
-        SourceMarkers, VideoDim,
     },
     egui_sfml::sfml::{
         graphics::{
             Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
             Transformable,
         },
-        window::{mouse, Event},
+        window::{Event, mouse},
     },
 };
 
