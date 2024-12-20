@@ -13,4 +13,4 @@ libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", feature
 rand = "0.8.5"
 rfd = "0.15.0"
 shell-words = "1.1.0"
-thiserror = "1.0.50"
+thiserror = "2"
