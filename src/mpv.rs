@@ -126,7 +126,7 @@ impl Mpv {
                 self.mpv_handle,
                 P::NAME.as_ptr(),
                 <P::Type as PropertyType>::CType::FORMAT,
-                out.as_mut_ptr() as _,
+                out.as_mut_ptr().cast(),
             ) < 0
             {
                 None
