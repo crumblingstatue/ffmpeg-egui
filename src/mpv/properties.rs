@@ -36,6 +36,8 @@ def_properties! {
     CropW, c"video-params/crop-w", i64;
     CropH, c"video-params/crop-h", i64;
     Rotate, c"video-params/rotate", i64;
+    AudioId, c"aid", i64;
+    SubId, c"sid", i64;
 }
 
 unsafe impl PropertyWrite for TimePos {}
@@ -46,6 +48,8 @@ unsafe impl PropertyWrite for AudioPitchCorrection {}
 unsafe impl PropertyWrite for KeepOpen {}
 unsafe impl PropertyWrite for KeepOpenPause {}
 unsafe impl PropertyWrite for AbLoopA {}
+unsafe impl PropertyWrite for AudioId {}
+unsafe impl PropertyWrite for SubId {}
 unsafe impl PropertyUnset for AbLoopA {
     type UnsetType = &'static str;
 

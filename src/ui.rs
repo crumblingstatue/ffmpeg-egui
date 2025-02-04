@@ -5,7 +5,7 @@ use {
         ffmpeg::{self, resolve_arguments},
         mpv::{
             Mpv,
-            properties::{AbLoopA, AbLoopB, Speed, TimePos, Volume},
+            properties::{AbLoopA, AbLoopB, AudioId, Speed, SubId, TimePos, Volume},
         },
         present::Present,
         source,
@@ -319,6 +319,28 @@ fn bottom_bar_ui(
                     panic!("Failed to create texture");
                 }
             });
+            if let Some(mut current) = mpv.get_property::<AudioId>() {
+                ui.horizontal(|ui| {
+                    ui.label("Audio track");
+                    if ui.add(egui::DragValue::new(&mut current)).changed() {
+                        mpv.set_property::<AudioId>(current);
+                    }
+                });
+            } else if ui.button("Set audio track to 1").clicked() {
+                ui.close_menu();
+                mpv.set_property::<AudioId>(1);
+            }
+            if let Some(mut current) = mpv.get_property::<SubId>() {
+                ui.horizontal(|ui| {
+                    ui.label("Sub track");
+                    if ui.add(egui::DragValue::new(&mut current)).changed() {
+                        mpv.set_property::<SubId>(current);
+                    }
+                });
+            } else if ui.button("Set sub track to 1").clicked() {
+                ui.close_menu();
+                mpv.set_property::<SubId>(1);
+            }
         });
     });
 }
