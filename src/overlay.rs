@@ -1,6 +1,6 @@
 use {
     crate::{
-        SourceMarkers, VideoDim,
+        SourceMarkers, SubsState, VideoDim,
         coords::{Dim, Present, VideoMag, VideoVector},
         mpv::{Mpv, properties::TimePos},
         source,
@@ -12,6 +12,7 @@ use {
             Color, Font, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
             Transformable,
         },
+        system::Vector2,
         window::{Event, mouse},
     },
 };
@@ -49,6 +50,7 @@ fn timeline_rect_timepos(timeline_rect: Rect<i16>, x: i16, src_info: &source::In
     ratio * src_info.duration
 }
 
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
     pos_string: &String,
@@ -57,6 +59,7 @@ pub(crate) fn draw_overlay(
     src_info: &source::Info,
     video_present_dim: VideoDim<Present>,
     video_area_max_dim: VideoDim<Present>,
+    subs: Option<&SubsState>,
 ) {
     let mouse_pos = rw.mouse_position();
     let mut rs = RectangleShape::default();
@@ -118,6 +121,49 @@ pub(crate) fn draw_overlay(
         text.set_position((timeline_rect_sf.left, timeline_rect_sf.top - 20.0));
         text.set_string(&format!("Mouse time pos: {}", FfmpegTimeFmt(timepos)));
         rw.draw(&text);
+    }
+    // Draw subs
+    if let Some(subs) = subs {
+        text.set_character_size(20);
+        text.set_position(0.);
+        text.set_outline_color(Color::BLACK);
+        text.set_outline_thickness(2.0);
+        let gray = Color::rgb(138, 145, 150);
+        text.set_fill_color(gray);
+        for (i, track) in subs.tracking.static_line_tracks.iter().enumerate() {
+            text.set_string(track);
+            rw.draw(&text);
+            if let Some(furis) = subs.tracking.static_furigana_indices.get(&i) {
+                for (furi_idx, furis) in furis {
+                    let pos = text.find_character_pos(*furi_idx);
+                    let mut smol = Text::new(&furis.join(""), font, 10);
+                    smol.set_outline_color(Color::BLACK);
+                    smol.set_fill_color(gray);
+                    smol.set_outline_thickness(1.0);
+                    smol.set_position(pos + Vector2::new(0.0, -11.));
+                    rw.draw(&smol);
+                }
+            }
+            text.move_((0., 32.0));
+        }
+        text.set_position(0.);
+        text.set_fill_color(Color::WHITE);
+        for (i, accum) in subs.tracking.accumulators.iter().enumerate() {
+            text.set_string(accum);
+            rw.draw(&text);
+            if let Some(furis) = subs.tracking.timed_furigana_indices.get(&i) {
+                for (furi_idx, furis) in furis {
+                    let pos = text.find_character_pos(*furi_idx);
+                    let mut smol = Text::new(&furis.join(""), font, 10);
+                    smol.set_outline_color(Color::BLACK);
+                    smol.set_fill_color(Color::WHITE);
+                    smol.set_outline_thickness(1.0);
+                    smol.set_position(pos + Vector2::new(0.0, -11.));
+                    rw.draw(&smol);
+                }
+            }
+            text.move_((0., 32.0));
+        }
     }
 }
 

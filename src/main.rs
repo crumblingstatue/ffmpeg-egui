@@ -5,7 +5,8 @@ use {
     clap::Parser,
     coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
     egui_sfml::{
-        SfEgui, egui,
+        SfEgui,
+        egui::{self},
         sfml::{
             graphics::{
                 Color, Font, Rect, RenderTarget, RenderWindow, Sprite, Transformable, View,
@@ -26,6 +27,7 @@ use {
     present::Present,
     sfml_integ::VideoPosSfExt as _,
     std::fmt::Write,
+    subs::SubsState,
     ui::{EguiFriendlyColor, UiState},
 };
 
@@ -36,6 +38,7 @@ mod overlay;
 mod present;
 mod sfml_integ;
 mod source;
+mod subs;
 mod time_fmt;
 mod ui;
 
@@ -118,6 +121,15 @@ struct Args {
     /// Start with a tab open
     #[arg(long)]
     tab: Option<TabOpen>,
+    /// Optional kashimark subtitle file to sync against lyrics
+    #[arg(long)]
+    sub: Option<String>,
+    /// Optional timing file for subtitle
+    #[arg(long)]
+    sub_timing: Option<String>,
+    /// Path to optional overlay font to use instead of default
+    #[arg(long)]
+    font: Option<String>,
 }
 
 fn main() {
@@ -129,6 +141,17 @@ fn main() {
             Some(path) => path.to_string_lossy().into_owned(),
             None => return,
         },
+    };
+    let mut subs_state = match args.sub {
+        Some(path) => {
+            let lines = kashimark::parse(&std::fs::read_to_string(path).unwrap());
+            let mut subs = SubsState::new(lines);
+            if let Some(path) = args.sub_timing {
+                subs.load_timings(path);
+            }
+            Some(subs)
+        }
+        None => None,
     };
     mpv.set_property::<AudioPitchCorrection>(false);
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
@@ -147,7 +170,10 @@ fn main() {
     let mut interact_state = InteractState::default();
     let mut sf_egui = SfEgui::new(&rw);
 
-    let font = unsafe { Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap() };
+    let font = match args.font {
+        Some(path) => Font::from_file(&path).unwrap(),
+        None => Font::from_memory_static(include_bytes!("../DejaVuSansMono.ttf")).unwrap(),
+    };
     let prefix = "Mouse video pos: ";
     let mut pos_string = String::from(prefix);
     let mut overlay_show = true;
@@ -200,6 +226,7 @@ fn main() {
                     &mut overlay_show,
                     &mut mpv,
                     sf_egui.context(),
+                    subs_state.as_mut(),
                 ),
                 Event::Resized { width, height } => {
                     let view =
@@ -258,6 +285,16 @@ fn main() {
                 _ => {}
             }
         }
+        if let Some(subs) = &mut subs_state
+            && let Some(current_pos) = mpv.get_property::<TimePos>()
+            && subs
+                .time_stamps
+                .get(subs.tracking.timestamp_tracker)
+                .is_some_and(|pos| current_pos >= *pos)
+        {
+            subs.advance();
+            subs.tracking.timestamp_tracker += 1;
+        }
         let raw_mouse_pos = rw.mouse_position();
         let src_mouse_pos =
             VideoPos::from_present(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
@@ -293,6 +330,7 @@ fn main() {
                     &src_info,
                     &mut interact_state,
                     &mut ui_state,
+                    subs_state.as_mut(),
                 )
             })
             .unwrap();
@@ -320,6 +358,7 @@ fn main() {
                 &src_info,
                 present.dim,
                 video_area_max_dim,
+                subs_state.as_ref(),
             );
         }
         sf_egui.draw(di, &mut rw, None);
@@ -333,6 +372,7 @@ fn handle_keypress(
     overlay_show: &mut bool,
     mpv: &mut Mpv,
     egui_ctx: &egui::Context,
+    subs: Option<&mut SubsState>,
 ) {
     if egui_ctx.wants_keyboard_input() {
         return;
@@ -350,13 +390,36 @@ fn handle_keypress(
         }
         Key::Period => mpv.command_async(FrameStep),
         Key::Comma => mpv.command_async(FrameBackStep),
+        Key::A => {
+            if let Some(subs) = subs {
+                subs.time_stamps
+                    .push(mpv.get_property::<TimePos>().unwrap());
+            }
+        }
         Key::P => mpv.command_async(PlaylistPlay::Current),
         Key::S => mpv.command_async(PlaylistPlay::None),
-        Key::R => mpv.command_async(PlaylistPlay::Index(0)),
+        Key::R => {
+            mpv.command_async(PlaylistPlay::Index(0));
+            if let Some(subs) = subs {
+                subs.rewind();
+            }
+        }
         Key::Left => mpv.command_async(SeekRelSeconds(-10.)),
         Key::Right => mpv.command_async(SeekRelSeconds(10.)),
         Key::Up => mpv.command_async(SeekRelSeconds(-30.)),
         Key::Down => mpv.command_async(SeekRelSeconds(30.)),
+        Key::F2 => {
+            if let Some(subs) = subs {
+                subs.save_state();
+            }
+        }
+        Key::F4 => {
+            if let Some(subs) = subs {
+                subs.reload_state();
+                let stamp = *subs.time_stamps.last().unwrap_or(&0.);
+                mpv.set_property::<TimePos>(stamp);
+            }
+        }
         _ => {}
     }
 }

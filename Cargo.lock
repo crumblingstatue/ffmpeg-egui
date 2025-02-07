@@ -631,6 +631,7 @@ dependencies = [
  "anyhow",
  "clap",
  "egui-sfml",
+ "kashimark",
  "libmpv-sys",
  "rand",
  "rfd",
@@ -937,6 +938,11 @@ dependencies = [
  "once_cell",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "kashimark"
+version = "0.1.0"
+source = "git+https://github.com/crumblingstatue/kashimark.git#d66d46ad2efd272fba32c57a13d288bd2f0a49f9"
 
 [[package]]
 name = "lazy_static"

@@ -1,6 +1,6 @@
 use {
     crate::{
-        InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
+        InteractState, RectDrag, RectMarker, SourceMarkers, SubsState, TimeSpan, TimespanMarker,
         coords::{self, VideoDim, VideoMag, VideoPos, VideoRect},
         ffmpeg::{self, resolve_arguments},
         mpv::{
@@ -76,6 +76,7 @@ pub(crate) fn ui(
     src_info: &source::Info,
     interact_state: &mut InteractState,
     ui_state: &mut UiState,
+    subs: Option<&mut SubsState>,
 ) {
     {
         let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -87,6 +88,7 @@ pub(crate) fn ui(
                 video_area_max_dim,
                 ui_state,
                 interact_state,
+                subs,
             );
         });
         video_area_max_dim.y = re.response.rect.top() as VideoMag;
@@ -225,6 +227,7 @@ fn right_panel_ui(
     }
 }
 
+#[expect(clippy::too_many_arguments)]
 fn bottom_bar_ui(
     ui: &mut egui::Ui,
     src_info: &source::Info,
@@ -233,6 +236,7 @@ fn bottom_bar_ui(
     video_area_max_dim: &VideoDim<coords::Present>,
     ui_state: &mut UiState,
     interact_state: &mut InteractState,
+    subs: Option<&mut SubsState>,
 ) {
     ui.horizontal(|ui| {
         ui.label(format!(
@@ -340,6 +344,22 @@ fn bottom_bar_ui(
             } else if ui.button("Set sub track to 1").clicked() {
                 ui.close_menu();
                 mpv.set_property::<SubId>(1);
+            }
+            if let Some(subs) = subs {
+                if ui.button("Clear sub timings").clicked() {
+                    ui.close_menu();
+                    subs.clear();
+                }
+                if ui.button("Save sub timings to file").clicked() {
+                    ui.close_menu();
+                    subs.save_timings();
+                }
+                if let Some(reload) = subs.timings_reload_sentry() {
+                    if ui.button("Reload sub timings from file").clicked() {
+                        ui.close_menu();
+                        reload.reload();
+                    }
+                }
             }
         });
     });
