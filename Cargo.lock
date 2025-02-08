@@ -552,7 +552,7 @@ dependencies = [
 [[package]]
 name = "kashimark"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/kashimark.git#d66d46ad2efd272fba32c57a13d288bd2f0a49f9"
+source = "git+https://github.com/crumblingstatue/kashimark.git#7b482133a32b80a671fd5810154966867b6dc76a"
 
 [[package]]
 name = "lazy_static"

@@ -1,4 +1,4 @@
-#![feature(array_chunks, generic_const_exprs, let_chains)]
+#![feature(array_chunks, generic_const_exprs, let_chains, array_windows)]
 
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
@@ -130,6 +130,9 @@ struct Args {
     /// Path to optional overlay font to use instead of default
     #[arg(long)]
     font: Option<String>,
+    /// Generate ASS subtitles from opened lyrics and timing, then exit
+    #[arg(long)]
+    gen_ass: Option<String>,
 }
 
 fn main() {
@@ -179,6 +182,12 @@ fn main() {
     let mut overlay_show = true;
     let actual_video_w = mpv.get_property::<Width>().unwrap_or(0);
     let actual_video_h = mpv.get_property::<Height>().unwrap_or(0);
+    if let Some(ref mut subs) = subs_state
+        && let Some(path) = args.gen_ass
+    {
+        subs.write_ass(&path, actual_video_w, actual_video_h);
+        return;
+    }
     let crop_x = mpv.get_property::<CropX>().unwrap_or(0);
     let crop_y = mpv.get_property::<CropY>().unwrap_or(0);
     let crop_w = mpv.get_property::<CropW>().unwrap_or(0);

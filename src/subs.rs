@@ -1,4 +1,5 @@
 use {
+    crate::time_fmt::AssTimeFmt,
     egui_sfml::egui::{TextBuffer, ahash::HashMap},
     std::{collections::VecDeque, fmt::Write as _},
 };
@@ -72,6 +73,81 @@ impl SubsState {
             .clone()
             .map(|path| TimingsReloadSentry { subs: self, path })
     }
+    pub fn write_ass(&mut self, path: &str, video_w: i64, video_h: i64) {
+        let ass = self.gen_ass(video_w, video_h);
+        std::fs::write(path, ass.as_bytes()).unwrap()
+    }
+    fn gen_ass(&mut self, video_w: i64, video_h: i64) -> String {
+        let mut ass = String::new();
+        ass.push_str(&format!("\
+            [Script Info]\n\
+            ScriptType: v4.00+\n\
+            ScaledBorderAndShadow: yes\n\
+            YCbCr Matrix: None\n\
+            PlayResX: {video_w}\n\
+            PlayResY: {video_h}\n\
+            LayoutResX: {video_w}\n\
+            LayoutResY: {video_h}\n\
+            \n\
+            [V4+ Styles]\n\
+            Format: Name, Fontname, Fontsize,\
+                     PrimaryColour, SecondaryColour, OutlineColour, BackColour,\
+                     Bold, Italic, Underline, StrikeOut,\
+                     ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n",
+        ));
+        let mut track_ids = Vec::new();
+        for line in &self.lines {
+            for track in &line.tracks {
+                track_ids.push(track.id);
+            }
+        }
+        track_ids.sort();
+        track_ids.dedup();
+        for track_id in track_ids {
+            ass.push_str(&format!(
+                "Style: Static{track_id},DejaVu Sans,22,\
+                                   &H00AAAAAA,&H00000000,&H00000000,&H00000000,\
+                                   0,0,0,0,\
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,0\n"
+            ));
+            ass.push_str(&format!(
+                "Style: Accum{track_id},DejaVu Sans,22,\
+                                   &H00FFFFFF, &H00000000, &H00000000, &H00000000,\
+                                   0,0,0,0,\
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n"
+            ));
+        }
+        ass.push_str(concat!(
+            "\n",
+            "[Events]\n",
+            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n",
+        ));
+        let time_stamps = self.time_stamps.clone();
+        for [st, et] in time_stamps.array_windows() {
+            self.advance();
+            //dbg!(&self.tracking.accumulators);
+            //dbg!(&self.tracking.static_line_tracks);
+            for (tid, track) in &self.tracking.static_line_tracks {
+                writeln!(
+                    &mut ass,
+                    "Dialogue: 0,{start},{end},Static{tid},,0,0,0,,{track}",
+                    start = AssTimeFmt(*st),
+                    end = AssTimeFmt(*et),
+                )
+                .unwrap();
+            }
+            for (tid, track) in &self.tracking.accumulators {
+                writeln!(
+                    &mut ass,
+                    "Dialogue: 1,{start},{end},Accum{tid},,0,0,0,,{track}",
+                    start = AssTimeFmt(*st),
+                    end = AssTimeFmt(*et),
+                )
+                .unwrap();
+            }
+        }
+        ass
+    }
 }
 
 pub struct TimingsReloadSentry<'a> {
@@ -90,9 +166,9 @@ pub struct TrackingState {
     line_idx: usize,
     seg_idx: usize,
     /// Contains the currently timed texts for the tracks
-    pub accumulators: Vec<String>,
+    pub accumulators: Vec<(u8, String)>,
     /// Contains the texts for the tracks for the current line in the song
-    pub static_line_tracks: Vec<String>,
+    pub static_line_tracks: Vec<(u8, String)>,
     /// Which characters have furigana
     pub static_furigana_indices: FuriMap,
     /// Which characters have furigana
@@ -122,18 +198,22 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
     }
     if let Some(line) = lines.get(tracking.line_idx) {
         if tracking.accumulators.len() < line.tracks.len() {
-            tracking.accumulators = vec![String::new(); line.tracks.len()];
-            tracking.static_line_tracks = vec![String::new(); line.tracks.len()];
+            tracking.accumulators = Vec::new();
+            tracking.static_line_tracks = Vec::new();
+            for track in &line.tracks {
+                tracking.accumulators.push((track.id, String::new()));
+                tracking.static_line_tracks.push((track.id, String::new()));
+            }
         }
-        for (i, ((track, accum), static_line)) in line
+        for (i, ((track, (_aid, accum)), (_sid, static_line))) in line
             .tracks
             .iter()
             .zip(tracking.accumulators.iter_mut())
             .zip(tracking.static_line_tracks.iter_mut())
             .enumerate()
         {
-            match track {
-                kashimark::Track::Timing(timing_track) => {
+            match &track.data {
+                kashimark::TrackData::Timing(timing_track) => {
                     static_line.clear();
                     for seg in &timing_track.segments {
                         write_seg(
@@ -153,7 +233,7 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
                         &mut tracking.timed_furi_debt,
                     );
                 }
-                kashimark::Track::Raw(a) => *accum = a.to_string(),
+                kashimark::TrackData::Raw(a) => *accum = a.to_string(),
             }
         }
         tracking.seg_idx += 1;
