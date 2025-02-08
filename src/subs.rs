@@ -18,6 +18,25 @@ struct Save {
     time_stamps: Vec<f64>,
 }
 
+const FW_SP: char = char::from_u32(0x3000).unwrap();
+
+fn write_at_char_idx(s: String, idx: usize, ch: char) -> String {
+    let mut old_iter = s.chars();
+    let mut new = String::new();
+    for _ in 0..idx {
+        new.push(old_iter.next().unwrap());
+    }
+    old_iter.next();
+    new.push(ch);
+    new.extend(old_iter);
+    new
+}
+
+#[test]
+fn test_write_at_char_idx() {
+    assert_eq!(write_at_char_idx("hello".to_string(), 3, 'a'), "helao");
+}
+
 impl SubsState {
     pub fn new(lines: Vec<kashimark::Line>) -> Self {
         Self {
@@ -105,18 +124,30 @@ impl SubsState {
         track_ids.dedup();
         for track_id in track_ids {
             ass.push_str(&format!(
-                "Style: Static{track_id},DejaVu Sans,22,\
+                "Style: Static{track_id},DejaVu Sans,44,\
                                    &H00AAAAAA,&H00000000,&H00000000,&H00000000,\
                                    0,0,0,0,\
                                    100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,0\n"
             ));
             ass.push_str(&format!(
-                "Style: Accum{track_id},DejaVu Sans,22,\
+                "Style: Accum{track_id},DejaVu Sans,44,\
                                    &H00FFFFFF, &H00000000, &H00000000, &H00000000,\
                                    0,0,0,0,\
                                    100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n"
             ));
         }
+        ass.push_str(
+            "Style: StaticFuri,DejaVu Sans,22.2,\
+                                   &H00AAAAAA, &H00000000, &H00000000, &H00000000,\
+                                   0,0,0,0,\
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n",
+        );
+        ass.push_str(
+            "Style: AccumFuri,DejaVu Sans,22.2,\
+                                   &H00FFFFFF, &H00000000, &H00000000, &H00000000,\
+                                   0,0,0,0,\
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n",
+        );
         ass.push_str(concat!(
             "\n",
             "[Events]\n",
@@ -126,6 +157,26 @@ impl SubsState {
         for [st, et] in time_stamps.array_windows() {
             self.advance();
             for (tid, track) in &self.tracking.static_line_tracks {
+                let mut furi_line: String =
+                    std::iter::repeat_n(FW_SP, track.chars().count() * 2).collect();
+                if let Some(furis) = self.tracking.static_furigana_indices.get(tid) {
+                    for (idx, furis) in furis {
+                        let mut i = 0;
+                        for furi in furis {
+                            for ch in furi.chars() {
+                                furi_line = write_at_char_idx(furi_line, (*idx * 2) + i, ch);
+                                i += 1;
+                            }
+                        }
+                    }
+                }
+                writeln!(
+                    &mut ass,
+                    "Dialogue: 0,{start},{end},StaticFuri,,0,0,0,,{furi_line}",
+                    start = AssTimeFmt(*st),
+                    end = AssTimeFmt(*et),
+                )
+                .unwrap();
                 writeln!(
                     &mut ass,
                     "Dialogue: 0,{start},{end},Static{tid},,0,0,0,,{track}",
@@ -135,6 +186,26 @@ impl SubsState {
                 .unwrap();
             }
             for (tid, track) in &self.tracking.accumulators {
+                let mut furi_line: String =
+                    std::iter::repeat_n(FW_SP, track.chars().count() * 2).collect();
+                if let Some(furis) = self.tracking.timed_furigana_indices.get(tid) {
+                    for (idx, furis) in furis {
+                        let mut i = 0;
+                        for furi in furis {
+                            for ch in furi.chars() {
+                                furi_line = write_at_char_idx(furi_line, (*idx * 2) + i, ch);
+                                i += 1;
+                            }
+                        }
+                    }
+                }
+                writeln!(
+                    &mut ass,
+                    "Dialogue: 1,{start},{end},AccumFuri,,0,0,0,,{furi_line}",
+                    start = AssTimeFmt(*st),
+                    end = AssTimeFmt(*et),
+                )
+                .unwrap();
                 writeln!(
                     &mut ass,
                     "Dialogue: 1,{start},{end},Accum{tid},,0,0,0,,{track}",
