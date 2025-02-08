@@ -179,7 +179,7 @@ pub struct TrackingState {
     timed_furi_debt: FuriDebt,
 }
 
-pub type FuriMap = HashMap<usize, HashMap<usize, Vec<String>>>;
+pub type FuriMap = HashMap<u8, HashMap<usize, Vec<String>>>;
 
 fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
     if tracking.wait_next_line {
@@ -203,12 +203,11 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
                 tracking.static_line_tracks.push((track.id, String::new()));
             }
         }
-        for (i, ((track, (_aid, accum)), (_sid, static_line))) in line
+        for ((track, (aid, accum)), (sid, static_line)) in line
             .tracks
             .iter()
             .zip(tracking.accumulators.iter_mut())
             .zip(tracking.static_line_tracks.iter_mut())
-            .enumerate()
         {
             match &track.data {
                 kashimark::TrackData::Timing(timing_track) => {
@@ -217,7 +216,7 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
                         write_seg(
                             static_line,
                             seg,
-                            i,
+                            *sid,
                             &mut tracking.static_furigana_indices,
                             &mut tracking.static_furi_debt,
                         );
@@ -226,7 +225,7 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
                     write_seg(
                         accum,
                         seg,
-                        i,
+                        *aid,
                         &mut tracking.timed_furigana_indices,
                         &mut tracking.timed_furi_debt,
                     );
@@ -246,7 +245,7 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
 
 #[derive(Default, Clone)]
 struct FuriDebt {
-    track_idx: usize,
+    track_id: u8,
     char_idx: usize,
     debt: VecDeque<String>,
 }
@@ -254,7 +253,7 @@ struct FuriDebt {
 fn write_seg(
     dest: &mut String,
     seg: &kashimark::TimedSegOrFill,
-    track_idx: usize,
+    track_id: u8,
     furi: &mut FuriMap,
     furi_debt: &mut FuriDebt,
 ) {
@@ -262,19 +261,19 @@ fn write_seg(
         kashimark::TimedSegOrFill::Seg(timed_segment) => {
             write!(dest, "{}", timed_segment.text).unwrap();
             if !timed_segment.furigana.is_empty() {
-                let idx_furi_map = furi.entry(track_idx).or_default();
+                let idx_furi_map = furi.entry(track_id).or_default();
                 let last_idx = dest.chars().count().saturating_sub(1);
                 let furi_vec = idx_furi_map.entry(last_idx).or_default();
                 let (first, rest) = timed_segment.furigana.split_first().unwrap();
                 *furi_vec = vec![first.clone()];
-                furi_debt.track_idx = track_idx;
+                furi_debt.track_id = track_id;
                 furi_debt.char_idx = last_idx;
                 furi_debt.debt = rest.to_vec().into();
             }
         }
         kashimark::TimedSegOrFill::Fill => {
             if let Some(furi_part) = furi_debt.debt.pop_front() {
-                let idx_furi_map = furi.get_mut(&furi_debt.track_idx).unwrap();
+                let idx_furi_map = furi.get_mut(&furi_debt.track_id).unwrap();
                 let furi_vec = idx_furi_map.get_mut(&furi_debt.char_idx).unwrap();
                 furi_vec.push(furi_part);
             }

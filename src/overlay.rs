@@ -130,10 +130,10 @@ pub(crate) fn draw_overlay(
         text.set_outline_thickness(2.0);
         let gray = Color::rgb(138, 145, 150);
         text.set_fill_color(gray);
-        for (i, (tid, track)) in subs.tracking.static_line_tracks.iter().enumerate() {
+        for (tid, track) in subs.tracking.static_line_tracks.iter() {
             text.set_string(&format!("{track} ({tid})"));
             rw.draw(&text);
-            if let Some(furis) = subs.tracking.static_furigana_indices.get(&i) {
+            if let Some(furis) = subs.tracking.static_furigana_indices.get(tid) {
                 for (furi_idx, furis) in furis {
                     let pos = text.find_character_pos(*furi_idx);
                     let mut smol = Text::new(&furis.join(""), font, 10);
@@ -148,10 +148,10 @@ pub(crate) fn draw_overlay(
         }
         text.set_position(0.);
         text.set_fill_color(Color::WHITE);
-        for (i, (_tid, accum)) in subs.tracking.accumulators.iter().enumerate() {
+        for (tid, accum) in &subs.tracking.accumulators {
             text.set_string(accum);
             rw.draw(&text);
-            if let Some(furis) = subs.tracking.timed_furigana_indices.get(&i) {
+            if let Some(furis) = subs.tracking.timed_furigana_indices.get(tid) {
                 for (furi_idx, furis) in furis {
                     let pos = text.find_character_pos(*furi_idx);
                     let mut smol = Text::new(&furis.join(""), font, 10);
