@@ -15,7 +15,7 @@ use {
         egui::{self, RichText, ScrollArea},
         sfml::graphics::Color,
     },
-    rand::{Rng, thread_rng},
+    rand::Rng,
     std::io::Read,
 };
 
@@ -443,7 +443,7 @@ fn timespans_ui(
             let dur_s = format!("{:.03}", marker.timespan.end - marker.timespan.begin);
             ui.label(&dur_s);
             if ui.button("copy").clicked() {
-                ui.output_mut(|o| o.copied_text = dur_s);
+                ui.ctx().copy_text(dur_s);
             }
         });
 
@@ -557,11 +557,11 @@ fn rects_ui(
 pub type EguiFriendlyColor = [f32; 3];
 
 fn random_color() -> EguiFriendlyColor {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     [
-        rng.gen_range(0.1..=1.0),
-        rng.gen_range(0.1..=1.0),
-        rng.gen_range(0.1..=1.0),
+        rng.random_range(0.1..=1.0),
+        rng.random_range(0.1..=1.0),
+        rng.random_range(0.1..=1.0),
     ]
 }
 
