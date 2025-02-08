@@ -125,8 +125,6 @@ impl SubsState {
         let time_stamps = self.time_stamps.clone();
         for [st, et] in time_stamps.array_windows() {
             self.advance();
-            //dbg!(&self.tracking.accumulators);
-            //dbg!(&self.tracking.static_line_tracks);
             for (tid, track) in &self.tracking.static_line_tracks {
                 writeln!(
                     &mut ass,
