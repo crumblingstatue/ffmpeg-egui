@@ -127,26 +127,26 @@ impl SubsState {
                 "Style: Static{track_id},DejaVu Sans,44,\
                                    &H00AAAAAA,&H00000000,&H00000000,&H00000000,\
                                    0,0,0,0,\
-                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,0\n"
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,2,0,0,0,0\n"
             ));
             ass.push_str(&format!(
                 "Style: Accum{track_id},DejaVu Sans,44,\
                                    &H00FFFFFF, &H00000000, &H00000000, &H00000000,\
                                    0,0,0,0,\
-                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n"
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,2,0,0,0,1\n"
             ));
         }
         ass.push_str(
             "Style: StaticFuri,DejaVu Sans,22.2,\
                                    &H00AAAAAA, &H00000000, &H00000000, &H00000000,\
                                    0,0,0,0,\
-                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n",
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,2,0,0,0,1\n",
         );
         ass.push_str(
             "Style: AccumFuri,DejaVu Sans,22.2,\
                                    &H00FFFFFF, &H00000000, &H00000000, &H00000000,\
                                    0,0,0,0,\
-                                   100.0,100.0,0.0,0.0,1,1.0,1.0,7,0,0,0,1\n",
+                                   100.0,100.0,0.0,0.0,1,1.0,1.0,2,0,0,0,1\n",
         );
         ass.push_str(concat!(
             "\n",
@@ -185,11 +185,16 @@ impl SubsState {
                 )
                 .unwrap();
             }
-            for (tid, track) in &self.tracking.accumulators {
+            for ((tid, track), (_sid, static_)) in self
+                .tracking
+                .accumulators
+                .iter()
+                .zip(&self.tracking.static_line_tracks)
+            {
                 let mut furi_line: String =
-                    std::iter::repeat_n(FW_SP, track.chars().count() * 2).collect();
-                if let Some(furis) = self.tracking.timed_furigana_indices.get(tid) {
-                    for (idx, furis) in furis {
+                    std::iter::repeat_n(FW_SP, static_.chars().count() * 2).collect();
+                if let Some(timed_furis) = self.tracking.timed_furigana_indices.get(tid) {
+                    for (idx, furis) in timed_furis {
                         let mut i = 0;
                         for furi in furis {
                             for ch in furi.chars() {
@@ -206,13 +211,26 @@ impl SubsState {
                     end = AssTimeFmt(*et),
                 )
                 .unwrap();
-                writeln!(
-                    &mut ass,
-                    "Dialogue: 1,{start},{end},Accum{tid},,0,0,0,,{track}",
-                    start = AssTimeFmt(*st),
-                    end = AssTimeFmt(*et),
-                )
-                .unwrap();
+                if static_.is_empty() {
+                    writeln!(
+                        &mut ass,
+                        "Dialogue: 1,{start},{end},Accum{tid},,0,0,0,,{track}",
+                        start = AssTimeFmt(*st),
+                        end = AssTimeFmt(*et),
+                    )
+                    .unwrap();
+                } else {
+                    let mut transparented = static_[..track.len()].to_string();
+                    transparented.push_str("{\\alpha&HFF&}");
+                    transparented.push_str(&static_[track.len()..]);
+                    writeln!(
+                        &mut ass,
+                        "Dialogue: 1,{start},{end},Accum{tid},,0,0,0,,{transparented}",
+                        start = AssTimeFmt(*st),
+                        end = AssTimeFmt(*et),
+                    )
+                    .unwrap();
+                }
             }
         }
         ass
