@@ -172,14 +172,14 @@ impl SubsState {
                 }
                 writeln!(
                     &mut ass,
-                    "Dialogue: 0,{start},{end},StaticFuri,,0,0,0,,{furi_line}",
+                    "Dialogue: 0,{start},{end},Static{tid},,0,0,0,,{track}",
                     start = AssTimeFmt(*st),
                     end = AssTimeFmt(*et),
                 )
                 .unwrap();
                 writeln!(
                     &mut ass,
-                    "Dialogue: 0,{start},{end},Static{tid},,0,0,0,,{track}",
+                    "Dialogue: 0,{start},{end},StaticFuri,,0,0,0,,{furi_line}",
                     start = AssTimeFmt(*st),
                     end = AssTimeFmt(*et),
                 )
@@ -204,13 +204,6 @@ impl SubsState {
                         }
                     }
                 }
-                writeln!(
-                    &mut ass,
-                    "Dialogue: 1,{start},{end},AccumFuri,,0,0,0,,{furi_line}",
-                    start = AssTimeFmt(*st),
-                    end = AssTimeFmt(*et),
-                )
-                .unwrap();
                 if static_.is_empty() {
                     writeln!(
                         &mut ass,
@@ -231,6 +224,13 @@ impl SubsState {
                     )
                     .unwrap();
                 }
+                writeln!(
+                    &mut ass,
+                    "Dialogue: 1,{start},{end},AccumFuri,,0,0,0,,{furi_line}",
+                    start = AssTimeFmt(*st),
+                    end = AssTimeFmt(*et),
+                )
+                .unwrap();
             }
         }
         ass
