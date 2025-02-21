@@ -26,7 +26,7 @@ pub struct UiState {
     rename_index: Option<usize>,
     selected_rect: Option<usize>,
     pub ffmpeg_cli: FfmpegCli,
-    file_dialog: FileDialog,
+    pub file_dialog: FileDialog,
 }
 
 #[derive(Default)]
@@ -49,7 +49,7 @@ impl Default for UiState {
             rename_index: None,
             selected_rect: None,
             ffmpeg_cli: FfmpegCli::default(),
-            file_dialog: FileDialog::new(),
+            file_dialog: FileDialog::new().as_modal(true),
         }
     }
 }

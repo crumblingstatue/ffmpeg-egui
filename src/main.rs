@@ -240,12 +240,14 @@ fn main() {
             overlay::handle_event(&event, &mpv, &src_info, video_area_max_dim);
             match event {
                 Event::Closed => rw.close(),
-                Event::KeyPressed { code, .. } => handle_keypress(
+                Event::KeyPressed { code, ctrl, .. } => handle_keypress(
                     code,
+                    ctrl,
                     &mut rw,
                     &mut overlay_show,
                     &mut mpv,
                     sf_egui.context(),
+                    &mut ui_state,
                     subs_state.as_mut(),
                 ),
                 Event::Resized { width, height } => {
@@ -403,13 +405,17 @@ fn main() {
 
 fn handle_keypress(
     code: Key,
+    ctrl: bool,
     rw: &mut RenderWindow,
     overlay_show: &mut bool,
     mpv: &mut Mpv,
     egui_ctx: &egui::Context,
+    ui_state: &mut UiState,
     subs: Option<&mut SubsState>,
 ) {
-    if egui_ctx.wants_keyboard_input() {
+    if egui_ctx.wants_keyboard_input()
+        || ui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
+    {
         return;
     }
     match code {
@@ -433,6 +439,9 @@ fn handle_keypress(
         }
         Key::P => mpv.command_async(PlaylistPlay::Current),
         Key::S => mpv.command_async(PlaylistPlay::None),
+        Key::O if ctrl => {
+            ui_state.file_dialog.pick_file();
+        }
         Key::R => {
             mpv.command_async(PlaylistPlay::Index(0));
             if let Some(subs) = subs {
