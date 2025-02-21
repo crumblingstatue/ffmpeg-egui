@@ -11,6 +11,7 @@ use {
         source,
         time_fmt::FfmpegTimeFmt,
     },
+    egui_file_dialog::FileDialog,
     egui_sfml::{
         egui::{self, RichText, ScrollArea},
         sfml::graphics::Color,
@@ -25,6 +26,7 @@ pub struct UiState {
     rename_index: Option<usize>,
     selected_rect: Option<usize>,
     pub ffmpeg_cli: FfmpegCli,
+    file_dialog: FileDialog,
 }
 
 #[derive(Default)]
@@ -47,6 +49,7 @@ impl Default for UiState {
             rename_index: None,
             selected_rect: None,
             ffmpeg_cli: FfmpegCli::default(),
+            file_dialog: FileDialog::new(),
         }
     }
 }
@@ -69,39 +72,43 @@ impl Tab {
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn ui(
     ctx: &egui::Context,
-    mpv: &Mpv,
+    mpv: &mut Mpv,
     video_area_max_dim: &mut VideoDim<coords::Present>,
-    present: &mut Present,
+    present: Option<&mut Present>,
     source_markers: &mut SourceMarkers,
     src_info: &source::Info,
     interact_state: &mut InteractState,
     ui_state: &mut UiState,
     subs: Option<&mut SubsState>,
 ) {
-    {
-        let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            bottom_bar_ui(
-                ui,
-                src_info,
-                present,
-                mpv,
-                video_area_max_dim,
-                ui_state,
-                interact_state,
-                subs,
-            );
+    let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+        bottom_bar_ui(
+            ui,
+            src_info,
+            present,
+            mpv,
+            video_area_max_dim,
+            ui_state,
+            interact_state,
+            subs,
+        );
+    });
+    video_area_max_dim.y = re.response.rect.top() as VideoMag;
+    let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
+        right_panel_ui(ui, ui_state, source_markers, interact_state, src_info, mpv);
+    });
+    video_area_max_dim.x = re.response.rect.left() as VideoMag;
+    if ui_state.ffmpeg_cli.open {
+        egui::Window::new("ffmpeg").show(ctx, |ui| {
+            ffmpeg_cli_ui(ui, ui_state, source_markers, src_info);
         });
-        video_area_max_dim.y = re.response.rect.top() as VideoMag;
-        let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            right_panel_ui(ui, ui_state, source_markers, interact_state, src_info, mpv);
+        ui_state.ffmpeg_cli.first_frame = false;
+    }
+    ui_state.file_dialog.update(ctx);
+    if let Some(path) = ui_state.file_dialog.take_picked() {
+        mpv.command_async(crate::mpv::commands::LoadFile {
+            path: path.to_str().unwrap(),
         });
-        video_area_max_dim.x = re.response.rect.left() as VideoMag;
-        if ui_state.ffmpeg_cli.open {
-            egui::Window::new("ffmpeg").show(ctx, |ui| {
-                ffmpeg_cli_ui(ui, ui_state, source_markers, src_info);
-            });
-            ui_state.ffmpeg_cli.first_frame = false;
-        }
     }
 }
 
@@ -156,11 +163,7 @@ fn ffmpeg_cli_ui(
             ui.label("running ffmpeg");
             if ui.button("kill").clicked() {
                 if let Err(e) = child.kill() {
-                    rfd::MessageDialog::new()
-                        .set_level(rfd::MessageLevel::Error)
-                        .set_title("Process kill error")
-                        .set_description(e.to_string())
-                        .show();
+                    eprintln!("Error killing child process: {e}");
                 }
             }
             ui.spinner();
@@ -231,7 +234,7 @@ fn right_panel_ui(
 fn bottom_bar_ui(
     ui: &mut egui::Ui,
     src_info: &source::Info,
-    present: &mut Present,
+    present: Option<&mut Present>,
     mpv: &Mpv,
     video_area_max_dim: &VideoDim<coords::Present>,
     ui_state: &mut UiState,
@@ -276,11 +279,18 @@ fn bottom_bar_ui(
             ui_state.ffmpeg_cli.first_frame = true;
         }
         ui.menu_button("Menu", |ui| {
+            if ui.button("Load video...").clicked() {
+                ui_state.file_dialog.pick_file();
+                ui.close_menu();
+            }
             if ui.button("Reset pan").clicked() {
                 interact_state.pan_pos = VideoPos::new(0, 0);
                 ui.close_menu();
             }
             ui.menu_button("Video size", |ui| {
+                let Some(present) = present else {
+                    return;
+                };
                 let mut present_size_changed = false;
                 if ui.button("Original").clicked() {
                     present.dim.x = src_info.dim.x as VideoMag;
@@ -308,19 +318,22 @@ fn bottom_bar_ui(
                     present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
                     present_size_changed = true;
                 }
-                // Clamp range to make it somewhat sane
-                present.dim.x = (present.dim.x).clamp(1, 4096);
-                present.dim.y = (present.dim.y).clamp(1, 4096);
-                if present_size_changed
-                    && present
+                if present_size_changed {
+                    // Clamp range to make it somewhat sane
+                    dbg!(present.dim);
+                    present.dim.x = (present.dim.x).clamp(1, 4096);
+                    present.dim.y = (present.dim.y).clamp(1, 4096);
+                    dbg!(present.dim);
+                    if present
                         .texture
                         .create(
                             (present.dim.x).try_into().unwrap(),
                             (present.dim.y).try_into().unwrap(),
                         )
                         .is_err()
-                {
-                    panic!("Failed to create texture");
+                    {
+                        panic!("Failed to create texture");
+                    }
                 }
             });
             if let Some(mut current) = mpv.get_property::<AudioId>() {

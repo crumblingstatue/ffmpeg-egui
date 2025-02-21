@@ -161,6 +161,23 @@ impl Mpv {
             );
         });
     }
+
+    #[must_use]
+    pub fn poll_event(&self) -> Option<MpvEvent> {
+        unsafe {
+            let ev_ptr = ffi::mpv_wait_event(self.mpv_handle, 0.0);
+            if let Some(ev) = ev_ptr.as_ref() {
+                if ev.event_id == ffi::mpv_event_id_MPV_EVENT_VIDEO_RECONFIG {
+                    return Some(MpvEvent::VideoReconfig);
+                }
+            }
+        }
+        None
+    }
+}
+
+pub enum MpvEvent {
+    VideoReconfig,
 }
 
 impl Drop for Mpv {

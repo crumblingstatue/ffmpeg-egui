@@ -9,7 +9,11 @@ pub struct Present {
 }
 
 impl Present {
-    pub fn new(dim: VideoDim<crate::coords::Present>) -> Self {
+    pub fn new(dim: VideoDim<crate::coords::Present>) -> Option<Self> {
+        if dim.x == 0 || dim.y == 0 {
+            eprintln!("Present::new: Zero dimension(s) passed");
+            return None;
+        }
         let mut texture = Texture::new().unwrap();
         if texture
             .create(dim.x.try_into().unwrap(), dim.y.try_into().unwrap())
@@ -17,6 +21,6 @@ impl Present {
         {
             eprintln!("Failed to create texture");
         }
-        Present { dim, texture }
+        Some(Present { dim, texture })
     }
 }

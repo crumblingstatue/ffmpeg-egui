@@ -3,7 +3,7 @@
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
     clap::Parser,
-    coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect},
+    coords::{Src, VideoDim, VideoMag, VideoPos, VideoRect, VideoVector},
     egui_sfml::{
         SfEgui,
         egui::{self},
@@ -138,13 +138,6 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut mpv = Mpv::new().unwrap();
-    let path = match args.file {
-        Some(path) => path,
-        None => match rfd::FileDialog::new().pick_file() {
-            Some(path) => path.to_string_lossy().into_owned(),
-            None => return,
-        },
-    };
     let mut subs_state = match args.sub {
         Some(path) => {
             let lines = kashimark::parse(&std::fs::read_to_string(path).unwrap());
@@ -160,7 +153,9 @@ fn main() {
     mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     mpv.set_property::<KeepOpenPause>(YesNo::No);
     mpv.set_property::<Volume>(75.0);
-    mpv.command_async(LoadFile { path: &path });
+    if let Some(path) = &args.file {
+        mpv.command_async(LoadFile { path });
+    }
     let mut source_markers = SourceMarkers::default();
     let mut rw = RenderWindow::new(
         (960, 600),
@@ -198,13 +193,17 @@ fn main() {
         eprintln!("Rotated videos are currently unsupported");
         return;
     }
-    let w_h_ratio = actual_video_w as f64 / actual_video_h as f64;
+    let w_h_ratio = if actual_video_h == 0 || actual_video_w == 0 {
+        1.0
+    } else {
+        actual_video_w as f64 / actual_video_h as f64
+    };
     let mut src_info = source::Info {
-        dim: VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag),
+        dim: VideoDim::new(0, 0),
         w_h_ratio,
         duration: 0.0,
         time_pos: 0.0,
-        path: path.to_owned(),
+        path: args.file.map_or(String::new(), String::from),
     };
     let mut present = Present::new(src_info.dim.as_present());
     let mut ui_state = UiState::default();
@@ -224,6 +223,18 @@ fn main() {
     let mut video_area_max_dim = VideoDim::<coords::Present>::new(0, 0);
 
     while rw.is_open() {
+        if let Some(ev) = mpv.poll_event() {
+            match ev {
+                mpv::MpvEvent::VideoReconfig => {
+                    let actual_video_w = mpv.get_property::<Width>().unwrap_or(0);
+                    let actual_video_h = mpv.get_property::<Height>().unwrap_or(0);
+                    src_info.dim =
+                        VideoDim::new(actual_video_w as VideoMag, actual_video_h as VideoMag);
+                    eprintln!("Video reconfig {:#?}", src_info.dim);
+                    present = Present::new(src_info.dim.as_present());
+                }
+            }
+        }
         while let Some(event) = rw.poll_event() {
             sf_egui.add_event(&event);
             overlay::handle_event(&event, &mpv, &src_info, video_area_max_dim);
@@ -247,6 +258,9 @@ fn main() {
                     x,
                     y,
                 } => 'block: {
+                    let Some(present) = present.as_ref() else {
+                        break 'block;
+                    };
                     if sf_egui.context().wants_pointer_input() {
                         break 'block;
                     }
@@ -268,7 +282,10 @@ fn main() {
                     button: mouse::Button::Left,
                     x,
                     y,
-                } => {
+                } => 'block: {
+                    let Some(present) = present.as_ref() else {
+                        break 'block;
+                    };
                     let pos = VideoPos::from_present(x, y, src_info.dim, present.dim);
                     if let Some(drag) = &interact_state.rect_drag {
                         match drag.status {
@@ -305,8 +322,14 @@ fn main() {
             subs.tracking.timestamp_tracker += 1;
         }
         let raw_mouse_pos = rw.mouse_position();
-        let src_mouse_pos =
-            VideoPos::from_present(raw_mouse_pos.x, raw_mouse_pos.y, src_info.dim, present.dim);
+        let src_mouse_pos = VideoPos::from_present(
+            raw_mouse_pos.x,
+            raw_mouse_pos.y,
+            src_info.dim,
+            present
+                .as_mut()
+                .map_or(VideoVector::new(0, 0), |present| present.dim),
+        );
         src_info.duration = mpv.get_property::<Duration>().unwrap_or(0.0);
         src_info.time_pos = mpv.get_property::<TimePos>().unwrap_or(0.0);
         if let Some(drag) = &interact_state.rect_drag {
@@ -332,9 +355,9 @@ fn main() {
             .run(&mut rw, |_rw, ctx| {
                 ui::ui(
                     ctx,
-                    &mpv,
+                    &mut mpv,
                     &mut video_area_max_dim,
-                    &mut present,
+                    present.as_mut(),
                     &mut source_markers,
                     &src_info,
                     &mut interact_state,
@@ -346,18 +369,19 @@ fn main() {
         pos_string.truncate(prefix.len());
         write!(&mut pos_string, "{}, {}", src_mouse_pos.x, src_mouse_pos.y,).unwrap();
         rw.clear(Color::BLACK);
-
-        let pixels = mpv.get_frame_as_pixels(present.dim);
-        present.texture.update_from_pixels(
-            pixels,
-            present.dim.x.try_into().unwrap(),
-            present.dim.y.try_into().unwrap(),
-            0,
-            0,
-        );
-        let mut s = Sprite::with_texture(&present.texture);
-        s.set_position(interact_state.pan_pos.to_sf());
-        rw.draw(&s);
+        if let Some(present) = present.as_mut() {
+            let pixels = mpv.get_frame_as_pixels(present.dim);
+            present.texture.update_from_pixels(
+                pixels,
+                present.dim.x.try_into().unwrap(),
+                present.dim.y.try_into().unwrap(),
+                0,
+                0,
+            );
+            let mut s = Sprite::with_texture(&present.texture);
+            s.set_position(interact_state.pan_pos.to_sf());
+            rw.draw(&s);
+        }
         if overlay_show {
             draw_overlay(
                 &mut rw,
@@ -365,7 +389,9 @@ fn main() {
                 &font,
                 &source_markers,
                 &src_info,
-                present.dim,
+                present
+                    .as_mut()
+                    .map_or(VideoVector::new(0, 0), |present| present.dim),
                 video_area_max_dim,
                 subs_state.as_ref(),
             );
