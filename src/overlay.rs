@@ -3,9 +3,9 @@ use {
         SourceMarkers, SubsState, VideoDim,
         coords::{Dim, Present, VideoMag, VideoVector},
         mpv::{Mpv, properties::TimePos},
+        sfml_integ::EguiFriendlyColorExt as _,
         source,
         time_fmt::FfmpegTimeFmt,
-        ui::EguiFriendlyColorExt,
     },
     egui_sfml::sfml::{
         graphics::{

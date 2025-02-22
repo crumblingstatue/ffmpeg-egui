@@ -12,10 +12,7 @@ use {
         time_fmt::FfmpegTimeFmt,
     },
     egui_file_dialog::FileDialog,
-    egui_sfml::{
-        egui::{self, RichText, ScrollArea},
-        sfml::graphics::Color,
-    },
+    egui_sfml::egui::{self, RichText, ScrollArea},
     rand::Rng,
     std::io::Read,
 };
@@ -576,15 +573,4 @@ fn random_color() -> EguiFriendlyColor {
         rng.random_range(0.1..=1.0),
         rng.random_range(0.1..=1.0),
     ]
-}
-
-pub trait EguiFriendlyColorExt {
-    fn to_sfml(self) -> Color;
-}
-
-impl EguiFriendlyColorExt for EguiFriendlyColor {
-    fn to_sfml(self) -> Color {
-        let [r, g, b] = self;
-        Color::rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
-    }
 }
