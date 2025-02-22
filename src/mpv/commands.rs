@@ -1,11 +1,14 @@
-use {super::command::Command, std::ffi::CString};
+use {
+    super::command::Command,
+    std::ffi::{CStr, CString},
+};
 
 pub struct LoadFile<'a> {
     pub path: &'a str,
 }
 
 unsafe impl Command for LoadFile<'_> {
-    const NAME: &'static str = "loadfile\0";
+    const NAME: &'static CStr = c"loadfile";
     const ARGS_COUNT: usize = 1;
 
     fn args(&self) -> [CString; Self::ARGS_COUNT] {
@@ -16,7 +19,7 @@ unsafe impl Command for LoadFile<'_> {
 pub struct FrameStep;
 
 unsafe impl Command for FrameStep {
-    const NAME: &'static str = "frame-step\0";
+    const NAME: &'static CStr = c"frame-step";
 
     const ARGS_COUNT: usize = 0;
 
@@ -28,7 +31,7 @@ unsafe impl Command for FrameStep {
 pub struct FrameBackStep;
 
 unsafe impl Command for FrameBackStep {
-    const NAME: &'static str = "frame-back-step\0";
+    const NAME: &'static CStr = c"frame-back-step";
 
     const ARGS_COUNT: usize = 0;
 
@@ -44,7 +47,7 @@ pub enum PlaylistPlay {
 }
 
 unsafe impl Command for PlaylistPlay {
-    const NAME: &'static str = "playlist-play-index\0";
+    const NAME: &'static CStr = c"playlist-play-index";
 
     const ARGS_COUNT: usize = 1;
 
@@ -65,7 +68,7 @@ unsafe impl Command for PlaylistPlay {
 pub struct SeekRelSeconds(pub f32);
 
 unsafe impl Command for SeekRelSeconds {
-    const NAME: &'static str = "seek\0";
+    const NAME: &'static CStr = c"seek";
     const ARGS_COUNT: usize = 1;
 
     fn args(&self) -> [CString; Self::ARGS_COUNT] {

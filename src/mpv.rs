@@ -69,7 +69,7 @@ impl Mpv {
         [(); C::ARGS_COUNT + 2]:,
     {
         let mut args_buf = [std::ptr::null(); C::ARGS_COUNT + 2];
-        args_buf[0] = C::NAME.as_ptr() as *const i8;
+        args_buf[0] = C::NAME.as_ptr();
         let args = command.args();
         for (i, arg) in args.iter().enumerate() {
             args_buf[i + 1] = arg.as_ptr();
