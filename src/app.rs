@@ -2,7 +2,7 @@ use {
     crate::{
         InteractState, MOUSE_OVERLAY_PREFIX, RectDragStatus, SourceMarkers, TabOpen,
         coords::{VideoDim, VideoMag, VideoPos, VideoVector},
-        mpv::{self, Mpv, commands as c, properties as p},
+        mpv::{Mpv, MpvEvent, commands as c, properties as p},
         overlay::{self, draw_overlay},
         present::Present,
         sfml_integ::VideoPosSfExt as _,
@@ -133,9 +133,9 @@ impl App {
     }
 
     pub fn do_frame(&mut self, font: &Font) {
-        if let Some(ev) = self.mpv.poll_event() {
+        if let Some(ev) = self.mpv.poll_and_handle_event() {
             match ev {
-                mpv::MpvEvent::VideoReconfig => {
+                MpvEvent::VideoReconfig => {
                     let actual_video_w = self.mpv.get_property::<p::Width>().unwrap_or(0);
                     let actual_video_h = self.mpv.get_property::<p::Height>().unwrap_or(0);
                     self.state.src.dim =
@@ -144,6 +144,7 @@ impl App {
                     self.state.present = Present::new(self.state.src.dim.as_present());
                     self.state.src.w_h_ratio = actual_video_w as f64 / actual_video_h as f64
                 }
+                MpvEvent::Idle | MpvEvent::PlaybackRestart => {}
             }
         }
         while let Some(event) = self.rw.poll_event() {

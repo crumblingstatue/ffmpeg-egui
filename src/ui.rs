@@ -355,6 +355,9 @@ fn bottom_bar_ui(ui: &mut egui::Ui, ui_state: &mut UiState, mpv: &Mpv, app_state
                 }
             }
         });
+        if mpv.is_idle() {
+            ui.label("<mpv idle>");
+        }
     });
 }
 

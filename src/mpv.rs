@@ -4,7 +4,7 @@ use {
         property::{Property, PropertyType, PropertyTypeRaw, PropertyUnset, PropertyWrite},
     },
     crate::coords::{Present, VideoDim},
-    libmpv_sys as ffi,
+    libmpv_sys::{self as ffi},
     std::{
         mem::MaybeUninit,
         os::raw::{c_int, c_void},
@@ -20,6 +20,7 @@ pub struct Mpv {
     mpv_handle: *mut ffi::mpv_handle,
     render_ctx: *mut ffi::mpv_render_context,
     pix_buf: Vec<u8>,
+    idle: bool,
 }
 
 impl Mpv {
@@ -62,6 +63,7 @@ impl Mpv {
             mpv_handle,
             render_ctx,
             pix_buf: Vec::new(),
+            idle: false,
         })
     }
     pub fn command_async<C: Command>(&mut self, command: C)
@@ -163,21 +165,41 @@ impl Mpv {
     }
 
     #[must_use]
-    pub fn poll_event(&self) -> Option<MpvEvent> {
+    pub fn poll_and_handle_event(&mut self) -> Option<MpvEvent> {
         unsafe {
             let ev_ptr = ffi::mpv_wait_event(self.mpv_handle, 0.0);
             if let Some(ev) = ev_ptr.as_ref() {
-                if ev.event_id == ffi::mpv_event_id_MPV_EVENT_VIDEO_RECONFIG {
-                    return Some(MpvEvent::VideoReconfig);
-                }
+                let event = match ev.event_id {
+                    ffi::mpv_event_id_MPV_EVENT_VIDEO_RECONFIG => MpvEvent::VideoReconfig,
+                    ffi::mpv_event_id_MPV_EVENT_IDLE => {
+                        self.idle = true;
+                        MpvEvent::Idle
+                    }
+                    ffi::mpv_event_id_MPV_EVENT_NONE => return None,
+                    ffi::mpv_event_id_MPV_EVENT_PLAYBACK_RESTART => {
+                        self.idle = false;
+                        MpvEvent::PlaybackRestart
+                    }
+                    eid => {
+                        eprintln!("Unhandled event id: {eid}");
+                        return None;
+                    }
+                };
+                return Some(event);
             }
         }
         None
+    }
+    #[must_use]
+    pub fn is_idle(&self) -> bool {
+        self.idle
     }
 }
 
 pub enum MpvEvent {
     VideoReconfig,
+    Idle,
+    PlaybackRestart,
 }
 
 impl Drop for Mpv {
