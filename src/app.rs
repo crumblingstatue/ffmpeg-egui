@@ -147,80 +147,10 @@ impl App {
                 MpvEvent::Idle | MpvEvent::PlaybackRestart => {}
             }
         }
+        let mut collected_events = Vec::new();
         while let Some(event) = self.rw.poll_event() {
             self.sf_egui.add_event(&event);
-            overlay::handle_event(
-                &event,
-                &self.mpv,
-                &self.state.src,
-                self.state.video_area_max_dim,
-            );
-            match event {
-                Event::Closed => self.rw.close(),
-                Event::KeyPressed { code, ctrl, .. } => self.handle_keypress(code, ctrl),
-                Event::Resized { width, height } => {
-                    let view =
-                        View::from_rect(Rect::new(0., 0., width as f32, height as f32)).unwrap();
-                    self.rw.set_view(&view);
-                }
-                Event::MouseButtonPressed {
-                    button: mouse::Button::Left,
-                    x,
-                    y,
-                } => 'block: {
-                    let Some(present) = self.state.present.as_ref() else {
-                        break 'block;
-                    };
-                    if self.sf_egui.context().wants_pointer_input() {
-                        break 'block;
-                    }
-                    let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
-                    if let Some(drag) = &mut self.state.interact.rect_drag {
-                        match drag.status {
-                            RectDragStatus::Init => {
-                                self.state.source_markers.rects[drag.idx].rect.pos = pos;
-                                drag.status = RectDragStatus::ClickedTopLeft;
-                            }
-                            RectDragStatus::ClickedTopLeft => {}
-                        }
-                    } else {
-                        self.state.interact.pan_cursor_origin = Some(pos);
-                        self.state.interact.pan_image_original_pos =
-                            Some(self.state.interact.pan_pos);
-                    }
-                }
-                Event::MouseButtonReleased {
-                    button: mouse::Button::Left,
-                    x,
-                    y,
-                } => 'block: {
-                    let Some(present) = self.state.present.as_ref() else {
-                        break 'block;
-                    };
-                    let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
-                    if let Some(drag) = &self.state.interact.rect_drag {
-                        match drag.status {
-                            RectDragStatus::Init => {}
-                            RectDragStatus::ClickedTopLeft => {
-                                let rect = &mut self.state.source_markers.rects[drag.idx].rect;
-                                rect.dim.x = pos.x - rect.pos.x;
-                                rect.dim.y = pos.y - rect.pos.y;
-                                if rect.pos.x + rect.dim.x > self.state.src.dim.x {
-                                    let diff = self.state.src.dim.x - rect.pos.x;
-                                    rect.dim.x = diff;
-                                }
-                                if rect.pos.y + rect.dim.y > self.state.src.dim.y {
-                                    let diff = self.state.src.dim.y - rect.pos.y;
-                                    rect.dim.y = diff;
-                                }
-                                self.state.interact.rect_drag = None;
-                            }
-                        }
-                    }
-                    self.state.interact.pan_cursor_origin = None;
-                }
-                _ => {}
-            }
+            collected_events.push(event);
         }
         if let Some(subs) = &mut self.state.subs
             && let Some(current_pos) = self.mpv.get_property::<p::TimePos>()
@@ -269,6 +199,15 @@ impl App {
                 crate::ui::ui(ctx, &mut self.mpv, &mut self.state, &mut self.ui_state)
             })
             .unwrap();
+        // We wait until the egui ui has run, so we know if it wanted input or not
+        if !(self.sf_egui.context().wants_keyboard_input()
+            || self.sf_egui.context().wants_pointer_input())
+        {
+            for event in collected_events {
+                self.handle_event(event);
+            }
+        }
+
         self.state.pos_string.truncate(MOUSE_OVERLAY_PREFIX.len());
         write!(
             &mut self.state.pos_string,
@@ -295,6 +234,79 @@ impl App {
         }
         self.sf_egui.draw(di, &mut self.rw, None);
         self.rw.display();
+    }
+
+    fn handle_event(&mut self, event: Event) {
+        overlay::handle_event(
+            &event,
+            &self.mpv,
+            &self.state.src,
+            self.state.video_area_max_dim,
+        );
+        match event {
+            Event::Closed => self.rw.close(),
+            Event::KeyPressed { code, ctrl, .. } => self.handle_keypress(code, ctrl),
+            Event::Resized { width, height } => {
+                let view = View::from_rect(Rect::new(0., 0., width as f32, height as f32)).unwrap();
+                self.rw.set_view(&view);
+            }
+            Event::MouseButtonPressed {
+                button: mouse::Button::Left,
+                x,
+                y,
+            } => 'block: {
+                let Some(present) = self.state.present.as_ref() else {
+                    break 'block;
+                };
+                if self.sf_egui.context().wants_pointer_input() {
+                    break 'block;
+                }
+                let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
+                if let Some(drag) = &mut self.state.interact.rect_drag {
+                    match drag.status {
+                        RectDragStatus::Init => {
+                            self.state.source_markers.rects[drag.idx].rect.pos = pos;
+                            drag.status = RectDragStatus::ClickedTopLeft;
+                        }
+                        RectDragStatus::ClickedTopLeft => {}
+                    }
+                } else {
+                    self.state.interact.pan_cursor_origin = Some(pos);
+                    self.state.interact.pan_image_original_pos = Some(self.state.interact.pan_pos);
+                }
+            }
+            Event::MouseButtonReleased {
+                button: mouse::Button::Left,
+                x,
+                y,
+            } => 'block: {
+                let Some(present) = self.state.present.as_ref() else {
+                    break 'block;
+                };
+                let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
+                if let Some(drag) = &self.state.interact.rect_drag {
+                    match drag.status {
+                        RectDragStatus::Init => {}
+                        RectDragStatus::ClickedTopLeft => {
+                            let rect = &mut self.state.source_markers.rects[drag.idx].rect;
+                            rect.dim.x = pos.x - rect.pos.x;
+                            rect.dim.y = pos.y - rect.pos.y;
+                            if rect.pos.x + rect.dim.x > self.state.src.dim.x {
+                                let diff = self.state.src.dim.x - rect.pos.x;
+                                rect.dim.x = diff;
+                            }
+                            if rect.pos.y + rect.dim.y > self.state.src.dim.y {
+                                let diff = self.state.src.dim.y - rect.pos.y;
+                                rect.dim.y = diff;
+                            }
+                            self.state.interact.rect_drag = None;
+                        }
+                    }
+                }
+                self.state.interact.pan_cursor_origin = None;
+            }
+            _ => {}
+        }
     }
 
     pub fn new(args: &crate::Args) -> Self {
