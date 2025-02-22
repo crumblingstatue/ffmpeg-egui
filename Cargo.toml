@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.75"
 clap = { version = "4.5.20", features = ["derive"] }
-egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git" }
+egui-sfml = "0.9.0"
 libmpv-sys = { git = "https://github.com/crumblingstatue/libmpv-rs.git", features = ["use-bindgen"] }
 rand = "0.9.0"
 egui-file-dialog = "0.9.0"
