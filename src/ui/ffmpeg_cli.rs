@@ -27,10 +27,10 @@ struct CookBook {
 
 const fn recipes() -> &'static [Recipe] {
     macro_rules! recipes {
-        ($($name:literal $desc:literal;)*) => {
+        ($($name:literal $($desc:literal)+;)*) => {
             &[
             $(
-                Recipe{ name: $name, description: $desc },
+                Recipe{ name: $name, descriptions: &[$($desc,)+] },
             )*
             ]
         }
@@ -41,13 +41,14 @@ const fn recipes() -> &'static [Recipe] {
         "Replace audio track"
         "-i video.mp4 -i audio.wav -c:v copy -map 0:v:0 -map 1:a:0 out.mp4";
         "Burn subtitles"
-        "-vf subtitles=subtitle.srt";
+        "-vf subtitles=subtitle.srt"
+        "-vf ass=subtitle.ass out.mp4";
     }
 }
 
 struct Recipe {
     name: &'static str,
-    description: &'static str,
+    descriptions: &'static [&'static str],
 }
 
 const FFMPEG_HELP_TEXT: &str = "\
@@ -78,13 +79,15 @@ pub fn ffmpeg_cli_ui(
             ui.separator();
             if let Some(sel_idx) = ui_state.ffmpeg_cli.cook_book.selected {
                 let recipe = &ui_state.ffmpeg_cli.cook_book.recipes[sel_idx];
-                ui.horizontal(|ui| {
-                    ui.heading(recipe.name);
-                    if ui.button("🏷").clicked() {
-                        ui.ctx().copy_text(recipe.description.to_owned());
-                    }
-                });
-                ui.label(recipe.description);
+                ui.heading(recipe.name);
+                for &desc in recipe.descriptions {
+                    ui.horizontal(|ui| {
+                        if ui.button("🏷").on_hover_text("Copy").clicked() {
+                            ui.ctx().copy_text(desc.to_owned());
+                        }
+                        ui.label(desc);
+                    });
+                }
             }
         });
     }
