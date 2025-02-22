@@ -1,13 +1,13 @@
 use {
     crate::{
-        InteractState, RectDrag, RectMarker, SourceMarkers, SubsState, TimeSpan, TimespanMarker,
-        coords::{self, VideoDim, VideoMag, VideoPos, VideoRect},
+        InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
+        app::AppState,
+        coords::{VideoMag, VideoPos, VideoRect},
         ffmpeg::{self, resolve_arguments},
         mpv::{
             Mpv,
             properties::{AbLoopA, AbLoopB, AudioId, Speed, SubId, TimePos, Volume},
         },
-        present::Present,
         source,
         time_fmt::FfmpegTimeFmt,
     },
@@ -66,38 +66,30 @@ impl Tab {
     }
 }
 
-#[expect(clippy::too_many_arguments)]
 pub(crate) fn ui(
     ctx: &egui::Context,
     mpv: &mut Mpv,
-    video_area_max_dim: &mut VideoDim<coords::Present>,
-    present: Option<&mut Present>,
-    source_markers: &mut SourceMarkers,
-    src_info: &source::Info,
-    interact_state: &mut InteractState,
+    app_state: &mut AppState,
     ui_state: &mut UiState,
-    subs: Option<&mut SubsState>,
 ) {
     let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-        bottom_bar_ui(
+        bottom_bar_ui(ui, ui_state, mpv, app_state);
+    });
+    app_state.video_area_max_dim.y = re.response.rect.top() as VideoMag;
+    let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
+        right_panel_ui(
             ui,
-            src_info,
-            present,
-            mpv,
-            video_area_max_dim,
             ui_state,
-            interact_state,
-            subs,
+            &mut app_state.source_markers,
+            &mut app_state.interact,
+            &app_state.src,
+            mpv,
         );
     });
-    video_area_max_dim.y = re.response.rect.top() as VideoMag;
-    let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
-        right_panel_ui(ui, ui_state, source_markers, interact_state, src_info, mpv);
-    });
-    video_area_max_dim.x = re.response.rect.left() as VideoMag;
+    app_state.video_area_max_dim.x = re.response.rect.left() as VideoMag;
     if ui_state.ffmpeg_cli.open {
         egui::Window::new("ffmpeg").show(ctx, |ui| {
-            ffmpeg_cli_ui(ui, ui_state, source_markers, src_info);
+            ffmpeg_cli_ui(ui, ui_state, &app_state.source_markers, &app_state.src);
         });
         ui_state.ffmpeg_cli.first_frame = false;
     }
@@ -227,27 +219,17 @@ fn right_panel_ui(
     }
 }
 
-#[expect(clippy::too_many_arguments)]
-fn bottom_bar_ui(
-    ui: &mut egui::Ui,
-    src_info: &source::Info,
-    present: Option<&mut Present>,
-    mpv: &Mpv,
-    video_area_max_dim: &VideoDim<coords::Present>,
-    ui_state: &mut UiState,
-    interact_state: &mut InteractState,
-    subs: Option<&mut SubsState>,
-) {
+fn bottom_bar_ui(ui: &mut egui::Ui, ui_state: &mut UiState, mpv: &Mpv, app_state: &mut AppState) {
     ui.horizontal(|ui| {
         ui.label(format!(
             "{}/{}",
-            FfmpegTimeFmt(src_info.time_pos),
-            FfmpegTimeFmt(src_info.duration)
+            FfmpegTimeFmt(app_state.src.time_pos),
+            FfmpegTimeFmt(app_state.src.duration)
         ));
         ui.style_mut().spacing.slider_width = ui.available_width();
-        let mut pos = src_info.time_pos;
+        let mut pos = app_state.src.time_pos;
         if ui
-            .add(egui::Slider::new(&mut pos, 0.0..=src_info.duration).show_value(false))
+            .add(egui::Slider::new(&mut pos, 0.0..=app_state.src.duration).show_value(false))
             .changed()
         {
             mpv.set_property::<TimePos>(pos);
@@ -281,38 +263,39 @@ fn bottom_bar_ui(
                 ui.close_menu();
             }
             if ui.button("Reset pan").clicked() {
-                interact_state.pan_pos = VideoPos::new(0, 0);
+                app_state.interact.pan_pos = VideoPos::new(0, 0);
                 ui.close_menu();
             }
             ui.menu_button("Video size", |ui| {
-                let Some(present) = present else {
+                let Some(present) = &mut app_state.present else {
                     return;
                 };
                 let mut present_size_changed = false;
                 if ui.button("Original").clicked() {
-                    present.dim.x = src_info.dim.x as VideoMag;
-                    present.dim.y = src_info.dim.y as VideoMag;
+                    present.dim.x = app_state.src.dim.x as VideoMag;
+                    present.dim.y = app_state.src.dim.y as VideoMag;
                     present_size_changed = true;
                     ui.close_menu();
                 }
                 if ui.button("Fit").clicked() {
-                    present.dim.y = video_area_max_dim.y;
-                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
-                    if present.dim.x > video_area_max_dim.x {
-                        present.dim.x = video_area_max_dim.x;
-                        present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
+                    present.dim.y = app_state.video_area_max_dim.y;
+                    present.dim.x = (present.dim.y as f64 * app_state.src.w_h_ratio) as VideoMag;
+                    if present.dim.x > app_state.video_area_max_dim.x {
+                        present.dim.x = app_state.video_area_max_dim.x;
+                        present.dim.y =
+                            (present.dim.x as f64 / app_state.src.w_h_ratio) as VideoMag;
                     }
                     present_size_changed = true;
                     ui.close_menu();
                 }
                 ui.label("Width");
                 if ui.add(egui::DragValue::new(&mut present.dim.x)).changed() {
-                    present.dim.y = (present.dim.x as f64 / src_info.w_h_ratio) as VideoMag;
+                    present.dim.y = (present.dim.x as f64 / app_state.src.w_h_ratio) as VideoMag;
                     present_size_changed = true;
                 }
                 ui.label("Height");
                 if ui.add(egui::DragValue::new(&mut present.dim.y)).changed() {
-                    present.dim.x = (present.dim.y as f64 * src_info.w_h_ratio) as VideoMag;
+                    present.dim.x = (present.dim.y as f64 * app_state.src.w_h_ratio) as VideoMag;
                     present_size_changed = true;
                 }
                 if present_size_changed {
@@ -355,7 +338,7 @@ fn bottom_bar_ui(
                 ui.close_menu();
                 mpv.set_property::<SubId>(1);
             }
-            if let Some(subs) = subs {
+            if let Some(subs) = &mut app_state.subs {
                 if ui.button("Clear sub timings").clicked() {
                     ui.close_menu();
                     subs.clear();

@@ -1,7 +1,7 @@
 use {
     crate::{
-        SourceMarkers, SubsState, VideoDim,
-        coords::{Dim, Present, VideoMag, VideoVector},
+        app::AppState,
+        coords::{Dim, Present, VideoDim, VideoMag, VideoVector},
         mpv::{Mpv, properties::TimePos},
         sfml_integ::EguiFriendlyColorExt as _,
         source,
@@ -50,24 +50,29 @@ fn timeline_rect_timepos(timeline_rect: Rect<i16>, x: i16, src_info: &source::In
     ratio * src_info.duration
 }
 
-#[expect(clippy::too_many_arguments)]
 pub(crate) fn draw_overlay(
     rw: &mut RenderWindow,
+    app_state: &AppState,
     pos_string: &String,
-    font: &egui_sfml::sfml::cpp::FBox<Font>,
-    source_markers: &SourceMarkers,
-    src_info: &source::Info,
-    video_present_dim: VideoDim<Present>,
-    video_area_max_dim: VideoDim<Present>,
-    subs: Option<&SubsState>,
+    font: &Font,
 ) {
     let mouse_pos = rw.mouse_position();
     let mut rs = RectangleShape::default();
+    let video_present_dim = app_state
+        .present
+        .as_ref()
+        .map_or(VideoVector::new(0, 0), |present| present.dim);
     // Rect markers
-    for marker in &source_markers.rects {
-        let dim = marker.rect.dim.to_present(src_info.dim, video_present_dim);
+    for marker in &app_state.source_markers.rects {
+        let dim = marker
+            .rect
+            .dim
+            .to_present(app_state.src.dim, video_present_dim);
         rs.set_size((dim.x.into(), dim.y.into()));
-        let pos = marker.rect.pos.to_present(src_info.dim, video_present_dim);
+        let pos = marker
+            .rect
+            .pos
+            .to_present(app_state.src.dim, video_present_dim);
         rs.set_position((pos.x.into(), pos.y.into()));
         let mut fill_c = marker.color.to_sfml();
         fill_c.a = 180;
@@ -78,33 +83,33 @@ pub(crate) fn draw_overlay(
     rs.set_outline_color(Color::WHITE);
     rs.set_outline_thickness(2.0);
     rs.set_fill_color(Color::TRANSPARENT);
-    let timeline_rect = timeline_rect(video_area_max_dim);
+    let timeline_rect = timeline_rect(app_state.video_area_max_dim);
     let timeline_rect_sf: Rect<f32> = timeline_rect.into_other();
     rs.set_position(timeline_rect_sf.position());
     rs.set_size(timeline_rect_sf.size());
     rw.draw(&rs);
     rs.set_fill_color(Color::WHITE);
-    let completed_ratio = src_info.time_pos / src_info.duration;
+    let completed_ratio = app_state.src.time_pos / app_state.src.duration;
     rs.set_size((
         timeline_rect_sf.width * completed_ratio as f32,
         TIMELINE_H.into(),
     ));
     rw.draw(&rs);
     // Timespan markers
-    for marker in &source_markers.timespans {
+    for marker in &app_state.source_markers.timespans {
         draw_timespan_marker(
             timeline_rect_sf.width,
-            marker.timespan.begin / src_info.duration,
+            marker.timespan.begin / app_state.src.duration,
             &mut rs,
-            video_area_max_dim,
+            app_state.video_area_max_dim,
             marker,
             rw,
         );
         draw_timespan_marker(
             timeline_rect_sf.width,
-            marker.timespan.end / src_info.duration,
+            marker.timespan.end / app_state.src.duration,
             &mut rs,
-            video_area_max_dim,
+            app_state.video_area_max_dim,
             marker,
             rw,
         );
@@ -112,18 +117,18 @@ pub(crate) fn draw_overlay(
     // Text overlay
     let mut text = Text::new(pos_string, font, 14);
     text.set_position((
-        video_area_max_dim.x as f32 - 240.0,
+        app_state.video_area_max_dim.x as f32 - 240.0,
         timeline_rect_sf.top - 20.0,
     ));
     rw.draw(&text);
     if timeline_rect.contains(mouse_pos.as_other()) {
-        let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as i16, src_info);
+        let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as i16, &app_state.src);
         text.set_position((timeline_rect_sf.left, timeline_rect_sf.top - 20.0));
         text.set_string(&format!("Mouse time pos: {}", FfmpegTimeFmt(timepos)));
         rw.draw(&text);
     }
     // Draw subs
-    if let Some(subs) = subs {
+    if let Some(subs) = &app_state.subs {
         text.set_character_size(20);
         text.set_position(0.);
         text.set_outline_color(Color::BLACK);
