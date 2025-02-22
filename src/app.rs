@@ -150,7 +150,9 @@ impl App {
         let mut collected_events = Vec::new();
         while let Some(event) = self.rw.poll_event() {
             self.sf_egui.add_event(&event);
-            collected_events.push(event);
+            if !self.handle_immediate_event(event) {
+                collected_events.push(event);
+            }
         }
         if let Some(subs) = &mut self.state.subs
             && let Some(current_pos) = self.mpv.get_property::<p::TimePos>()
@@ -204,7 +206,7 @@ impl App {
             || self.sf_egui.context().wants_pointer_input())
         {
             for event in collected_events {
-                self.handle_event(event);
+                self.handle_delayed_event(event);
             }
         }
 
@@ -236,7 +238,24 @@ impl App {
         self.rw.display();
     }
 
-    fn handle_event(&mut self, event: Event) {
+    /// Handle events before the egui ui
+    ///
+    /// Returns `true` if the event was "used" (don't push it to delayed events)
+    #[must_use]
+    fn handle_immediate_event(&mut self, event: Event) -> bool {
+        match event {
+            Event::Closed => self.rw.close(),
+            Event::Resized { width, height } => {
+                let view = View::from_rect(Rect::new(0., 0., width as f32, height as f32)).unwrap();
+                self.rw.set_view(&view);
+            }
+            _ => return false,
+        }
+        true
+    }
+
+    /// Handle events after the egui ui
+    fn handle_delayed_event(&mut self, event: Event) {
         overlay::handle_event(
             &event,
             &self.mpv,
@@ -244,12 +263,8 @@ impl App {
             self.state.video_area_max_dim,
         );
         match event {
-            Event::Closed => self.rw.close(),
             Event::KeyPressed { code, ctrl, .. } => self.handle_keypress(code, ctrl),
-            Event::Resized { width, height } => {
-                let view = View::from_rect(Rect::new(0., 0., width as f32, height as f32)).unwrap();
-                self.rw.set_view(&view);
-            }
+
             Event::MouseButtonPressed {
                 button: mouse::Button::Left,
                 x,
