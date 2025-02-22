@@ -15,6 +15,39 @@ pub struct FfmpegCli {
     exit_status: Option<i32>,
     stdout: String,
     stderr: String,
+    cook_book: CookBook,
+}
+
+#[derive(Default)]
+struct CookBook {
+    open: bool,
+    recipes: &'static [Recipe] = recipes(),
+    selected: Option<usize>,
+}
+
+const fn recipes() -> &'static [Recipe] {
+    macro_rules! recipes {
+        ($($name:literal $desc:literal;)*) => {
+            &[
+            $(
+                Recipe{ name: $name, description: $desc },
+            )*
+            ]
+        }
+    }
+    recipes! {
+        "Crop video"
+        "-vf crop=out_w:out_h:x:y out.mp4";
+        "Replace audio track"
+        "-i video.mp4 -i audio.wav -c:v copy -map 0:v:0 -map 1:a:0 out.mp4";
+        "Burn subtitles"
+        "-vf subtitles=subtitle.srt";
+    }
+}
+
+struct Recipe {
+    name: &'static str,
+    description: &'static str,
 }
 
 const FFMPEG_HELP_TEXT: &str = "\
@@ -29,6 +62,32 @@ pub fn ffmpeg_cli_ui(
     source_markers: &SourceMarkers,
     src_info: &source::Info,
 ) {
+    if ui_state.ffmpeg_cli.cook_book.open {
+        egui::SidePanel::right("cookbook_right_panel").show_inside(ui, |ui| {
+            for (i, recipe) in ui_state.ffmpeg_cli.cook_book.recipes.iter().enumerate() {
+                if ui
+                    .selectable_label(
+                        ui_state.ffmpeg_cli.cook_book.selected == Some(i),
+                        recipe.name,
+                    )
+                    .clicked()
+                {
+                    ui_state.ffmpeg_cli.cook_book.selected = Some(i);
+                }
+            }
+            ui.separator();
+            if let Some(sel_idx) = ui_state.ffmpeg_cli.cook_book.selected {
+                let recipe = &ui_state.ffmpeg_cli.cook_book.recipes[sel_idx];
+                ui.horizontal(|ui| {
+                    ui.heading(recipe.name);
+                    if ui.button("🏷").clicked() {
+                        ui.ctx().copy_text(recipe.description.to_owned());
+                    }
+                });
+                ui.label(recipe.description);
+            }
+        });
+    }
     let ctrl_enter = ui.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, egui::Key::Enter));
     let re = ui.add(
         egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.source_string)
@@ -118,4 +177,5 @@ pub fn ffmpeg_cli_ui(
                 ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
             });
     }
+    ui.checkbox(&mut ui_state.ffmpeg_cli.cook_book.open, "Cook book");
 }
