@@ -202,12 +202,10 @@ impl App {
             })
             .unwrap();
         // We wait until the egui ui has run, so we know if it wanted input or not
-        if !(self.sf_egui.context().wants_keyboard_input()
-            || self.sf_egui.context().wants_pointer_input())
-        {
-            for event in collected_events {
-                self.handle_delayed_event(event);
-            }
+        let wants_kb = self.sf_egui.context().wants_keyboard_input();
+        let wants_ptr = self.sf_egui.context().wants_pointer_input();
+        for event in collected_events {
+            self.handle_delayed_event(event, wants_kb, wants_ptr);
         }
 
         self.state.pos_string.truncate(MOUSE_OVERLAY_PREFIX.len());
@@ -255,7 +253,7 @@ impl App {
     }
 
     /// Handle events after the egui ui
-    fn handle_delayed_event(&mut self, event: Event) {
+    fn handle_delayed_event(&mut self, event: Event, wants_kb: bool, wants_ptr: bool) {
         overlay::handle_event(
             &event,
             &self.mpv,
@@ -263,7 +261,11 @@ impl App {
             self.state.video_area_max_dim,
         );
         match event {
-            Event::KeyPressed { code, ctrl, .. } => self.handle_keypress(code, ctrl),
+            Event::KeyPressed { code, ctrl, .. } => {
+                if !wants_kb {
+                    self.handle_keypress(code, ctrl);
+                }
+            }
 
             Event::MouseButtonPressed {
                 button: mouse::Button::Left,
@@ -273,7 +275,7 @@ impl App {
                 let Some(present) = self.state.present.as_ref() else {
                     break 'block;
                 };
-                if self.sf_egui.context().wants_pointer_input() {
+                if wants_ptr {
                     break 'block;
                 }
                 let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
@@ -298,6 +300,9 @@ impl App {
                 let Some(present) = self.state.present.as_ref() else {
                     break 'block;
                 };
+                if wants_ptr {
+                    break 'block;
+                }
                 let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
                 if let Some(drag) = &self.state.interact.rect_drag {
                     match drag.status {
