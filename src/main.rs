@@ -1,4 +1,6 @@
 #![feature(array_chunks, generic_const_exprs, let_chains, array_windows)]
+// We make light use of generic_const_exprs, which is an incomplete feature
+#![expect(incomplete_features)]
 
 use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
