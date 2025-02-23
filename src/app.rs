@@ -64,7 +64,7 @@ impl AppState {
                 w_h_ratio: 1.0,
                 duration: 0.0,
                 time_pos: 0.0,
-                path: args.file.as_ref().map_or(String::new(), String::from),
+                path: String::new(),
             },
             present: None,
             video_area_max_dim: VideoDim::<crate::coords::Present>::new(0, 0),

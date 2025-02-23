@@ -1,6 +1,6 @@
 use {
     super::property::{Property, PropertyUnset, PropertyWrite, YesNo, YesNoAlways},
-    std::ffi::CStr,
+    std::{ffi::CStr, marker::PhantomData},
 };
 
 macro_rules! def_properties {
@@ -38,6 +38,15 @@ def_properties! {
     Rotate, c"video-params/rotate", i64;
     AudioId, c"aid", i64;
     SubId, c"sid", i64;
+}
+
+pub struct Path<'mpv> {
+    _phantom: PhantomData<&'mpv str>,
+}
+unsafe impl<'mpv> Property for Path<'mpv> {
+    type Type = &'mpv str;
+
+    const NAME: &'static CStr = c"path";
 }
 
 unsafe impl PropertyWrite for TimePos {}

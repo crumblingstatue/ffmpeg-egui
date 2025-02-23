@@ -81,8 +81,8 @@ impl PropertyType for &str {
         f(c_string.as_mut_ptr() as *mut c_char)
     }
 
-    fn from_c(_src: Self::CType) -> Self {
-        todo!()
+    fn from_c(src: Self::CType) -> Self {
+        unsafe { CStr::from_ptr(src).to_str().unwrap() }
     }
 }
 

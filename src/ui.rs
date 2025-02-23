@@ -7,7 +7,7 @@ use {
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
             Mpv,
-            properties::{AbLoopA, AbLoopB, AudioId, Speed, SubId, TimePos, Volume},
+            properties::{AbLoopA, AbLoopB, AudioId, Path, Speed, SubId, TimePos, Volume},
         },
         source,
         time_fmt::FfmpegTimeFmt,
@@ -78,6 +78,9 @@ pub(crate) fn ui(
     app_state.video_area_max_dim.x = re.response.rect.left() as VideoMag;
     if ui_state.ffmpeg_cli.open {
         egui::Window::new("ffmpeg").show(ctx, |ui| {
+            if let Some(path) = mpv.get_property::<Path>() {
+                app_state.src.path = path.to_owned();
+            }
             ffmpeg_cli_ui(ui, ui_state, &app_state.source_markers, &app_state.src);
         });
         ui_state.ffmpeg_cli.first_frame = false;
