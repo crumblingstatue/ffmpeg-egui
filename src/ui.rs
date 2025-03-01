@@ -8,6 +8,7 @@ use {
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
             Mpv,
+            commands::LoadFile,
             properties::{AbLoopA, AbLoopB, AudioId, Path, Speed, SubId, TimePos, Volume},
         },
         source,
@@ -71,7 +72,7 @@ pub(crate) fn ui(
     cfg: &mut Config,
 ) {
     let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-        bottom_bar_ui(ui, ui_state, mpv, app_state);
+        bottom_bar_ui(ui, ui_state, mpv, app_state, cfg);
     });
     app_state.video_area_max_dim.y = re.response.rect.top() as VideoMag;
     let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
@@ -129,7 +130,13 @@ fn right_panel_ui(
     }
 }
 
-fn bottom_bar_ui(ui: &mut egui::Ui, ui_state: &mut UiState, mpv: &Mpv, app_state: &mut AppState) {
+fn bottom_bar_ui(
+    ui: &mut egui::Ui,
+    ui_state: &mut UiState,
+    mpv: &mut Mpv,
+    app_state: &mut AppState,
+    cfg: &mut Config,
+) {
     ui.horizontal(|ui| {
         ui.label(format!(
             "{}/{}",
@@ -173,6 +180,14 @@ fn bottom_bar_ui(ui: &mut egui::Ui, ui_state: &mut UiState, mpv: &Mpv, app_state
                 ui_state.file_op = FileOp::OpenMediaFile;
                 ui.close_menu();
             }
+            ui.menu_button("Recent", |ui| {
+                for item in cfg.recently_used_list.iter() {
+                    if ui.button(item).clicked() {
+                        ui.close_menu();
+                        mpv.command_async(LoadFile { path: item });
+                    }
+                }
+            });
             if ui.button("Load kashimark subs...").clicked() {
                 ui_state.file_dialog.pick_file();
                 ui_state.file_op = FileOp::OpenKashimark;
