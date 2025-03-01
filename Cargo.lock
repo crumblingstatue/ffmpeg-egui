@@ -711,7 +711,7 @@ dependencies = [
 [[package]]
 name = "recently_used_list"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/recently_used_list.git#94c3e15150dc755a81973aa3354b8eebeaf961ba"
+source = "git+https://github.com/crumblingstatue/recently_used_list.git#90af7254942e9ac657e0f2df6fbeee4a95a27385"
 dependencies = [
  "serde",
 ]

@@ -185,6 +185,8 @@ fn bottom_bar_ui(
                     if ui.button(item).clicked() {
                         ui.close_menu();
                         mpv.command_async(LoadFile { path: item });
+                        cfg.recently_used_list.use_(item.clone());
+                        return;
                     }
                 }
             });
