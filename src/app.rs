@@ -124,14 +124,16 @@ impl App {
             Key::Down => self.mpv.command_async(c::SeekRelSeconds(30.)),
             Key::F2 => {
                 if let Some(subs) = &mut self.state.subs {
-                    subs.save_state();
+                    match self.mpv.get_property::<p::TimePos>() {
+                        Some(stamp) => subs.save_state(stamp),
+                        None => eprintln!("No timestamp from mpv. Probably playback stopped?"),
+                    }
                 }
             }
             Key::F4 => {
                 if let Some(subs) = &mut self.state.subs {
                     subs.reload_state();
-                    let stamp = *subs.time_stamps.last().unwrap_or(&0.);
-                    self.mpv.set_property::<p::TimePos>(stamp);
+                    self.mpv.set_property::<p::TimePos>(subs.saved.mpv_position);
                 }
             }
             _ => {}

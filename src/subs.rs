@@ -7,15 +7,16 @@ use {
 pub struct SubsState {
     lines: Vec<kashimark::Line>,
     pub tracking: TrackingState,
-    saved: Save,
+    pub saved: Save,
     timings_path: Option<String>,
     pub time_stamps: Vec<f64>,
 }
 
 #[derive(Default)]
-struct Save {
+pub struct Save {
     tracking: TrackingState,
     time_stamps: Vec<f64>,
+    pub mpv_position: f64,
 }
 
 const FW_SP: char = char::from_u32(0x3000).unwrap();
@@ -50,10 +51,11 @@ impl SubsState {
     pub fn advance(&mut self) {
         advance(&mut self.tracking, &self.lines);
     }
-    pub fn save_state(&mut self) {
+    pub fn save_state(&mut self, mpv_pos: f64) {
         self.saved = Save {
             tracking: self.tracking.clone(),
             time_stamps: self.time_stamps.clone(),
+            mpv_position: mpv_pos,
         };
     }
     pub fn reload_state(&mut self) {
