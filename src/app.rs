@@ -101,8 +101,10 @@ impl App {
             Key::Comma => self.mpv.command_async(c::FrameBackStep),
             Key::A => {
                 if let Some(subs) = &mut self.state.subs {
-                    subs.time_stamps
-                        .push(self.mpv.get_property::<p::TimePos>().unwrap());
+                    match self.mpv.get_property::<p::TimePos>() {
+                        Some(stamp) => subs.time_stamps.push(stamp),
+                        None => eprintln!("No timestamp from mpv. Probably playback stopped?"),
+                    }
                 }
             }
             Key::P => self.mpv.command_async(c::PlaylistPlay::Current),

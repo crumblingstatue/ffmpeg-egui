@@ -310,7 +310,10 @@ fn advance(tracking: &mut TrackingState, lines: &[kashimark::Line]) {
                             &mut tracking.static_furi_debt,
                         );
                     }
-                    let seg = &timing_track.segments[tracking.seg_idx];
+                    let Some(seg) = &timing_track.segments.get(tracking.seg_idx) else {
+                        eprintln!("Can't advance subs... Probably at end");
+                        return;
+                    };
                     write_seg(
                         accum,
                         seg,
