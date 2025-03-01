@@ -3,7 +3,7 @@ mod ffmpeg_cli;
 use {
     crate::{
         InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
-        app::AppState,
+        app::{AppState, load_kashimark_subs},
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
             Mpv,
@@ -25,6 +25,12 @@ pub struct UiState {
     selected_rect: Option<usize>,
     pub ffmpeg_cli: FfmpegCli,
     pub file_dialog: FileDialog,
+    pub file_op: FileOp,
+}
+
+pub enum FileOp {
+    OpenMediaFile,
+    OpenKashimark,
 }
 
 impl Default for UiState {
@@ -36,6 +42,7 @@ impl Default for UiState {
             selected_rect: None,
             ffmpeg_cli: FfmpegCli::default(),
             file_dialog: FileDialog::new().as_modal(true),
+            file_op: FileOp::OpenMediaFile,
         }
     }
 }
@@ -87,9 +94,16 @@ pub(crate) fn ui(
     }
     ui_state.file_dialog.update(ctx);
     if let Some(path) = ui_state.file_dialog.take_picked() {
-        mpv.command_async(crate::mpv::commands::LoadFile {
-            path: path.to_str().unwrap(),
-        });
+        match ui_state.file_op {
+            FileOp::OpenMediaFile => {
+                mpv.command_async(crate::mpv::commands::LoadFile {
+                    path: path.to_str().unwrap(),
+                });
+            }
+            FileOp::OpenKashimark => {
+                app_state.subs = Some(load_kashimark_subs(&path, None));
+            }
+        }
     }
 }
 
@@ -151,8 +165,14 @@ fn bottom_bar_ui(ui: &mut egui::Ui, ui_state: &mut UiState, mpv: &Mpv, app_state
             ui_state.ffmpeg_cli.first_frame = true;
         }
         ui.menu_button("Menu", |ui| {
-            if ui.button("Load video...").clicked() {
+            if ui.button("Load media file...").clicked() {
                 ui_state.file_dialog.pick_file();
+                ui_state.file_op = FileOp::OpenMediaFile;
+                ui.close_menu();
+            }
+            if ui.button("Load kashimark subs...").clicked() {
+                ui_state.file_dialog.pick_file();
+                ui_state.file_op = FileOp::OpenKashimark;
                 ui.close_menu();
             }
             if ui.button("Reset pan").clicked() {

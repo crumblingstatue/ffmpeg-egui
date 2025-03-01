@@ -20,7 +20,7 @@ use {
             window::{ContextSettings, Event, Key, Style, mouse},
         },
     },
-    std::fmt::Write as _,
+    std::{fmt::Write as _, path::Path},
 };
 
 pub struct App {
@@ -43,20 +43,22 @@ pub struct AppState {
     pub overlay_show: bool,
 }
 
+pub fn load_kashimark_subs(path: &Path, sub_timing_path: Option<&String>) -> SubsState {
+    let lines = kashimark::parse(&std::fs::read_to_string(path).unwrap());
+    let mut subs = SubsState::new(lines);
+    if let Some(path) = sub_timing_path {
+        subs.load_timings(path.clone());
+    }
+    subs
+}
+
 impl AppState {
     fn new(args: &crate::Args) -> Self {
         Self {
-            subs: match &args.sub {
-                Some(path) => {
-                    let lines = kashimark::parse(&std::fs::read_to_string(path).unwrap());
-                    let mut subs = SubsState::new(lines);
-                    if let Some(path) = &args.sub_timing {
-                        subs.load_timings(path.clone());
-                    }
-                    Some(subs)
-                }
-                None => None,
-            },
+            subs: args
+                .sub
+                .as_ref()
+                .map(|path| load_kashimark_subs(path.as_ref(), args.sub_timing.as_ref())),
             source_markers: SourceMarkers::default(),
             interact: InteractState::default(),
             src: crate::source::Info {
