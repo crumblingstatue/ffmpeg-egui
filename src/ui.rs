@@ -4,6 +4,7 @@ use {
     crate::{
         InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
         app::{AppState, load_kashimark_subs},
+        config::Config,
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
             Mpv,
@@ -67,6 +68,7 @@ pub(crate) fn ui(
     mpv: &mut Mpv,
     app_state: &mut AppState,
     ui_state: &mut UiState,
+    cfg: &mut Config,
 ) {
     let re = egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
         bottom_bar_ui(ui, ui_state, mpv, app_state);
@@ -96,6 +98,7 @@ pub(crate) fn ui(
     if let Some(path) = ui_state.file_dialog.take_picked() {
         match ui_state.file_op {
             FileOp::OpenMediaFile => {
+                cfg.recently_used_list.use_(path.display().to_string());
                 mpv.command_async(crate::mpv::commands::LoadFile {
                     path: path.to_str().unwrap(),
                 });

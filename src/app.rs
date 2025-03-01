@@ -1,6 +1,7 @@
 use {
     crate::{
         InteractState, MOUSE_OVERLAY_PREFIX, RectDragStatus, SourceMarkers, TabOpen,
+        config::Config,
         coords::{VideoDim, VideoMag, VideoPos, VideoVector},
         mpv::{Mpv, MpvEvent, commands as c, properties as p},
         overlay::{self, draw_overlay},
@@ -29,6 +30,7 @@ pub struct App {
     pub sf_egui: SfEgui,
     pub ui_state: UiState,
     pub state: AppState,
+    pub cfg: Config,
 }
 
 /// The "independent" application state that we store on our side
@@ -200,7 +202,13 @@ impl App {
         let di = self
             .sf_egui
             .run(&mut self.rw, |_rw, ctx| {
-                crate::ui::ui(ctx, &mut self.mpv, &mut self.state, &mut self.ui_state)
+                crate::ui::ui(
+                    ctx,
+                    &mut self.mpv,
+                    &mut self.state,
+                    &mut self.ui_state,
+                    &mut self.cfg,
+                )
             })
             .unwrap();
         // We wait until the egui ui has run, so we know if it wanted input or not
@@ -331,7 +339,7 @@ impl App {
         }
     }
 
-    pub fn new(args: &crate::Args) -> Self {
+    pub fn new(args: &crate::Args, cfg: Config) -> Self {
         let rw = RenderWindow::new(
             (960, 600),
             "ffmpeg-egui",
@@ -359,6 +367,11 @@ impl App {
             rw,
             sf_egui,
             ui_state: UiState::default(),
+            cfg,
         }
+    }
+
+    pub(crate) fn save_cfg(&self) {
+        self.cfg.save().unwrap();
     }
 }

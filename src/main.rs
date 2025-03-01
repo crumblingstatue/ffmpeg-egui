@@ -12,6 +12,7 @@ use {
     crate::mpv::properties::{CropH, CropW, CropY, Rotate},
     app::App,
     clap::Parser,
+    config::Config,
     coords::{Src, VideoPos, VideoRect},
     egui_sfml::sfml::graphics::Font,
     mpv::{
@@ -23,6 +24,7 @@ use {
 };
 
 mod app;
+mod config;
 mod coords;
 mod ffmpeg;
 mod mpv;
@@ -125,19 +127,28 @@ struct Args {
     /// Generate ASS subtitles from opened lyrics and timing, then exit
     #[arg(long)]
     gen_ass: Option<String>,
+    /// Use most recently opened file, if any
+    #[arg(long)]
+    recent: bool,
 }
 
 const MOUSE_OVERLAY_PREFIX: &str = "Mouse video pos: ";
 
 fn main() {
     let args = Args::parse();
-    let mut app = App::new(&args);
+    let cfg = Config::load_or_default();
+    let mut app = App::new(&args, cfg);
     app.mpv.set_property::<AudioPitchCorrection>(false);
     app.mpv.set_property::<KeepOpen>(YesNoAlways::Yes);
     app.mpv.set_property::<KeepOpenPause>(YesNo::No);
     app.mpv.set_property::<Volume>(75.0);
     if let Some(path) = &args.file {
+        app.cfg.recently_used_list.use_(path.clone());
         app.mpv.command_async(LoadFile { path });
+    } else if args.recent {
+        if let Some(path) = app.cfg.recently_used_list.most_recent() {
+            app.mpv.command_async(LoadFile { path });
+        }
     }
     app.rw.set_framerate_limit(60);
 
@@ -167,4 +178,6 @@ fn main() {
     while app.rw.is_open() {
         app.do_frame(&font);
     }
+
+    app.save_cfg();
 }
