@@ -171,6 +171,7 @@ impl Mpv {
             if let Some(ev) = ev_ptr.as_ref() {
                 let event = match ev.event_id {
                     ffi::mpv_event_id_MPV_EVENT_VIDEO_RECONFIG => MpvEvent::VideoReconfig,
+                    ffi::mpv_event_id_MPV_EVENT_FILE_LOADED => MpvEvent::FileLoaded,
                     ffi::mpv_event_id_MPV_EVENT_IDLE => {
                         self.idle = true;
                         MpvEvent::Idle
@@ -200,6 +201,7 @@ pub enum MpvEvent {
     VideoReconfig,
     Idle,
     PlaybackRestart,
+    FileLoaded,
 }
 
 impl Drop for Mpv {

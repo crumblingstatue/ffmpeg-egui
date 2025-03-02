@@ -7,7 +7,7 @@ use {
         overlay::{self, draw_overlay},
         present::Present,
         sfml_integ::VideoPosSfExt as _,
-        subs::SubsState,
+        subs::{SubsState, TrackingState},
         ui::UiState,
     },
     egui_sfml::{
@@ -153,6 +153,12 @@ impl App {
                     self.state.src.w_h_ratio = actual_video_w as f64 / actual_video_h as f64
                 }
                 MpvEvent::Idle | MpvEvent::PlaybackRestart => {}
+                MpvEvent::FileLoaded => {
+                    // Reload subs tracking state when file is reloaded
+                    if let Some(subs) = &mut self.state.subs {
+                        subs.tracking = TrackingState::default();
+                    }
+                }
             }
         }
         let mut collected_events = Vec::new();
