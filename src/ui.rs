@@ -3,7 +3,7 @@ mod ffmpeg_cli;
 use {
     crate::{
         InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
-        app::{AppState, load_kashimark_subs},
+        app::{AppState, load_kashimark_subs_with_opt_timings},
         config::Config,
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
@@ -141,7 +141,7 @@ pub(crate) fn ui(
                     path: path.to_str().unwrap(),
                 });
             }
-            FileOp::Kashimark => match load_kashimark_subs(&path, None) {
+            FileOp::Kashimark => match load_kashimark_subs_with_opt_timings(&path, None) {
                 Ok(subs) => app_state.subs = Some(subs),
                 Err(e) => {
                     ui_state
@@ -247,10 +247,18 @@ fn bottom_bar_ui(
                 ui_state.file_op = FileOp::Kashimark;
                 ui.close_menu();
             }
-            if app_state.subs.is_some() && ui.button("Load sub timings...").clicked() {
-                ui_state.file_dialog.pick_file();
-                ui_state.file_op = FileOp::SubTimings;
-                ui.close_menu();
+            if let Some(subs) = &mut app_state.subs {
+                if ui.button("↻ Reload kashimark subs").clicked() {
+                    ui.close_menu();
+                    if let Err(e) = subs.reload() {
+                        ui_state.modal.err(format!("Error reloading subs: {e}"));
+                    }
+                }
+                if ui.button("Load sub timings...").clicked() {
+                    ui_state.file_dialog.pick_file();
+                    ui_state.file_op = FileOp::SubTimings;
+                    ui.close_menu();
+                }
             }
             if ui.button("Reset pan").clicked() {
                 app_state.interact.pan_pos = VideoPos::new(0, 0);
@@ -338,7 +346,7 @@ fn bottom_bar_ui(
                     subs.save_timings();
                 }
                 if let Some(reload) = subs.timings_reload_sentry() {
-                    if ui.button("Reload sub timings from file").clicked() {
+                    if ui.button("↻ Reload sub timings from file").clicked() {
                         ui.close_menu();
                         if let Err(e) = reload.reload() {
                             ui_state.modal.err(format!("Error reloading timings: {e}"));

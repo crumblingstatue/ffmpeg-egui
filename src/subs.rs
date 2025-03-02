@@ -1,7 +1,7 @@
 use {
     crate::time_fmt::AssTimeFmt,
     egui_sfml::egui::{TextBuffer, ahash::HashMap},
-    std::{collections::VecDeque, fmt::Write as _},
+    std::{collections::VecDeque, fmt::Write as _, path::PathBuf},
 };
 
 pub struct SubsState {
@@ -10,6 +10,7 @@ pub struct SubsState {
     pub saved: Save,
     timings_path: Option<String>,
     pub time_stamps: Vec<f64>,
+    path: PathBuf,
 }
 
 #[derive(Default)]
@@ -39,13 +40,14 @@ fn test_write_at_char_idx() {
 }
 
 impl SubsState {
-    pub fn new(lines: Vec<kashimark::Line>) -> Self {
+    pub fn new(lines: Vec<kashimark::Line>, path: PathBuf) -> Self {
         Self {
             lines,
             tracking: TrackingState::default(),
             saved: Save::default(),
             time_stamps: Vec::new(),
             timings_path: None,
+            path,
         }
     }
     pub fn advance(&mut self) {
@@ -60,7 +62,10 @@ impl SubsState {
     }
     pub fn reload_state(&mut self) {
         self.tracking = self.saved.tracking.clone();
-        self.time_stamps = self.saved.time_stamps.clone();
+        // We don't want to overwrite our potentially existing timestamps with an empty one
+        if !self.saved.time_stamps.is_empty() {
+            self.time_stamps = self.saved.time_stamps.clone();
+        }
     }
     pub fn load_timings(&mut self, path: String) -> anyhow::Result<()> {
         let file = std::fs::read_to_string(&path)?;
@@ -237,6 +242,13 @@ impl SubsState {
             }
         }
         ass
+    }
+
+    pub(crate) fn reload(&mut self) -> anyhow::Result<()> {
+        self.lines = kashimark::parse(&std::fs::read_to_string(&self.path)?)?;
+        // Not sure what else to do to correctly reset things
+        //self.rewind();
+        Ok(())
     }
 }
 
