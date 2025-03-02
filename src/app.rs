@@ -52,7 +52,7 @@ pub fn load_kashimark_subs(
     let lines = kashimark::parse(&std::fs::read_to_string(path)?)?;
     let mut subs = SubsState::new(lines);
     if let Some(path) = sub_timing_path {
-        subs.load_timings(path.clone());
+        subs.load_timings(path.clone())?;
     }
     Ok(subs)
 }

@@ -62,17 +62,18 @@ impl SubsState {
         self.tracking = self.saved.tracking.clone();
         self.time_stamps = self.saved.time_stamps.clone();
     }
-    pub fn load_timings(&mut self, path: String) {
-        let file = std::fs::read_to_string(&path).unwrap();
+    pub fn load_timings(&mut self, path: String) -> anyhow::Result<()> {
+        let file = std::fs::read_to_string(&path)?;
         self.time_stamps.clear();
         for token in file.split(' ') {
             if token.is_empty() {
                 break;
             }
-            let time: f64 = token.parse().unwrap();
+            let time: f64 = token.parse()?;
             self.time_stamps.push(time);
         }
         self.timings_path = Some(path);
+        Ok(())
     }
     pub fn save_timings(&self) {
         let path = self.timings_path.as_deref().unwrap_or("sub-timing.txt");
@@ -245,8 +246,8 @@ pub struct TimingsReloadSentry<'a> {
 }
 
 impl TimingsReloadSentry<'_> {
-    pub fn reload(mut self) {
-        self.subs.load_timings(self.path.take());
+    pub fn reload(mut self) -> anyhow::Result<()> {
+        self.subs.load_timings(self.path.take())
     }
 }
 

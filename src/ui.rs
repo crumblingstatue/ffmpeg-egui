@@ -151,7 +151,11 @@ pub(crate) fn ui(
             },
             FileOp::SubTimings => {
                 if let Some(subs) = &mut app_state.subs {
-                    subs.load_timings(path.display().to_string());
+                    if let Err(e) = subs.load_timings(path.display().to_string()) {
+                        ui_state
+                            .modal
+                            .err(format!("Error loading sub timings: {e}"));
+                    }
                 }
             }
         }
@@ -336,7 +340,9 @@ fn bottom_bar_ui(
                 if let Some(reload) = subs.timings_reload_sentry() {
                     if ui.button("Reload sub timings from file").clicked() {
                         ui.close_menu();
-                        reload.reload();
+                        if let Err(e) = reload.reload() {
+                            ui_state.modal.err(format!("Error reloading timings: {e}"));
+                        }
                     }
                 }
             }
