@@ -66,8 +66,9 @@ enum ModalPayload {
 }
 
 pub enum FileOp {
-    OpenMediaFile,
-    OpenKashimark,
+    MediaFile,
+    Kashimark,
+    SubTimings,
 }
 
 impl Default for UiState {
@@ -79,7 +80,7 @@ impl Default for UiState {
             selected_rect: None,
             ffmpeg_cli: FfmpegCli::default(),
             file_dialog: FileDialog::new().as_modal(true),
-            file_op: FileOp::OpenMediaFile,
+            file_op: FileOp::MediaFile,
             modal: ModalPopup::default(),
         }
     }
@@ -134,13 +135,13 @@ pub(crate) fn ui(
     ui_state.file_dialog.update(ctx);
     if let Some(path) = ui_state.file_dialog.take_picked() {
         match ui_state.file_op {
-            FileOp::OpenMediaFile => {
+            FileOp::MediaFile => {
                 cfg.recently_used_list.use_(path.display().to_string());
                 mpv.command_async(crate::mpv::commands::LoadFile {
                     path: path.to_str().unwrap(),
                 });
             }
-            FileOp::OpenKashimark => match load_kashimark_subs(&path, None) {
+            FileOp::Kashimark => match load_kashimark_subs(&path, None) {
                 Ok(subs) => app_state.subs = Some(subs),
                 Err(e) => {
                     ui_state
@@ -148,6 +149,11 @@ pub(crate) fn ui(
                         .err(format!("Error loading kashimark subs: {e}"));
                 }
             },
+            FileOp::SubTimings => {
+                if let Some(subs) = &mut app_state.subs {
+                    subs.load_timings(path.display().to_string());
+                }
+            }
         }
     }
     ui_state.modal.show(ctx);
@@ -219,7 +225,7 @@ fn bottom_bar_ui(
         ui.menu_button("Menu", |ui| {
             if ui.button("Load media file...").clicked() {
                 ui_state.file_dialog.pick_file();
-                ui_state.file_op = FileOp::OpenMediaFile;
+                ui_state.file_op = FileOp::MediaFile;
                 ui.close_menu();
             }
             ui.menu_button("Recent", |ui| {
@@ -234,7 +240,12 @@ fn bottom_bar_ui(
             });
             if ui.button("Load kashimark subs...").clicked() {
                 ui_state.file_dialog.pick_file();
-                ui_state.file_op = FileOp::OpenKashimark;
+                ui_state.file_op = FileOp::Kashimark;
+                ui.close_menu();
+            }
+            if app_state.subs.is_some() && ui.button("Load sub timings...").clicked() {
+                ui_state.file_dialog.pick_file();
+                ui_state.file_op = FileOp::SubTimings;
                 ui.close_menu();
             }
             if ui.button("Reset pan").clicked() {
