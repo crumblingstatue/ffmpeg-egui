@@ -28,6 +28,41 @@ pub struct UiState {
     pub ffmpeg_cli: FfmpegCli,
     pub file_dialog: FileDialog,
     pub file_op: FileOp,
+    pub modal: ModalPopup,
+}
+
+#[derive(Default)]
+pub struct ModalPopup {
+    payload: Option<ModalPayload>,
+}
+impl ModalPopup {
+    fn err(&mut self, msg: String) {
+        self.payload = Some(ModalPayload::Error { msg })
+    }
+
+    fn show(&mut self, ctx: &egui::Context) {
+        if let Some(payload) = &self.payload {
+            let mut close = false;
+            egui::Modal::new("modal_popup".into()).show(ctx, |ui| {
+                match payload {
+                    ModalPayload::Error { msg } => {
+                        ui.heading("Error");
+                        ui.label(msg);
+                    }
+                }
+                if ui.button("Close").clicked() {
+                    close = true;
+                }
+            });
+            if close {
+                self.payload = None;
+            }
+        }
+    }
+}
+
+enum ModalPayload {
+    Error { msg: String },
 }
 
 pub enum FileOp {
@@ -45,6 +80,7 @@ impl Default for UiState {
             ffmpeg_cli: FfmpegCli::default(),
             file_dialog: FileDialog::new().as_modal(true),
             file_op: FileOp::OpenMediaFile,
+            modal: ModalPopup::default(),
         }
     }
 }
@@ -104,11 +140,17 @@ pub(crate) fn ui(
                     path: path.to_str().unwrap(),
                 });
             }
-            FileOp::OpenKashimark => {
-                app_state.subs = Some(load_kashimark_subs(&path, None));
-            }
+            FileOp::OpenKashimark => match load_kashimark_subs(&path, None) {
+                Ok(subs) => app_state.subs = Some(subs),
+                Err(e) => {
+                    ui_state
+                        .modal
+                        .err(format!("Error loading kashimark subs: {e}"));
+                }
+            },
         }
     }
+    ui_state.modal.show(ctx);
 }
 
 fn right_panel_ui(

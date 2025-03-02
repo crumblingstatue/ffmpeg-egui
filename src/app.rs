@@ -45,13 +45,16 @@ pub struct AppState {
     pub overlay_show: bool,
 }
 
-pub fn load_kashimark_subs(path: &Path, sub_timing_path: Option<&String>) -> SubsState {
-    let lines = kashimark::parse(&std::fs::read_to_string(path).unwrap());
+pub fn load_kashimark_subs(
+    path: &Path,
+    sub_timing_path: Option<&String>,
+) -> anyhow::Result<SubsState> {
+    let lines = kashimark::parse(&std::fs::read_to_string(path)?)?;
     let mut subs = SubsState::new(lines);
     if let Some(path) = sub_timing_path {
         subs.load_timings(path.clone());
     }
-    subs
+    Ok(subs)
 }
 
 impl AppState {
@@ -60,7 +63,7 @@ impl AppState {
             subs: args
                 .sub
                 .as_ref()
-                .map(|path| load_kashimark_subs(path.as_ref(), args.sub_timing.as_ref())),
+                .map(|path| load_kashimark_subs(path.as_ref(), args.sub_timing.as_ref()).unwrap()),
             source_markers: SourceMarkers::default(),
             interact: InteractState::default(),
             src: crate::source::Info {

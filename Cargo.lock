@@ -462,7 +462,10 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 [[package]]
 name = "kashimark"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/kashimark.git#7b482133a32b80a671fd5810154966867b6dc76a"
+source = "git+https://github.com/crumblingstatue/kashimark.git#9f87193b3808070f19ef5ce5611a1f84df1699f5"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "lazy_static"
