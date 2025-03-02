@@ -177,6 +177,7 @@ impl Mpv {
                         MpvEvent::Idle
                     }
                     ffi::mpv_event_id_MPV_EVENT_NONE => return None,
+                    ffi::mpv_event_id_MPV_EVENT_SEEK => MpvEvent::Seek,
                     ffi::mpv_event_id_MPV_EVENT_PLAYBACK_RESTART => {
                         self.idle = false;
                         MpvEvent::PlaybackRestart
@@ -202,6 +203,7 @@ pub enum MpvEvent {
     Idle,
     PlaybackRestart,
     FileLoaded,
+    Seek,
 }
 
 impl Drop for Mpv {

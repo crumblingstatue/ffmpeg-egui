@@ -162,6 +162,11 @@ impl App {
                         subs.tracking = TrackingState::default();
                     }
                 }
+                MpvEvent::Seek => {
+                    if let Some(subs) = &mut self.state.subs {
+                        subs.rewind();
+                    }
+                }
             }
         }
         let mut collected_events = Vec::new();
@@ -173,13 +178,15 @@ impl App {
         }
         if let Some(subs) = &mut self.state.subs
             && let Some(current_pos) = self.mpv.get_property::<p::TimePos>()
-            && subs
+        {
+            while subs
                 .time_stamps
                 .get(subs.tracking.timestamp_tracker)
                 .is_some_and(|pos| current_pos >= *pos)
-        {
-            subs.advance();
-            subs.tracking.timestamp_tracker += 1;
+            {
+                subs.advance();
+                subs.tracking.timestamp_tracker += 1;
+            }
         }
         let raw_mouse_pos = self.rw.mouse_position();
         let src_mouse_pos = VideoPos::from_present(
