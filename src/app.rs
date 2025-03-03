@@ -64,8 +64,8 @@ pub fn load_kashimark_subs_with_opt_timings(
 impl AppState {
     fn new(args: &crate::Args) -> Self {
         Self {
-            subs: args.sub.as_ref().map(|path| {
-                load_kashimark_subs_with_opt_timings(path.as_ref(), args.sub_timing.as_ref())
+            subs: args.kashimark.as_ref().map(|path| {
+                load_kashimark_subs_with_opt_timings(path.as_ref(), args.kashimark_timing.as_ref())
                     .unwrap()
             }),
             source_markers: SourceMarkers::default(),

@@ -117,10 +117,10 @@ struct Args {
     tab: Option<TabOpen>,
     /// Optional kashimark subtitle file to sync against lyrics
     #[arg(long)]
-    sub: Option<String>,
+    kashimark: Option<String>,
     /// Optional timing file for subtitle
     #[arg(long)]
-    sub_timing: Option<String>,
+    kashimark_timing: Option<String>,
     /// Path to optional overlay font to use instead of default
     #[arg(long)]
     font: Option<String>,
