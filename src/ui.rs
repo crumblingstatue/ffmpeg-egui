@@ -29,6 +29,7 @@ pub struct UiState {
     pub file_dialog: FileDialog,
     pub file_op: FileOp,
     pub modal: ModalPopup,
+    pub quit_requested: bool,
 }
 
 #[derive(Default)]
@@ -82,6 +83,7 @@ impl Default for UiState {
             file_dialog: FileDialog::new().as_modal(true),
             file_op: FileOp::MediaFile,
             modal: ModalPopup::default(),
+            quit_requested: false,
         }
     }
 }
@@ -361,6 +363,10 @@ fn bottom_bar_ui(
                         .modal
                         .err(format!("Error opening config file: {e}"));
                 }
+            }
+            ui.separator();
+            if ui.button("🚪 Quit").clicked() {
+                ui_state.quit_requested = true;
             }
         });
         if mpv.is_idle() {

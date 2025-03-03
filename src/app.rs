@@ -94,7 +94,6 @@ impl App {
             return;
         }
         match code {
-            Key::Escape => self.rw.close(),
             Key::Tab => self.state.overlay_show ^= true,
             Key::Space => {
                 let pause_flag = self.mpv.get_property::<p::Pause>().unwrap_or(false);
@@ -268,6 +267,9 @@ impl App {
         }
         self.sf_egui.draw(di, &mut self.rw, None);
         self.rw.display();
+        if self.ui_state.quit_requested {
+            self.rw.close();
+        }
     }
 
     /// Handle events before the egui ui
