@@ -4,7 +4,7 @@ use {
     crate::{
         InteractState, RectDrag, RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
         app::{AppState, load_kashimark_subs_with_opt_timings},
-        config::Config,
+        config::{self, Config},
         coords::{VideoMag, VideoPos, VideoRect},
         mpv::{
             Mpv,
@@ -352,6 +352,14 @@ fn bottom_bar_ui(
                             ui_state.modal.err(format!("Error reloading timings: {e}"));
                         }
                     }
+                }
+            }
+            ui.separator();
+            if ui.button("Open config file").clicked() {
+                if let Err(e) = config::shell_open() {
+                    ui_state
+                        .modal
+                        .err(format!("Error opening config file: {e}"));
                 }
             }
         });

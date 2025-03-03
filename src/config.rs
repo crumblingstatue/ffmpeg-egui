@@ -1,6 +1,7 @@
 use {
     recently_used_list::RecentlyUsedList,
     serde::{Deserialize, Serialize},
+    std::process::{Command, ExitStatus},
 };
 
 #[derive(Default, Serialize, Deserialize)]
@@ -34,4 +35,9 @@ fn conf_dir_path() -> std::path::PathBuf {
 
 fn toml_path() -> std::path::PathBuf {
     conf_dir_path().join("config.toml")
+}
+
+pub(crate) fn shell_open() -> anyhow::Result<ExitStatus> {
+    let path = toml_path();
+    Ok(Command::new("xdg-open").arg(path).status()?)
 }
