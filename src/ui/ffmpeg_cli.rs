@@ -1,7 +1,12 @@
 use {
     super::UiState,
-    crate::{SourceMarkers, ffmpeg::resolve_arguments, source},
-    egui_sfml::egui,
+    crate::{
+        SourceMarkers,
+        config::{Config, VideoOutPreset},
+        ffmpeg::resolve_arguments,
+        source,
+    },
+    egui_sfml::egui::{self, TextBuffer},
     std::io::Read as _,
 };
 
@@ -15,12 +20,24 @@ pub struct FfmpegCli {
     exit_status: Option<i32>,
     stdout: String,
     stderr: String,
+    optional_content: Option<OptContent>,
     cook_book: CookBook,
+    vo_presets: VoPresetsUi,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum OptContent {
+    CookBook,
+    VoPresets,
+}
+
+#[derive(Default)]
+struct VoPresetsUi {
+    new_name_buf: String,
 }
 
 #[derive(Default)]
 struct CookBook {
-    open: bool,
     recipes: &'static [Recipe] = recipes(),
     selected: Option<usize>,
 }
@@ -53,8 +70,9 @@ struct Recipe {
 
 const FFMPEG_HELP_TEXT: &str = "\
 {i}: Currently opened media file
-{r.x} Rectangle 'x'
-{t.x} Timespan 'x'
+{r.x} Rectangle
+{t.x} Timespan
+{v.x} Video output preset
 ";
 
 pub fn ffmpeg_cli_ui(
@@ -62,33 +80,12 @@ pub fn ffmpeg_cli_ui(
     ui_state: &mut UiState,
     source_markers: &SourceMarkers,
     src_info: &source::Info,
+    cfg: &mut Config,
 ) {
-    if ui_state.ffmpeg_cli.cook_book.open {
-        egui::SidePanel::right("cookbook_right_panel").show_inside(ui, |ui| {
-            for (i, recipe) in ui_state.ffmpeg_cli.cook_book.recipes.iter().enumerate() {
-                if ui
-                    .selectable_label(
-                        ui_state.ffmpeg_cli.cook_book.selected == Some(i),
-                        recipe.name,
-                    )
-                    .clicked()
-                {
-                    ui_state.ffmpeg_cli.cook_book.selected = Some(i);
-                }
-            }
-            ui.separator();
-            if let Some(sel_idx) = ui_state.ffmpeg_cli.cook_book.selected {
-                let recipe = &ui_state.ffmpeg_cli.cook_book.recipes[sel_idx];
-                ui.heading(recipe.name);
-                for &desc in recipe.descriptions {
-                    ui.horizontal(|ui| {
-                        if ui.button("🏷").on_hover_text("Copy").clicked() {
-                            ui.ctx().copy_text(desc.to_owned());
-                        }
-                        ui.label(desc);
-                    });
-                }
-            }
+    if let Some(opt_content) = ui_state.ffmpeg_cli.optional_content {
+        egui::SidePanel::right("opt_right_panel").show_inside(ui, |ui| match opt_content {
+            OptContent::CookBook => cook_book_ui(ui, ui_state),
+            OptContent::VoPresets => vo_presets_ui(ui, ui_state, cfg),
         });
     }
     let ctrl_enter = ui.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, egui::Key::Enter));
@@ -96,7 +93,12 @@ pub fn ffmpeg_cli_ui(
         egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.source_string)
             .hint_text("arguments to ffmpeg"),
     );
-    match resolve_arguments(&ui_state.ffmpeg_cli.source_string, source_markers, src_info) {
+    match resolve_arguments(
+        &ui_state.ffmpeg_cli.source_string,
+        source_markers,
+        src_info,
+        cfg,
+    ) {
         Ok(args) => {
             let mut args_str = String::new();
             for (i, arg) in args.iter().enumerate() {
@@ -112,6 +114,7 @@ pub fn ffmpeg_cli_ui(
                     &ui_state.ffmpeg_cli.source_string,
                     source_markers,
                     src_info,
+                    cfg,
                 ) {
                     Ok(child) => ui_state.ffmpeg_cli.child = Some(child),
                     Err(e) => ui_state.ffmpeg_cli.err_str = e.to_string(),
@@ -180,5 +183,115 @@ pub fn ffmpeg_cli_ui(
                 ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
             });
     }
-    ui.checkbox(&mut ui_state.ffmpeg_cli.cook_book.open, "Cook book");
+    ui.horizontal(|ui| {
+        let opt_c = &mut ui_state.ffmpeg_cli.optional_content;
+        if ui.button("🇽").clicked() {
+            *opt_c = None;
+        }
+        if ui
+            .selectable_label(*opt_c == Some(OptContent::CookBook), "Cook book")
+            .clicked()
+        {
+            *opt_c = Some(OptContent::CookBook);
+        }
+        if ui
+            .selectable_label(*opt_c == Some(OptContent::VoPresets), "Video out presets")
+            .clicked()
+        {
+            *opt_c = Some(OptContent::VoPresets);
+        }
+    });
+}
+
+fn cook_book_ui(ui: &mut egui::Ui, ui_state: &mut UiState) {
+    for (i, recipe) in ui_state.ffmpeg_cli.cook_book.recipes.iter().enumerate() {
+        if ui
+            .selectable_label(
+                ui_state.ffmpeg_cli.cook_book.selected == Some(i),
+                recipe.name,
+            )
+            .clicked()
+        {
+            ui_state.ffmpeg_cli.cook_book.selected = Some(i);
+        }
+    }
+    ui.separator();
+    if let Some(sel_idx) = ui_state.ffmpeg_cli.cook_book.selected {
+        let recipe = &ui_state.ffmpeg_cli.cook_book.recipes[sel_idx];
+        ui.heading(recipe.name);
+        for &desc in recipe.descriptions {
+            ui.horizontal(|ui| {
+                if ui.button("🏷").on_hover_text("Copy").clicked() {
+                    ui.ctx().copy_text(desc.to_owned());
+                }
+                ui.label(desc);
+            });
+        }
+    }
+}
+
+fn vo_presets_ui(ui: &mut egui::Ui, ui_state: &mut UiState, cfg: &mut Config) {
+    ui.label("Use these with {v.name}");
+    ui.separator();
+    let mut keys: Vec<String> = cfg.vo_preset.keys().cloned().collect();
+    keys.sort();
+    let mut del = None;
+    for key in keys {
+        ui.heading(&key);
+        let preset = cfg.vo_preset.get_mut(&key).unwrap();
+        ui.horizontal(|ui| {
+            ui.label("Description");
+            ui.text_edit_singleline(&mut preset.desc);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Codec");
+            opt_string_edit(ui, &mut preset.codec);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Pixel format");
+            opt_string_edit(ui, &mut preset.pix_fmt);
+        });
+        if ui.button("Delete").clicked() {
+            del = Some(key);
+        }
+        ui.separator();
+    }
+    if let Some(key) = del {
+        cfg.vo_preset.remove(&key);
+    }
+    ui.separator();
+    ui.horizontal(|ui| {
+        ui.label("New");
+        ui.text_edit_singleline(&mut ui_state.ffmpeg_cli.vo_presets.new_name_buf);
+        if ui
+            .add_enabled(
+                !ui_state.ffmpeg_cli.vo_presets.new_name_buf.is_empty(),
+                egui::Button::new("➕"),
+            )
+            .clicked()
+        {
+            cfg.vo_preset.insert(
+                ui_state.ffmpeg_cli.vo_presets.new_name_buf.take(),
+                VideoOutPreset::default(),
+            );
+        }
+    });
+}
+
+fn opt_string_edit(ui: &mut egui::Ui, opt_s: &mut Option<String>) {
+    match opt_s {
+        Some(codec) => {
+            let mut keep = true;
+            ui.checkbox(&mut keep, "");
+            ui.text_edit_singleline(codec);
+            if !keep {
+                *opt_s = None;
+            }
+        }
+        None => {
+            if ui.checkbox(&mut false, "").clicked() {
+                *opt_s = Some(String::new());
+            }
+        }
+    }
 }

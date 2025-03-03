@@ -130,7 +130,7 @@ pub(crate) fn ui(
             if let Some(path) = mpv.get_property::<Path>() {
                 app_state.src.path = path.to_owned();
             }
-            ffmpeg_cli_ui(ui, ui_state, &app_state.source_markers, &app_state.src);
+            ffmpeg_cli_ui(ui, ui_state, &app_state.source_markers, &app_state.src, cfg);
         });
         ui_state.ffmpeg_cli.first_frame = false;
     }

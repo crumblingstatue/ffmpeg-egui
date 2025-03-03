@@ -1,5 +1,5 @@
 use {
-    crate::{SourceMarkers, source},
+    crate::{SourceMarkers, config::Config, source},
     egui_sfml::egui::TextBuffer,
     std::{
         fmt::Write,
@@ -12,8 +12,9 @@ pub(crate) fn invoke(
     input: &str,
     markers: &SourceMarkers,
     src_info: &source::Info,
+    cfg: &Config,
 ) -> anyhow::Result<Child> {
-    let resolved = resolve_arguments(input, markers, src_info)?;
+    let resolved = resolve_arguments(input, markers, src_info, cfg)?;
     Ok(Command::new("ffmpeg")
         .args(resolved)
         // Always overwrite file, otherwise it just hangs because it can't ask y/n question
@@ -39,12 +40,13 @@ pub fn resolve_arguments(
     input: &str,
     markers: &SourceMarkers,
     src_info: &source::Info,
+    cfg: &Config,
 ) -> Result<Vec<String>, ResolveError> {
     let words = shell_words::split(input)?;
     let mut out = Vec::new();
     for word in words {
         let tokens = tokenize_word(&word)?;
-        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info)?);
+        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info, cfg)?);
     }
     Ok(out)
 }
@@ -58,6 +60,7 @@ fn resolve_word_tokens(
     tokens: &[Token],
     markers: &SourceMarkers,
     src_info: &source::Info,
+    cfg: &Config,
 ) -> Result<Vec<String>, ResolveError> {
     let mut resolved = Vec::new();
     let mut current_string = String::new();
@@ -92,6 +95,22 @@ fn resolve_word_tokens(
                 resolved.push((marker.timespan.end - marker.timespan.begin).to_string());
             }
             Token::SubsInput => current_string.push_str(&src_info.path),
+            Token::SubsVoPreset(name) => {
+                let preset = cfg
+                    .vo_preset
+                    .get(*name)
+                    .ok_or_else(|| ResolveError::MissingItem {
+                        name: name.to_string(),
+                    })?;
+                if let Some(pix_fmt) = &preset.pix_fmt {
+                    resolved.push("-pix_fmt".into());
+                    resolved.push(pix_fmt.clone());
+                }
+                if let Some(codec) = &preset.codec {
+                    resolved.push("-c:v".into());
+                    resolved.push(codec.clone());
+                }
+            }
         }
     }
     if !current_string.is_empty() {
@@ -113,6 +132,7 @@ enum SubsType {
     Rect,
     TimeSpan,
     Input,
+    VoPreset,
 }
 
 struct ParseState {
@@ -167,6 +187,10 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                     state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::TimeSpan;
                 }
+                b'v' => {
+                    state.status = Status::SubsCategAccess;
+                    state.subs_type = SubsType::VoPreset;
+                }
                 _ => return Err(ParseError::UnexpectedToken),
             },
             Status::SubsCategAccess => {
@@ -182,6 +206,7 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                         SubsType::Rect => Token::SubsRect(raw),
                         SubsType::TimeSpan => Token::SubsTimespan(raw),
                         SubsType::Input => Token::SubsInput,
+                        SubsType::VoPreset => Token::SubsVoPreset(raw),
                     };
                     tokens.push(tok);
                     state.token_begin = i + 1;
@@ -212,6 +237,7 @@ enum Token<'a> {
     SubsRect(&'a str),
     SubsTimespan(&'a str),
     SubsInput,
+    SubsVoPreset(&'a str),
 }
 
 #[test]
@@ -245,8 +271,23 @@ fn test_resolve() {
         time_pos: 0.0,
         path: "/home/my_video.mp4".into(),
     };
+    let mut cfg = Config::default();
+    cfg.vo_preset.insert(
+        "custom".into(),
+        crate::config::VideoOutPreset {
+            desc: String::new(),
+            codec: Some("h265".into()),
+            pix_fmt: Some("yuv420p".into()),
+        },
+    );
     assert_eq!(
-        resolve_arguments("-i {i} {t.0} crop={r.0}", &test_markers, &test_src_info).unwrap(),
+        resolve_arguments(
+            "-i {i} {t.0} crop={r.0} {v.custom}",
+            &test_markers,
+            &test_src_info,
+            &cfg
+        )
+        .unwrap(),
         vec![
             "-i".to_string(),
             "/home/my_video.mp4".to_string(),
@@ -254,7 +295,11 @@ fn test_resolve() {
             "10".to_string(),
             "-t".to_string(),
             "10".to_string(),
-            "crop=100:100:0:0".to_string()
+            "crop=100:100:0:0".to_string(),
+            "-pix_fmt".to_string(),
+            "yuv420p".to_string(),
+            "-c:v".to_string(),
+            "h265".to_string()
         ]
     );
 }

@@ -1,12 +1,26 @@
 use {
     recently_used_list::RecentlyUsedList,
     serde::{Deserialize, Serialize},
-    std::process::{Command, ExitStatus},
+    std::{
+        collections::HashMap,
+        process::{Command, ExitStatus},
+    },
 };
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct Config {
     pub recently_used_list: RecentlyUsedList<String>,
+    #[serde(default)]
+    pub vo_preset: HashMap<String, VideoOutPreset>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct VideoOutPreset {
+    pub desc: String,
+    #[serde(default)]
+    pub codec: Option<String>,
+    #[serde(default)]
+    pub pix_fmt: Option<String>,
 }
 
 impl Config {
