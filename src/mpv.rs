@@ -4,7 +4,7 @@ use {
         property::{Property, PropertyType, PropertyTypeRaw, PropertyUnset, PropertyWrite},
     },
     crate::coords::{Present, VideoDim},
-    libmpv_sys::{self as ffi},
+    libmpv_sys::{self as ffi, mpv_load_config_file},
     std::{
         mem::MaybeUninit,
         os::raw::{c_int, c_void},
@@ -28,6 +28,19 @@ impl Mpv {
         let mpv_handle = unsafe { ffi::mpv_create() };
         if mpv_handle.is_null() {
             panic!("Failed to create mpv instance");
+        }
+        // Load mpv config, if exists
+        if let Some(home) = std::env::home_dir() {
+            let conf_path = home.join(".config/mpv/mpv.conf");
+            unsafe {
+                let result = mpv_load_config_file(
+                    mpv_handle,
+                    conf_path.as_os_str().as_encoded_bytes().as_ptr() as *const std::ffi::c_char,
+                );
+                if result != 0 {
+                    eprintln!("Error when loading config file (code {result})");
+                }
+            }
         }
         let render_ctx = unsafe {
             // If we don't set "libmpv" as video output, mpv opens its own window.
