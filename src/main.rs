@@ -145,10 +145,10 @@ fn main() {
     if let Some(path) = &args.file {
         app.cfg.recently_used_list.use_(path.clone());
         app.mpv.command_async(LoadFile { path });
-    } else if args.recent {
-        if let Some(path) = app.cfg.recently_used_list.most_recent() {
-            app.mpv.command_async(LoadFile { path });
-        }
+    } else if args.recent
+        && let Some(path) = app.cfg.recently_used_list.most_recent()
+    {
+        app.mpv.command_async(LoadFile { path });
     }
     app.rw.set_framerate_limit(60);
 

@@ -152,12 +152,12 @@ pub(crate) fn ui(
                 }
             },
             FileOp::SubTimings => {
-                if let Some(subs) = &mut app_state.subs {
-                    if let Err(e) = subs.load_timings(path.display().to_string()) {
-                        ui_state
-                            .modal
-                            .err(format!("Error loading sub timings: {e}"));
-                    }
+                if let Some(subs) = &mut app_state.subs
+                    && let Err(e) = subs.load_timings(path.display().to_string())
+                {
+                    ui_state
+                        .modal
+                        .err(format!("Error loading sub timings: {e}"));
                 }
             }
         }
@@ -347,22 +347,22 @@ fn bottom_bar_ui(
                     ui.close_menu();
                     subs.save_timings();
                 }
-                if let Some(reload) = subs.timings_reload_sentry() {
-                    if ui.button("↻ Reload sub timings from file").clicked() {
-                        ui.close_menu();
-                        if let Err(e) = reload.reload() {
-                            ui_state.modal.err(format!("Error reloading timings: {e}"));
-                        }
+                if let Some(reload) = subs.timings_reload_sentry()
+                    && ui.button("↻ Reload sub timings from file").clicked()
+                {
+                    ui.close_menu();
+                    if let Err(e) = reload.reload() {
+                        ui_state.modal.err(format!("Error reloading timings: {e}"));
                     }
                 }
             }
             ui.separator();
-            if ui.button("Open config file").clicked() {
-                if let Err(e) = config::shell_open() {
-                    ui_state
-                        .modal
-                        .err(format!("Error opening config file: {e}"));
-                }
+            if ui.button("Open config file").clicked()
+                && let Err(e) = config::shell_open()
+            {
+                ui_state
+                    .modal
+                    .err(format!("Error opening config file: {e}"));
             }
             ui.separator();
             if ui.button("🚪 Quit").clicked() {
@@ -469,13 +469,13 @@ fn timespans_ui(
     ui.separator();
     let label_string = match (mpv.get_property::<AbLoopA>(), mpv.get_property::<AbLoopB>()) {
         (Some(a), Some(b)) => {
-            format!("ab-loop: {}-{}", a, b)
+            format!("ab-loop: {a}-{b}")
         }
         (Some(a), None) => {
-            format!("loop from {}", a)
+            format!("loop from {a}")
         }
         (None, Some(b)) => {
-            format!("loop to {}", b)
+            format!("loop to {b}")
         }
         (None, None) => String::new(),
     };

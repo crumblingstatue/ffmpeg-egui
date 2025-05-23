@@ -135,10 +135,10 @@ pub fn ffmpeg_cli_ui(
     if let Some(child) = &mut ui_state.ffmpeg_cli.child {
         ui.horizontal(|ui| {
             ui.label("running ffmpeg");
-            if ui.button("kill").clicked() {
-                if let Err(e) = child.kill() {
-                    eprintln!("Error killing child process: {e}");
-                }
+            if ui.button("kill").clicked()
+                && let Err(e) = child.kill()
+            {
+                eprintln!("Error killing child process: {e}");
             }
             ui.spinner();
         });
@@ -162,7 +162,7 @@ pub fn ffmpeg_cli_ui(
         }
     }
     if let Some(code) = ui_state.ffmpeg_cli.exit_status {
-        ui.label(format!("Exit status: {}", code));
+        ui.label(format!("Exit status: {code}"));
     }
     if !ui_state.ffmpeg_cli.stdout.is_empty() {
         ui.label("Standard output:");

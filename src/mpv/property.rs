@@ -103,7 +103,7 @@ impl PropertyType for bool {
         match src {
             1 => true,
             0 => false,
-            _ => panic!("Invalid value converting mpv property to bool: {}", src),
+            _ => panic!("Invalid value converting mpv property to bool: {src}"),
         }
     }
 }
@@ -121,7 +121,7 @@ impl PropertyType for YesNo {
         match c_str.to_str().unwrap() {
             "yes" => YesNo::Yes,
             "no" => YesNo::No,
-            etc => panic!("Invalid yes/no option: {}", etc),
+            etc => panic!("Invalid yes/no option: {etc}"),
         }
     }
 
@@ -151,7 +151,7 @@ impl PropertyType for YesNoAlways {
             "yes" => YesNoAlways::Yes,
             "no" => YesNoAlways::No,
             "always" => YesNoAlways::Always,
-            etc => panic!("Invalid yes/no option: {}", etc),
+            etc => panic!("Invalid yes/no option: {etc}"),
         }
     }
 
