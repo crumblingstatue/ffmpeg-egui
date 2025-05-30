@@ -442,27 +442,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ffmpeg-egui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "dirs",
- "egui-file-dialog",
- "egui-sf2g",
- "kashimark",
- "libmpv-sys",
- "rand",
- "recently_used_list",
- "serde",
- "sf2g",
- "sf2g-xt",
- "shell-words",
- "thiserror",
- "toml",
-]
-
-[[package]]
 name = "flate2"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -480,6 +459,27 @@ checksum = "f62dff207fc71a4bf56014d992fb7ea8b1d6f1ff8d81129faaf3e82715bca130"
 dependencies = [
  "cc",
  "pkg-config",
+]
+
+[[package]]
+name = "frogmpeg"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dirs",
+ "egui-file-dialog",
+ "egui-sf2g",
+ "kashimark",
+ "libmpv-sys",
+ "rand",
+ "recently_used_list",
+ "serde",
+ "sf2g",
+ "sf2g-xt",
+ "shell-words",
+ "thiserror",
+ "toml",
 ]
 
 [[package]]

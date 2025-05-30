@@ -382,7 +382,7 @@ impl App {
     pub fn new(args: &crate::Args, cfg: Config) -> Self {
         let rw = RenderWindow::new(
             (960, 600),
-            "ffmpeg-egui",
+            "frogmpeg",
             Style::RESIZE,
             &ContextSettings::default(),
         )
