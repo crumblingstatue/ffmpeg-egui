@@ -72,6 +72,7 @@ const FFMPEG_HELP_TEXT: &str = "\
 {i}: Currently opened media file
 {r.x} Rectangle
 {t.x} Timespan
+-filter:v \"{x.0}, {x.1} ...\" Draw text(s)
 {v.x} Video output preset
 ";
 
@@ -79,6 +80,7 @@ pub fn ffmpeg_cli_ui(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
     source_markers: &SourceMarkers,
+    texts: &[crate::text::Text],
     src_info: &source::Info,
     cfg: &mut Config,
 ) {
@@ -96,6 +98,7 @@ pub fn ffmpeg_cli_ui(
     match resolve_arguments(
         &ui_state.ffmpeg_cli.source_string,
         source_markers,
+        texts,
         src_info,
         cfg,
     ) {
@@ -113,6 +116,7 @@ pub fn ffmpeg_cli_ui(
                 match crate::ffmpeg::invoke(
                     &ui_state.ffmpeg_cli.source_string,
                     source_markers,
+                    texts,
                     src_info,
                     cfg,
                 ) {

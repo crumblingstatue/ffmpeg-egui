@@ -20,10 +20,7 @@ use {
 };
 
 pub struct UiState {
-    pub tab: right_panel::Tab,
-    selected_timespan: Option<usize>,
-    rename_index: Option<usize>,
-    selected_rect: Option<usize>,
+    pub right_panel: right_panel::State,
     pub ffmpeg_cli: FfmpegCli,
     pub file_dialog: FileDialog,
     pub file_op: FileOp,
@@ -74,10 +71,7 @@ pub enum FileOp {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            tab: right_panel::Tab::Rects,
-            selected_timespan: None,
-            rename_index: None,
-            selected_rect: None,
+            right_panel: right_panel::State::default(),
             ffmpeg_cli: FfmpegCli::default(),
             file_dialog: FileDialog::new().as_modal(true),
             file_op: FileOp::MediaFile,
@@ -101,10 +95,11 @@ pub(crate) fn ui(
     let re = egui::SidePanel::right("right_panel").show(ctx, |ui| {
         right_panel::ui(
             ui,
-            ui_state,
+            &mut ui_state.right_panel,
             &mut app_state.source_markers,
             &mut app_state.interact,
             &app_state.src,
+            &mut app_state.texts,
             mpv,
         );
     });
@@ -114,7 +109,14 @@ pub(crate) fn ui(
             if let Some(path) = mpv.get_property::<Path>() {
                 app_state.src.path = path.to_owned();
             }
-            ffmpeg_cli_ui(ui, ui_state, &app_state.source_markers, &app_state.src, cfg);
+            ffmpeg_cli_ui(
+                ui,
+                ui_state,
+                &app_state.source_markers,
+                &app_state.texts,
+                &app_state.src,
+                cfg,
+            );
         });
         ui_state.ffmpeg_cli.first_frame = false;
     }

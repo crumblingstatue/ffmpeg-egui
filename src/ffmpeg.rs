@@ -3,6 +3,7 @@ use {
     egui_sf2g::egui::TextBuffer,
     std::{
         fmt::Write,
+        num::ParseIntError,
         process::{Child, Command, Stdio},
     },
     thiserror::Error,
@@ -11,10 +12,11 @@ use {
 pub(crate) fn invoke(
     input: &str,
     markers: &SourceMarkers,
+    texts: &[crate::text::Text],
     src_info: &source::Info,
     cfg: &Config,
 ) -> anyhow::Result<Child> {
-    let resolved = resolve_arguments(input, markers, src_info, cfg)?;
+    let resolved = resolve_arguments(input, markers, texts, src_info, cfg)?;
     Ok(Command::new("ffmpeg")
         .args(resolved)
         // Always overwrite file, otherwise it just hangs because it can't ask y/n question
@@ -39,6 +41,7 @@ pub enum ResolveError {
 pub fn resolve_arguments(
     input: &str,
     markers: &SourceMarkers,
+    texts: &[crate::text::Text],
     src_info: &source::Info,
     cfg: &Config,
 ) -> Result<Vec<String>, ResolveError> {
@@ -46,7 +49,9 @@ pub fn resolve_arguments(
     let mut out = Vec::new();
     for word in words {
         let tokens = tokenize_word(&word)?;
-        out.extend_from_slice(&resolve_word_tokens(&tokens, markers, src_info, cfg)?);
+        out.extend_from_slice(&resolve_word_tokens(
+            &tokens, markers, texts, src_info, cfg,
+        )?);
     }
     Ok(out)
 }
@@ -59,6 +64,7 @@ pub fn resolve_arguments(
 fn resolve_word_tokens(
     tokens: &[Token],
     markers: &SourceMarkers,
+    texts: &[crate::text::Text],
     src_info: &source::Info,
     cfg: &Config,
 ) -> Result<Vec<String>, ResolveError> {
@@ -93,6 +99,32 @@ fn resolve_word_tokens(
                 resolved.push(marker.timespan.begin.to_string());
                 resolved.push("-t".into());
                 resolved.push((marker.timespan.end - marker.timespan.begin).to_string());
+            }
+            Token::SubsText { idx } => {
+                let text = texts.get(*idx).ok_or_else(|| ResolveError::MissingItem {
+                    name: idx.to_string(),
+                })?;
+                let filt = format!(
+                    "\
+                    drawtext=text={}: \
+                    x={}: \
+                    y={}: \
+                    fontcolor=white: \
+                    enable='between(t,{},{})': \
+                    fontfile={}: \
+                    fontsize={}: \
+                    borderw={}: \
+                ",
+                    text.string,
+                    text.pos.x,
+                    text.pos.y,
+                    text.timespan.begin,
+                    text.timespan.end,
+                    text.font_path,
+                    text.size,
+                    text.borderw,
+                );
+                current_string.push_str(&filt);
             }
             Token::SubsInput => current_string.push_str(&src_info.path),
             Token::SubsVoPreset(name) => {
@@ -131,6 +163,7 @@ enum Status {
 enum SubsType {
     Rect,
     TimeSpan,
+    Text,
     Input,
     VoPreset,
 }
@@ -157,6 +190,8 @@ pub enum ParseError {
     UnexpectedToken,
     #[error("Unexpected end")]
     UnexpectedEnd,
+    #[error("Index parse error: {0}")]
+    InvalidIndex(#[from] ParseIntError),
 }
 
 fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
@@ -187,6 +222,10 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                     state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::TimeSpan;
                 }
+                b'x' => {
+                    state.status = Status::SubsCategAccess;
+                    state.subs_type = SubsType::Text;
+                }
                 b'v' => {
                     state.status = Status::SubsCategAccess;
                     state.subs_type = SubsType::VoPreset;
@@ -205,6 +244,7 @@ fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
                     let tok = match state.subs_type {
                         SubsType::Rect => Token::SubsRect(raw),
                         SubsType::TimeSpan => Token::SubsTimespan(raw),
+                        SubsType::Text => Token::SubsText { idx: raw.parse()? },
                         SubsType::Input => Token::SubsInput,
                         SubsType::VoPreset => Token::SubsVoPreset(raw),
                     };
@@ -236,6 +276,7 @@ enum Token<'a> {
     Raw(&'a str),
     SubsRect(&'a str),
     SubsTimespan(&'a str),
+    SubsText { idx: usize },
     SubsInput,
     SubsVoPreset(&'a str),
 }
@@ -246,6 +287,7 @@ fn test_resolve() {
         RectMarker, SourceMarkers, TimeSpan, TimespanMarker,
         coords::{VideoDim, VideoPos, VideoRect},
     };
+    let test_texts = &[];
     let test_markers = SourceMarkers {
         rects: vec![RectMarker {
             rect: VideoRect {
@@ -284,6 +326,7 @@ fn test_resolve() {
         resolve_arguments(
             "-i {i} {t.0} crop={r.0} {v.custom}",
             &test_markers,
+            test_texts,
             &test_src_info,
             &cfg
         )

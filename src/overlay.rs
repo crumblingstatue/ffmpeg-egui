@@ -3,7 +3,7 @@ use {
         app::AppState,
         coords::{Dim, Present, VideoDim, VideoMag, VideoVector},
         mpv::{Mpv, properties::TimePos},
-        sfml_integ::EguiFriendlyColorExt as _,
+        sfml_integ::{EguiFriendlyColorExt as _, VideoPosSfExt},
         source,
         time_fmt::FfmpegTimeFmt,
     },
@@ -126,6 +126,24 @@ pub(crate) fn draw_overlay(
         let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as i16, &app_state.src);
         text.set_position((timeline_rect_sf.left, timeline_rect_sf.top - 20.0));
         text.set_string(format!("Mouse time pos: {}", FfmpegTimeFmt(timepos)));
+        text.draw(rw, &RenderStates::DEFAULT);
+    }
+    // Texts
+    for txt in &app_state.texts {
+        if !txt.timespan.contains(app_state.src.time_pos) {
+            continue;
+        }
+        text.set_character_size(txt.size);
+        text.set_string(txt.string.clone());
+        text.set_position(
+            txt.pos
+                .to_present(app_state.src.dim, video_present_dim)
+                .to_sf(),
+        );
+        if txt.borderw != 0 {
+            text.set_outline_color(Color::BLACK);
+            text.set_outline_thickness(txt.borderw.into());
+        }
         text.draw(rw, &RenderStates::DEFAULT);
     }
     // Draw subs

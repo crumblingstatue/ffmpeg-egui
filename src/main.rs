@@ -33,6 +33,7 @@ mod present;
 mod sfml_integ;
 mod source;
 mod subs;
+mod text;
 mod time_fmt;
 mod ui;
 
@@ -91,9 +92,15 @@ impl Default for InteractState {
     }
 }
 
-struct TimeSpan {
-    begin: f64,
-    end: f64,
+#[derive(Clone, Copy)]
+pub struct TimeSpan {
+    pub begin: f64,
+    pub end: f64,
+}
+impl TimeSpan {
+    pub fn contains(&self, pos: f64) -> bool {
+        (self.begin..self.end).contains(&pos)
+    }
 }
 
 #[derive(Clone, Copy, clap::ValueEnum)]

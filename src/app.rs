@@ -40,6 +40,7 @@ pub struct App {
 pub struct AppState {
     pub source_markers: SourceMarkers,
     pub interact: InteractState,
+    pub texts: Vec<crate::text::Text>,
     pub subs: Option<SubsState>,
     pub src: crate::source::Info,
     pub present: Option<Present>,
@@ -84,6 +85,7 @@ impl AppState {
             video_area_max_dim: VideoDim::<crate::coords::Present>::new(0, 0),
             pos_string: String::from(MOUSE_OVERLAY_PREFIX),
             overlay_show: true,
+            texts: Vec::new(),
         }
     }
 }
@@ -395,8 +397,10 @@ impl App {
         }
         if let Some(tab) = args.tab {
             match tab {
-                TabOpen::Rects => ui_state.tab = crate::ui::right_panel::Tab::Rects,
-                TabOpen::Timespans => ui_state.tab = crate::ui::right_panel::Tab::TimeSpans,
+                TabOpen::Rects => ui_state.right_panel.tab = crate::ui::right_panel::Tab::Rects,
+                TabOpen::Timespans => {
+                    ui_state.right_panel.tab = crate::ui::right_panel::Tab::TimeSpans
+                }
             }
         }
         Self {

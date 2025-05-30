@@ -37,7 +37,7 @@ pub enum Src {}
 pub enum Present {}
 
 impl<Kind, Space> VideoVector<Kind, Space> {
-    pub fn new(x: VideoMag, y: VideoMag) -> Self {
+    pub const fn new(x: VideoMag, y: VideoMag) -> Self {
         Self {
             x,
             y,
