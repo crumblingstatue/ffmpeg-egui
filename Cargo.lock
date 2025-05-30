@@ -456,6 +456,7 @@ dependencies = [
  "recently_used_list",
  "serde",
  "sf2g",
+ "sf2g-xt",
  "shell-words",
  "thiserror",
  "toml",
@@ -1094,6 +1095,15 @@ dependencies = [
  "num-traits",
  "pkg-config",
  "widestring",
+]
+
+[[package]]
+name = "sf2g-xt"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97499ad2bb6ecdb4c0a51fa7d6a1aff04e950891074d2a76aa6d97c236ec870a"
+dependencies = [
+ "sf2g",
 ]
 
 [[package]]

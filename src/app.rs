@@ -22,6 +22,7 @@ use {
         },
     },
     sf2g::graphics::RenderStates,
+    sf2g_xt::window::InputState,
     std::{fmt::Write as _, path::Path},
 };
 
@@ -32,6 +33,7 @@ pub struct App {
     pub ui_state: UiState,
     pub state: AppState,
     pub cfg: Config,
+    pub input: InputState,
 }
 
 /// The "independent" application state that we store on our side
@@ -173,6 +175,7 @@ impl App {
                 }
             }
         }
+        self.input.start_frame();
         let mut collected_events = Vec::new();
         while let Some(event) = self.rw.poll_event() {
             self.sf_egui.add_event(&event);
@@ -278,6 +281,7 @@ impl App {
     /// Returns `true` if the event was "used" (don't push it to delayed events)
     #[must_use]
     fn handle_immediate_event(&mut self, event: Event) -> bool {
+        self.input.update_from_event(&event);
         match event {
             Event::Closed => self.rw.close(),
             Event::Resized { width, height } => {
@@ -313,6 +317,10 @@ impl App {
                     break 'block;
                 };
                 if wants_ptr {
+                    break 'block;
+                }
+                // Video pan drag is shift + drag
+                if !self.input.key_down(Key::LShift) {
                     break 'block;
                 }
                 let pos = VideoPos::from_present(x, y, self.state.src.dim, present.dim);
@@ -395,6 +403,7 @@ impl App {
             sf_egui,
             ui_state: UiState::default(),
             cfg,
+            input: InputState::default(),
         }
     }
 
