@@ -131,6 +131,9 @@ impl App {
             Key::Right => self.mpv.command_async(c::SeekRelSeconds(10.)),
             Key::Up => self.mpv.command_async(c::SeekRelSeconds(-30.)),
             Key::Down => self.mpv.command_async(c::SeekRelSeconds(30.)),
+            Key::Home => {
+                self.mpv.set_property::<p::TimePos>(0.);
+            }
             Key::F2 => {
                 if let Some(subs) = &mut self.state.subs {
                     match self.mpv.get_property::<p::TimePos>() {
