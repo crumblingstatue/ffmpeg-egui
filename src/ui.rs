@@ -270,6 +270,7 @@ fn bottom_bar_ui(
                 let Some(present) = &mut app_state.present else {
                     return;
                 };
+                ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
                 let mut present_size_changed = false;
                 if ui.button("Original").clicked() {
                     present.dim.x = app_state.src.dim.x as VideoMag;
