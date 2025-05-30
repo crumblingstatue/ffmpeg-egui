@@ -22,3 +22,8 @@ dirs = "6.0.0"
 recently_used_list.git = "https://github.com/crumblingstatue/recently_used_list.git"
 toml = "0.8.20"
 serde = { version = "1.0.218", features = ["derive"] }
+
+[profile.release]
+lto = "thin"
+panic = "abort"
+strip = "symbols"
