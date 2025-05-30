@@ -325,12 +325,13 @@ fn bottom_bar_ui(
                 }
             }
             ui.separator();
-            if ui.button("Open config file").clicked()
-                && let Err(e) = config::shell_open()
-            {
-                ui_state
-                    .modal
-                    .err(format!("Error opening config file: {e}"));
+            if ui.button("Open config file").clicked() {
+                ui.close_menu();
+                if let Err(e) = config::shell_open() {
+                    ui_state
+                        .modal
+                        .err(format!("Error opening config file: {e}"));
+                }
             }
             ui.separator();
             if ui.button("🚪 Quit").clicked() {
