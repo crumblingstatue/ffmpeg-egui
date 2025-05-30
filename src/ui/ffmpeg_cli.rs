@@ -6,6 +6,7 @@ use {
         ffmpeg::resolve_arguments,
         source,
     },
+    core::f32,
     egui_sf2g::egui::{self, TextBuffer},
     std::io::Read as _,
 };
@@ -93,6 +94,7 @@ pub fn ffmpeg_cli_ui(
     let ctrl_enter = ui.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, egui::Key::Enter));
     let re = ui.add(
         egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.source_string)
+            .desired_width(f32::INFINITY)
             .hint_text("arguments to ffmpeg"),
     );
     match resolve_arguments(
@@ -174,7 +176,11 @@ pub fn ffmpeg_cli_ui(
             .max_height(400.0)
             .id_salt("stdout")
             .show(ui, |ui| {
-                ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stdout);
+                ui.add(
+                    egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.stdout.as_str())
+                        .code_editor()
+                        .desired_width(f32::INFINITY),
+                );
             });
     }
     if !ui_state.ffmpeg_cli.stderr.is_empty() {
@@ -184,7 +190,11 @@ pub fn ffmpeg_cli_ui(
             .id_salt("stderr")
             .stick_to_bottom(true)
             .show(ui, |ui| {
-                ui.text_edit_multiline(&mut ui_state.ffmpeg_cli.stderr);
+                ui.add(
+                    egui::TextEdit::multiline(&mut ui_state.ffmpeg_cli.stderr.as_str())
+                        .code_editor()
+                        .desired_width(f32::INFINITY),
+                );
             });
     }
     ui.horizontal(|ui| {
