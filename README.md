@@ -1,6 +1,6 @@
 # 🐸 frogmpeg
 
-A simple lightweight GUI frontend for ffmpeg.
+A lightweight GUI frontend for ffmpeg.
 
 ## Goal
 
