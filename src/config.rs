@@ -44,7 +44,7 @@ impl Config {
 }
 
 fn conf_dir_path() -> std::path::PathBuf {
-    dirs::config_dir().unwrap().join("ffmfrog")
+    dirs::config_dir().unwrap().join("frogmpeg")
 }
 
 fn toml_path() -> std::path::PathBuf {
