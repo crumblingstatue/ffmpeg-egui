@@ -173,7 +173,7 @@ pub fn ffmpeg_cli_ui(
     if !ui_state.ffmpeg_cli.stdout.is_empty() {
         ui.label("Standard output:");
         egui::ScrollArea::vertical()
-            .max_height(400.0)
+            .max_height(200.0)
             .id_salt("stdout")
             .show(ui, |ui| {
                 ui.add(
@@ -186,7 +186,7 @@ pub fn ffmpeg_cli_ui(
     if !ui_state.ffmpeg_cli.stderr.is_empty() {
         ui.label("Standard error:");
         egui::ScrollArea::vertical()
-            .max_height(400.0)
+            .max_height(200.0)
             .id_salt("stderr")
             .stick_to_bottom(true)
             .show(ui, |ui| {
