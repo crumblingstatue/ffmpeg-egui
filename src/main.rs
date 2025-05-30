@@ -14,7 +14,7 @@ use {
     clap::Parser,
     config::Config,
     coords::{Src, VideoPos, VideoRect},
-    egui_sfml::sfml::graphics::Font,
+    egui_sf2g::sf2g::graphics::Font,
     mpv::{
         commands::LoadFile,
         properties::{AudioPitchCorrection, CropX, Height, KeepOpen, KeepOpenPause, Volume, Width},

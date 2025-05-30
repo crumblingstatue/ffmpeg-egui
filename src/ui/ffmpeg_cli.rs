@@ -6,7 +6,7 @@ use {
         ffmpeg::resolve_arguments,
         source,
     },
-    egui_sfml::egui::{self, TextBuffer},
+    egui_sf2g::egui::{self, TextBuffer},
     std::io::Read as _,
 };
 

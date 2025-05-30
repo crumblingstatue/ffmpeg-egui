@@ -1,6 +1,6 @@
 use {
     crate::{coords::VideoPos, ui::EguiFriendlyColor},
-    egui_sfml::sfml::{graphics::Color, system::Vector2f},
+    egui_sf2g::sf2g::{graphics::Color, system::Vector2f},
 };
 
 pub trait VideoPosSfExt {

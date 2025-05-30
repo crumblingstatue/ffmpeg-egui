@@ -10,9 +10,9 @@ use {
         subs::{SubsState, TrackingState},
         ui::UiState,
     },
-    egui_sfml::{
+    egui_sf2g::{
         self, SfEgui,
-        sfml::{
+        sf2g::{
             cpp::FBox,
             graphics::{
                 Color, Font, Rect, RenderTarget as _, RenderWindow, Sprite, Transformable as _,
@@ -21,6 +21,7 @@ use {
             window::{ContextSettings, Event, Key, Style, mouse},
         },
     },
+    sf2g::graphics::RenderStates,
     std::{fmt::Write as _, path::Path},
 };
 
@@ -260,7 +261,7 @@ impl App {
             );
             let mut s = Sprite::with_texture(&present.texture);
             s.set_position(self.state.interact.pan_pos.to_sf());
-            self.rw.draw(&s);
+            self.rw.draw_sprite(&s, &RenderStates::DEFAULT);
         }
         if self.state.overlay_show {
             draw_overlay(&mut self.rw, &self.state, &self.state.pos_string, font);

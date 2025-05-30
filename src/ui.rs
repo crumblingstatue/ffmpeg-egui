@@ -15,7 +15,7 @@ use {
         time_fmt::FfmpegTimeFmt,
     },
     egui_file_dialog::FileDialog,
-    egui_sfml::egui::{self, ScrollArea},
+    egui_sf2g::egui::{self, ScrollArea},
     ffmpeg_cli::{FfmpegCli, ffmpeg_cli_ui},
     rand::Rng,
 };

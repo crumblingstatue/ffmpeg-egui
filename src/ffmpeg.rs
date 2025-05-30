@@ -1,6 +1,6 @@
 use {
     crate::{SourceMarkers, config::Config, source},
-    egui_sfml::egui::TextBuffer,
+    egui_sf2g::egui::TextBuffer,
     std::{
         fmt::Write,
         process::{Child, Command, Stdio},

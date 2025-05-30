@@ -1,6 +1,6 @@
 use {
     crate::time_fmt::AssTimeFmt,
-    egui_sfml::egui::{TextBuffer, ahash::HashMap},
+    egui_sf2g::egui::{TextBuffer, ahash::HashMap},
     std::{collections::VecDeque, fmt::Write as _, path::PathBuf},
 };
 

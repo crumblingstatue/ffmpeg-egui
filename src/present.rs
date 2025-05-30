@@ -1,6 +1,6 @@
 use {
     crate::coords::VideoDim,
-    egui_sfml::sfml::{cpp::FBox, graphics::Texture},
+    egui_sf2g::sf2g::{cpp::FBox, graphics::Texture},
 };
 
 pub struct Present {
