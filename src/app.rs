@@ -395,8 +395,8 @@ impl App {
         }
         if let Some(tab) = args.tab {
             match tab {
-                TabOpen::Rects => ui_state.tab = crate::ui::Tab::Rects,
-                TabOpen::Timespans => ui_state.tab = crate::ui::Tab::TimeSpans,
+                TabOpen::Rects => ui_state.tab = crate::ui::right_panel::Tab::Rects,
+                TabOpen::Timespans => ui_state.tab = crate::ui::right_panel::Tab::TimeSpans,
             }
         }
         Self {
