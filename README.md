@@ -2,6 +2,8 @@
 
 A lightweight GUI frontend for ffmpeg.
 
+![Screenshot](https://github.com/user-attachments/assets/36baa430-9a17-4f20-a577-1dddaea2d29b)
+
 ## Goal
 
 The goal of frogmpeg is to create visual aid for composing ffmpeg commands.
