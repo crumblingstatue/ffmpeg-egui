@@ -5,11 +5,15 @@ use {
 
 pub trait VideoPosSfExt {
     fn to_sf(&self) -> Vector2f;
+    fn to_arr(&self) -> [f32; 2];
 }
 
 impl<Space> VideoPosSfExt for VideoPos<Space> {
     fn to_sf(&self) -> Vector2f {
         Vector2f::new(self.x.into(), self.y.into())
+    }
+    fn to_arr(&self) -> [f32; 2] {
+        [self.x.into(), self.y.into()]
     }
 }
 

@@ -366,9 +366,9 @@ dependencies = [
 
 [[package]]
 name = "egui-sf2g"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b6cdd58fa9448f9bd8247c8f4b699dc237074e3af9b190526043d249a7b52ed"
+checksum = "3e0848db5926a84605ea8190fbc38b4572d25f43f2c9751c5524273cd73c4d16"
 dependencies = [
  "arboard",
  "egui",
@@ -902,9 +902,9 @@ dependencies = [
 
 [[package]]
 name = "prettyplease"
-version = "0.2.32"
+version = "0.2.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "664ec5419c51e34154eec046ebcba56312d5a2fc3b09a06da188e1ad21afadf6"
+checksum = "9dee91521343f4c5c6a63edd65e54f31f5c92fe8978c40a4282f8372194c6a7d"
 dependencies = [
  "proc-macro2",
  "syn",
@@ -1082,9 +1082,9 @@ dependencies = [
 
 [[package]]
 name = "sf2g"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32fa89ef10e18f37624b2470ae5aab00665a60964b26888e8c23e0dd9a630f60"
+checksum = "89aded822dea490c0ad09e5915cce05a47151b6257bcc796db30043d404992a4"
 dependencies = [
  "bitflags 2.9.1",
  "cc",
@@ -1099,9 +1099,9 @@ dependencies = [
 
 [[package]]
 name = "sf2g-xt"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97499ad2bb6ecdb4c0a51fa7d6a1aff04e950891074d2a76aa6d97c236ec870a"
+checksum = "8a147d7b0cba1a8f011ab8f140960104f32c1b51c0e396b6dca0365c01f7f9a8"
 dependencies = [
  "sf2g",
 ]

@@ -117,29 +117,33 @@ pub(crate) fn draw_overlay(
     }
     // Text overlay
     let mut text = Text::new(pos_string.to_owned(), font, 14);
-    text.set_position((
+    text.tf.position = [
         app_state.video_area_max_dim.x as f32 - 240.0,
         timeline_rect_sf.top - 20.0,
-    ));
+    ];
     text.draw(rw, &RenderStates::DEFAULT);
     if timeline_rect.contains(mouse_pos.as_other()) {
         let timepos = timeline_rect_timepos(timeline_rect, mouse_pos.x as i16, &app_state.src);
-        text.set_position((timeline_rect_sf.left, timeline_rect_sf.top - 20.0));
+        text.tf.position = [timeline_rect_sf.left, timeline_rect_sf.top - 20.0];
         text.set_string(format!("Mouse time pos: {}", FfmpegTimeFmt(timepos)));
         text.draw(rw, &RenderStates::DEFAULT);
     }
     // Texts
+    let src_present_ratio = [
+        video_present_dim.x as f32 / app_state.src.dim.x as f32,
+        video_present_dim.y as f32 / app_state.src.dim.y as f32,
+    ];
+    text.tf.scale = src_present_ratio;
     for txt in &app_state.texts {
         if !txt.timespan.contains(app_state.src.time_pos) {
             continue;
         }
         text.set_character_size(txt.size);
         text.set_string(txt.string.clone());
-        text.set_position(
-            txt.pos
-                .to_present(app_state.src.dim, video_present_dim)
-                .to_sf(),
-        );
+        text.tf.position = txt
+            .pos
+            .to_present(app_state.src.dim, video_present_dim)
+            .to_arr();
         if txt.borderw != 0 {
             text.set_outline_color(Color::BLACK);
             text.set_outline_thickness(txt.borderw.into());
@@ -149,7 +153,7 @@ pub(crate) fn draw_overlay(
     // Draw subs
     if let Some(subs) = &app_state.subs {
         text.set_character_size(20);
-        text.set_position(0.);
+        text.tf.position = [0., 0.];
         text.set_outline_color(Color::BLACK);
         text.set_outline_thickness(2.0);
         let gray = Color::rgb(138, 145, 150);
@@ -164,13 +168,13 @@ pub(crate) fn draw_overlay(
                     smol.set_outline_color(Color::BLACK);
                     smol.set_fill_color(gray);
                     smol.set_outline_thickness(1.0);
-                    smol.set_position(pos + Vector2::new(0.0, -11.));
+                    smol.tf.position = (pos + Vector2::new(0.0, -11.)).into();
                     smol.draw(rw, &RenderStates::DEFAULT);
                 }
             }
-            text.move_((0., 32.0));
+            text.tf.position[1] += 32.0;
         }
-        text.set_position(0.);
+        text.tf.position = [0., 0.];
         text.set_fill_color(Color::WHITE);
         for (tid, accum) in &subs.tracking.accumulators {
             text.set_string(accum.clone());
@@ -182,11 +186,11 @@ pub(crate) fn draw_overlay(
                     smol.set_outline_color(Color::BLACK);
                     smol.set_fill_color(Color::WHITE);
                     smol.set_outline_thickness(1.0);
-                    smol.set_position(pos + Vector2::new(0.0, -11.));
+                    smol.tf.position = (pos + Vector2::new(0.0, -11.)).into();
                     smol.draw(rw, &RenderStates::DEFAULT);
                 }
             }
-            text.move_((0., 32.0));
+            text.tf.position[1] += 32.0;
         }
     }
 }
