@@ -1,10 +1,4 @@
-#![feature(
-    array_chunks,
-    generic_const_exprs,
-    let_chains,
-    array_windows,
-    default_field_values
-)]
+#![feature(array_chunks, generic_const_exprs, array_windows, default_field_values)]
 // We make light use of generic_const_exprs, which is an incomplete feature
 #![expect(incomplete_features)]
 
