@@ -95,7 +95,7 @@ impl SubsState {
         self.time_stamps.clear();
         self.rewind();
     }
-    pub fn timings_reload_sentry(&mut self) -> Option<TimingsReloadSentry> {
+    pub fn timings_reload_sentry(&'_ mut self) -> Option<TimingsReloadSentry<'_>> {
         self.timings_path
             .clone()
             .map(|path| TimingsReloadSentry { subs: self, path })

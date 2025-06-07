@@ -194,7 +194,7 @@ pub enum ParseError {
     InvalidIndex(#[from] ParseIntError),
 }
 
-fn tokenize_word(word: &str) -> Result<Vec<Token>, ParseError> {
+fn tokenize_word(word: &'_ str) -> Result<Vec<Token<'_>>, ParseError> {
     let mut state = ParseState::default();
     let mut tokens = Vec::new();
     for (i, byte) in word.bytes().enumerate() {
